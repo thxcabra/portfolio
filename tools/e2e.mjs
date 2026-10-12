@@ -98,6 +98,8 @@ ok('tela de título do FireRed');
 await key('Enter', 900);
 assert.deepEqual(await me(), [7, 8, 'up']);
 ok('START entra no Centro Pokémon, Red na porta');
+assert.equal(await ev(`getComputedStyle(document.querySelector('.person[data-me]')).imageRendering`), 'pixelated', 'personagens borrados: imagem de fundo sem pixelated');
+ok('personagens com pixel nítido');
 
 await sleep(700);
 assert.match((await msg()) ?? '', /Bem-vindo/);

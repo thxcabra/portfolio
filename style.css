@@ -19,7 +19,7 @@ body {
   font: 16px/16px Gen3, monospace;
 }
 button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
-img, video { image-rendering: pixelated; }
+html { image-rendering: pixelated; }   /* inherited: covers <img>, video and every background image (people, flames...) */
 noscript { color: #f8f8f8; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
