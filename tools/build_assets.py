@@ -129,10 +129,36 @@ def build_dialog(out_box, out_arrow):
     pngio.write(out_arrow, strip)
 
 
+def build_menus(ui):
+    """Pieces of FireRed's menus: the help bar under the START menu (help_message.c: msg_window.png
+    tile 0 for the top row, 5 for the middle rows, 14 for the bottom row, palette stdpal_2), the
+    OPTION header frame (std.png in stdpal_3) and the keypad icons A, B, up/down, left/right
+    (text.c sKeypadIcons, drawn with the window palette)."""
+    T = GFX / 'text_window'
+    pal = pngio.read_jasc(T / 'stdpal_2.pal')
+    _, _, tiles, _ = pngio.read(GFX / 'help_system/msg_window.png')   # 80x16: 10 tiles per row
+    bar = []
+    for t in [0, 5, 5, 5, 14]:
+        for y in range(8):
+            row = []
+            for _ in range(30):
+                for x in range(8):
+                    v = tiles[(t // 10) * 8 + y][(t % 10) * 8 + x]
+                    row.append(tuple(pal[v]) + (255,) if v else (0, 0, 0, 0))
+            bar.append(row)
+    pngio.write(ui / 'help.png', bar)
+    rgba_png(T / 'std.png', ui / 'frame-std.png', T / 'stdpal_3.pal')
+    _, _, keys, _ = pngio.read(GFX / 'fonts/keypad_icons.png')
+    spots = [(0, 0), (8, 0), (0, 16), (8, 16)]   # A, B, DPAD_UPDOWN, DPAD_LEFTRIGHT
+    pngio.write(ui / 'keys.png', [[tuple(pal[keys[sy + y][sx + x]]) + (255,) if keys[sy + y][sx + x] else (0, 0, 0, 0)
+                                   for sx, sy in spots for x in range(8)] for y in range(12)])
+
+
 def build_ui():
     ui = OUT / 'ui'
     ui.mkdir(parents=True, exist_ok=True)
     build_dialog(ui / 'dialog.png', ui / 'arrow.png')
+    build_menus(ui)
     for n in range(1, 11):
         rgba_png(GFX / f'text_window/type{n}.png', ui / f'frame-{n}.png')
     rgba_png(GFX / 'trainer_card/badges.png', ui / 'badges.png')
@@ -142,7 +168,7 @@ def build_ui():
 
 
 def check_ui():
-    names = [f'frame-{n}.png' for n in range(1, 11)] + ['badges.png', 'menu_info.png', 'ball.png', 'sparkle.png', 'dialog.png', 'arrow.png']
+    names = [f'frame-{n}.png' for n in range(1, 11)] + ['badges.png', 'menu_info.png', 'ball.png', 'sparkle.png', 'dialog.png', 'arrow.png', 'help.png', 'frame-std.png', 'keys.png']
     for name in names:
         assert (OUT / 'ui' / name).exists(), f'missing assets/ui/{name}'
     w, h, px, _ = pngio.read(OUT / 'ui/badges.png')
@@ -150,6 +176,13 @@ def check_ui():
     assert px[0][0][3] == 0, 'badge background must be transparent'
     w, h, _, _ = pngio.read(OUT / 'ui/dialog.png')
     assert (w, h) == (240, 48), f'dialog box {w}x{h}'
+    _, _, bar, _ = pngio.read(OUT / 'ui/help.png')
+    assert (len(bar[0]), len(bar)) == (240, 40), 'help bar must be 240x40'
+    col = [bar[y][100][:3] for y in range(40)]   # help_message.c: rows of msg_window.png in stdpal_2
+    assert col[0] == col[1] == (0, 82, 115) and col[2] == (16, 172, 222), col[:3]
+    assert col[3] == col[36] == (0, 123, 197) and col[37] == (0, 115, 139) and col[38] == col[39] == (0, 82, 115), col[36:]
+    w, h, _, _ = pngio.read(OUT / 'ui/keys.png')
+    assert (w, h) == (32, 12), f'keys.png {w}x{h}'
     print('ui ok')
 
 
