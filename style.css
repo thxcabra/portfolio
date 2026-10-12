@@ -48,9 +48,6 @@ body:not(.ready) .gba { opacity: 0; }   /* not visibility: hidden, which would b
   touch-action: none; user-select: none; cursor: pointer;
 }
 .screen, .screen * { text-shadow: 1px 0 0 var(--sh), 0 1px 0 var(--sh), 1px 1px 0 var(--sh); }
-.box { border: 8px solid transparent; border-image: var(--frame) 8 fill stretch; }
-.blink { animation: blink 1s steps(1) infinite; }
-@keyframes blink { 50% { opacity: 0; } }
 .tw-rest { color: transparent; --sh: transparent; }
 
 .title { position: absolute; inset: 0; background: #000; }
@@ -64,15 +61,27 @@ body:not(.ready) .gba { opacity: 0; }   /* not visibility: hidden, which would b
 .person.flip { transform: scaleX(-1); }
 /* Message box as FireRed draws it: 240x48 frame at y=112, text window at (16,120), first line at y=1,
    lines 15px apart (14px font + 1px spacing). A 14px line box puts the glyph cell top on the line top. */
-.msg { position: absolute; left: 0; top: 112px; width: 240px; height: 48px; z-index: 1; background: url(assets/ui/dialog.png); color: #626262; --sh: #d5d5cd; }
+.msg { position: absolute; left: 0; top: 112px; width: 240px; height: 48px; z-index: 2; background: url(assets/ui/dialog.png); color: #626262; --sh: #d5d5cd; }
 .msg[data-voice="female"] { color: #e60808; }   /* FireRed: women speak in red (TEXT_COLOR_RED), */
 .msg[data-voice="male"] { color: #3152cd; }     /* men in blue (TEXT_COLOR_BLUE); the shadow stays light gray */
 .msg[hidden] { display: none; }
 .msg p { position: absolute; left: 16px; top: 9px; }
-.msg .line { display: block; height: 15px; line-height: 14px; white-space: pre; }
+.line { display: block; height: 15px; line-height: 14px; white-space: pre; }   /* 14px font + 1px spacing; a 14px line box puts the glyph cell top on the line top */
 .msg .next { display: inline-block; vertical-align: top; width: 10px; height: 12px; background: url(assets/ui/arrow.png); visibility: hidden; }
 .msg.more .next { visibility: visible; animation: arrow .536s steps(1) infinite; }   /* 4 steps of 8 frames */
 @keyframes arrow { 25%, 75% { background-position: -10px 0; } 50% { background-position: -20px 0; } }
+
+/* ---------- menus (menu.c, start_menu.c, help_message.c) ---------- */
+.ui { position: absolute; inset: 0; z-index: 1; }
+.ui > * { position: absolute; inset: 0; pointer-events: none; }   /* clicks between windows reach .ui = "outside" */
+.ui .win, .ui .help, .ui .msg, .ui > .full { pointer-events: auto; }
+.world.talking .ui, .world.talking .ui * { pointer-events: none; }   /* a message is up: clicks advance it */
+.win { position: absolute; border: 8px solid transparent; border-image: var(--frame) 8 repeat; background: #fff padding-box; }
+.win.std { border-image-source: url(assets/ui/frame-std.png); }
+.txt { position: absolute; }
+.item { position: absolute; left: 8px; text-align: left; }
+.item:focus { outline: none; }   /* the ▶ shows where the cursor is */
+.help { position: absolute; left: 0; top: 120px; width: 240px; height: 40px; background: url(assets/ui/help.png); color: #fff; --sh: #626262; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }

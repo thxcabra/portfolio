@@ -5,6 +5,7 @@ import {
   route, textWidth, fitsLines, TEXT_SPEEDS, multiTiles, spritePath, nextIndex, fitScale, coverScale, cycle, splitShown, pickNext,
   discPath, rrectPath, corner, TYPES, SHAPES, DIRS, around, pathToAny, pageFits, esc,
 } from './logic.js';
+import { MENU } from './carts/center/screens/menu.js';
 
 // routes: screens with their own link
 const R = (p) => route(p, 8);
@@ -174,6 +175,17 @@ for (const l of ['pt', 'en']) {
   for (const [k, pages] of Object.entries(DATA.talk[l])) {
     pages.forEach((page, i) => assert.ok(pageFits(page, widthsOf, 208, i < pages.length - 1 ? 10 : 0), `talk.${l}.${k}[${i}] não cabe na caixa: "${page}"`));
   }
+}
+
+// menus: labels and help lines fit their windows (widths from the game font)
+for (const l of ['pt', 'en']) {
+  const u = ui[l];
+  for (const id of MENU) {
+    assert.ok(u[`menu_${id}`], `ui.${l}.menu_${id} faltando`);
+    assert.ok(fitsLines(u[`help_${id}`], widthsOf, 238, 2), `ui.${l}.help_${id} não cabe na barra de ajuda (2 linhas)`);
+  }
+  const widest = Math.max(...MENU.map((id) => textWidth(u[`menu_${id}`], widthsOf)));
+  assert.ok(widest <= 96, `ui.${l}: item do menu START largo demais (${widest}px)`);
 }
 
 console.log('check ok');

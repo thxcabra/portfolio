@@ -84,6 +84,12 @@ const clickTile = async (tx, ty) => {
   const x = r[0] + (tx * 16 + 8) * r[2], y = r[1] + (ty * 16 + 8) * r[2];
   for (const type of ['mouseMoved', 'mousePressed', 'mouseReleased']) await send('Input.dispatchMouseEvent', { type, x, y, button: 'left', clickCount: 1 });
 };
+const menuTo = async (label) => {
+  for (let i = 0; i < 8 && (await focused()) !== label; i++) await key('ArrowDown', 120);
+  assert.equal(await focused(), label);
+};
+// Rectangle of an element in game pixels, relative to the screen: [left, top, right, bottom].
+const rectIn = (sel) => ev(`(() => { const s = document.getElementById('screen').getBoundingClientRect(), b = document.querySelector('${sel}').getBoundingClientRect(), k = s.width / 240; return [b.left - s.left, b.top - s.top, b.right - s.left, b.bottom - s.top].map((v) => Math.round(v / k)); })()`);
 
 await send('Page.navigate', { url: BASE });
 await sleep(1500);
@@ -133,6 +139,28 @@ await sleep(12 * 266 + 900);
 assert.match((await msg()) ?? '', /obras/);
 await closeMsg();
 ok('escada: sala de minijogos em obras');
+
+await key('Enter');
+assert.ok(await has('.menu .win'), 'START não abriu o menu');
+assert.equal(await focused(), 'PROJETOS');
+const [, menuTop, menuRight, menuBottom] = await rectIn('.menu .win');
+assert.deepEqual([menuTop, menuRight, menuBottom], [0, 240, 120], 'menu START fora do lugar do FireRed');
+assert.deepEqual(await rectIn('.menu .help'), [0, 120, 240, 160]);
+assert.equal((await rectIn('.menu .item'))[1], 8, 'primeiro item em y=8');
+await key('ArrowUp');
+assert.equal(await focused(), 'SAIR', 'o cursor do menu dá a volta');
+await key('ArrowDown');
+assert.match(await ev(`document.querySelector('.menu .help').textContent`), /projetos/i);
+const before = await me();
+await hold('ArrowLeft', 300);
+assert.deepEqual(await me(), before, 'o Red andou com o menu aberto');
+await key('z');
+assert.match((await msg()) ?? '', /breve/);
+await closeMsg();
+assert.ok(await has('.menu .win'), 'o menu fechou junto com a mensagem');
+await key('Enter');
+assert.ok(!(await has('.menu')), 'START não fechou o menu');
+ok('menu START: posição do jogo, cursor dá a volta, ajuda, "em breve", o Red não anda, fecha');
 
 await keyDown('ArrowLeft');
 assert.ok(await ev(`document.getElementById('gba').classList.contains('p-dpad')`), 'direcional não afundou');

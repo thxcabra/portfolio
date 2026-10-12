@@ -1,29 +1,61 @@
-// Cartridge 1: the Pokémon Center. Title screen first, then the room you walk around in.
+// Cartridge 1: the Pokémon Center. Title screen first, then the room you walk around in, with the
+// START menu and the screens it opens stacked on top of it.
 import { createWorld, BEHAVIOR } from './world.js';
 import { createDialog } from './dialog.js';
 import { createTitle } from './title.js';
+import { createStack } from './ui.js';
+import { createMenu } from './screens/menu.js';
 
 const VOICE = { nurse: 'female', gentleman: 'male', boy: 'male', youngster: 'male' };   // by the game's gender table
+const SCREENS = {};   // menu id -> () => screen; the ones not built yet say "coming soon"
 
 let api = null;
 let screen = null;
 let map = null;
+let widths = null;
 let world = null;
 let dialog = null;
+let stack = null;
 let titleScreen = null;
 let mode = 'off';   // off | title | loading | world
+
+const json = async (url) => (await fetch(url)).json();
 
 function title() {
   mode = 'title';
   titleScreen = createTitle(screen, { reduced: api.reduced() });
 }
 
+// The room stands still while a message or any screen is up; the address shows the open screen.
+function sync() {
+  world.freeze(dialog.open || stack.size > 0);
+  screen.firstElementChild.classList.toggle('talking', dialog.open);
+  api.link(stack.path());
+}
+
 function say(pages, done, voice = '') {
-  world.freeze(true);
   dialog.say(pages, () => {
-    world.freeze(false);
+    sync();
     done?.();
   }, voice);
+  sync();
+}
+
+function openMenu(start) {
+  api.sfx('win_open');
+  stack.push(createMenu({
+    api, widths, start,
+    choose: openScreen,
+    close: () => {
+      api.sfx('select');
+      stack.pop();
+    },
+  }));
+}
+
+function openScreen(id) {
+  if (!SCREENS[id]) return say(api.talk('soon'));
+  stack.push(SCREENS[id]());
 }
 
 function interact(target) {
@@ -54,15 +86,17 @@ async function enter() {
   mode = 'loading';
   api.sfx('select');
   titleScreen.stop();
-  map ??= await (await fetch('assets/world/center.json')).json();
+  [map, widths] = await Promise.all([map ?? json('assets/world/center.json'), widths ?? json('assets/font/widths.json')]);
   screen.innerHTML = '<div class="world"></div>';
   const root = screen.firstElementChild;
   world = createWorld(root, map, { interact, blocked, bump: () => api.sfx('bump') });
+  stack = createStack(root, { onChange: sync, outside: () => (dialog.open ? dialog.advance() : stack.button('b', true)) });
   dialog = createDialog(root, api);
   mode = 'world';
+  sync();
   if (!api.store.get('welcomed', false)) {
     setTimeout(() => {
-      if (mode === 'world' && !dialog.open) say(api.talk('nurse_welcome'), () => api.store.set('welcomed', true), 'female');
+      if (mode === 'world' && !dialog.open && !stack.size) say(api.talk('nurse_welcome'), () => api.store.set('welcomed', true), 'female');
     }, api.reduced() ? 0 : 500);
   }
 }
@@ -78,6 +112,7 @@ export default {
     world?.stop();
     world = null;
     dialog = null;
+    stack = null;
     mode = 'off';
     screen.innerHTML = '';
   },
@@ -91,13 +126,16 @@ export default {
       if (down && (name === 'a' || name === 'b')) dialog.advance();
       return;
     }
+    if (stack.size) return stack.button(name, down);
+    if (down && name === 'start') return openMenu();
     world.button(name, down);
   },
   pointer(x, y) {
     if (mode === 'title') return enter();
     if (mode !== 'world') return;
     if (dialog.open) return dialog.advance();
+    if (stack.size) return;   // the screens take their own clicks
     world.pointer(x, y);
   },
-  open() {},   // the shortcuts bar (projects / about / contact) arrives in phase 3
+  open() {},   // links arrive in Tarefa 9
 };
