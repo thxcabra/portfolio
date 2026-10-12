@@ -114,7 +114,12 @@ assert.match((await msg()) ?? '', /Bem-vindo/);
 assert.equal(await ev(`getComputedStyle(document.querySelector('.msg')).color`), 'rgb(230, 8, 8)', 'a Enfermeira fala em vermelho, como no FireRed');
 await closeMsg();
 assert.equal(await ev(`localStorage.getItem('welcomed')`), 'true');
-ok('Enfermeira dá as boas-vindas uma vez');
+assert.ok(await has('.menu .win'), 'o menu não abriu sozinho depois das boas-vindas');
+assert.equal(await focused(), 'PROJETOS');
+await key('x');
+assert.ok(!(await has('.menu')));
+assert.equal(await ev(`document.querySelector('.hint').hidden`), false, 'a dica START: MENU não apareceu');
+ok('Enfermeira dá as boas-vindas uma vez e o menu abre sozinho; dica aparece');
 
 await hold('ArrowUp', 4 * 266 + 200);
 assert.deepEqual(await me(), [7, 4, 'up']);
@@ -142,6 +147,7 @@ ok('escada: sala de minijogos em obras');
 
 await key('Enter');
 assert.ok(await has('.menu .win'), 'START não abriu o menu');
+assert.equal(await ev(`document.querySelector('.hint').hidden`), true, 'a dica não sumiu depois de usar o menu');
 assert.equal(await focused(), 'PROJETOS');
 const [, menuTop, menuRight, menuBottom] = await rectIn('.menu .win');
 assert.deepEqual([menuTop, menuRight, menuBottom], [0, 240, 120], 'menu START fora do lugar do FireRed');

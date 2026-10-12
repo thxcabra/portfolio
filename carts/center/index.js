@@ -3,7 +3,8 @@
 import { createWorld, BEHAVIOR } from './world.js';
 import { createDialog } from './dialog.js';
 import { createTitle } from './title.js';
-import { createStack } from './ui.js';
+import { createStack, win, text } from './ui.js';
+import { textWidth } from '../../logic.js';
 import { createMenu } from './screens/menu.js';
 
 const VOICE = { nurse: 'female', gentleman: 'male', boy: 'male', youngster: 'male' };   // by the game's gender table
@@ -16,6 +17,7 @@ let widths = null;
 let world = null;
 let dialog = null;
 let stack = null;
+let hint = null;
 let titleScreen = null;
 let mode = 'off';   // off | title | loading | world
 
@@ -31,6 +33,7 @@ function sync() {
   world.freeze(dialog.open || stack.size > 0);
   screen.firstElementChild.classList.toggle('talking', dialog.open);
   api.link(stack.path());
+  hint.hidden = stack.size > 0 || dialog.open || api.store.get('menuUsed', false);
 }
 
 function say(pages, done, voice = '') {
@@ -51,6 +54,25 @@ function openMenu(start) {
       stack.pop();
     },
   }));
+}
+
+// Until the player opens the menu by themselves, a small window in the corner says how.
+function makeHint(root) {
+  const label = api.t('hint');
+  const w = Math.ceil((8 + textWidth(label, widths)) / 8) * 8;
+  const el = win(8, 8, w, 16, 'hint');
+  el.append(text(label, Math.floor((w - textWidth(label, widths)) / 2), 1));
+  el.addEventListener('pointerdown', (e) => {
+    e.stopPropagation();   // not a click on the room
+    useMenu();
+  });
+  root.append(el);
+  return el;
+}
+
+function useMenu() {
+  api.store.set('menuUsed', true);
+  openMenu();
 }
 
 function openScreen(id) {
@@ -92,11 +114,15 @@ async function enter() {
   world = createWorld(root, map, { interact, blocked, bump: () => api.sfx('bump') });
   stack = createStack(root, { onChange: sync, outside: () => (dialog.open ? dialog.advance() : stack.button('b', true)) });
   dialog = createDialog(root, api);
+  hint = makeHint(root);
   mode = 'world';
   sync();
   if (!api.store.get('welcomed', false)) {
     setTimeout(() => {
-      if (mode === 'world' && !dialog.open && !stack.size) say(api.talk('nurse_welcome'), () => api.store.set('welcomed', true), 'female');
+      if (mode === 'world' && !dialog.open && !stack.size) say(api.talk('nurse_welcome'), () => {
+        api.store.set('welcomed', true);
+        openMenu(0);
+      }, 'female');
     }, api.reduced() ? 0 : 500);
   }
 }
@@ -127,7 +153,7 @@ export default {
       return;
     }
     if (stack.size) return stack.button(name, down);
-    if (down && name === 'start') return openMenu();
+    if (down && name === 'start') return useMenu();
     world.button(name, down);
   },
   pointer(x, y) {

@@ -81,6 +81,7 @@ body:not(.ready) .gba { opacity: 0; }   /* not visibility: hidden, which would b
 .txt { position: absolute; }
 .item { position: absolute; left: 8px; text-align: left; }
 .item:focus { outline: none; }   /* the ▶ shows where the cursor is */
+.hint { z-index: 1; cursor: pointer; }
 .help { position: absolute; left: 0; top: 120px; width: 240px; height: 40px; background: url(assets/ui/help.png); color: #fff; --sh: #626262; }
 
 @media (prefers-reduced-motion: reduce) {
