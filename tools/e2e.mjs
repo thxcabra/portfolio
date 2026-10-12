@@ -76,7 +76,7 @@ await send('Log.enable');
 await send('Page.enable');
 await send('Emulation.setFocusEmulationEnabled', { enabled: true });   // a headless page never gets window focus otherwise
 const me = () => ev(`(() => { const p = document.querySelector('.person[data-me]'); return p ? [Number(p.dataset.x), Number(p.dataset.y), p.dataset.dir] : null; })()`);
-const msg = () => ev(`(() => { const m = document.querySelector('.msg'); return m && !m.hidden ? m.textContent : null; })()`);
+const msg = () => ev(`(() => { const m = document.querySelector('.msg.dialog'); return m && !m.hidden ? m.textContent : null; })()`);
 const hold = async (k, ms) => { await keyDown(k); await sleep(ms); await send('Input.dispatchKeyEvent', { type: 'keyUp', key: k, ...KEYS[k], text: undefined }); await sleep(150); };
 const closeMsg = async () => { for (let i = 0; i < 15 && (await msg()) !== null; i++) await key('z', 250); assert.equal(await msg(), null, 'caixa de diálogo não fechou'); };
 const clickTile = async (tx, ty) => {
@@ -111,7 +111,7 @@ ok('personagens com pixel nítido');
 
 await sleep(700);
 assert.match((await msg()) ?? '', /Bem-vindo/);
-assert.equal(await ev(`getComputedStyle(document.querySelector('.msg')).color`), 'rgb(230, 8, 8)', 'a Enfermeira fala em vermelho, como no FireRed');
+assert.equal(await ev(`getComputedStyle(document.querySelector('.msg.dialog')).color`), 'rgb(230, 8, 8)', 'a Enfermeira fala em vermelho, como no FireRed');
 await closeMsg();
 assert.equal(await ev(`localStorage.getItem('welcomed')`), 'true');
 assert.ok(await has('.menu .win'), 'o menu não abriu sozinho depois das boas-vindas');
@@ -195,6 +195,31 @@ assert.ok(!(await has('.options')) && (await has('.menu .win')), 'B não voltou 
 assert.equal(await focused(), 'OPÇÕES');
 await key('Enter');
 ok('OPÇÕES: posições do jogo; velocidade, moldura e idioma salvos; B volta ao menu');
+
+await ev(`window.__opened = []; window.open = (u) => { window.__opened.push(u); return null; }`);
+await key('Enter');
+await menuTo('CONTATO');
+await key('z', 400);
+assert.ok(await has('.contact .win'), 'CONTATO não abriu');
+assert.equal(await ev('location.hash'), '#/contato');
+assert.deepEqual((await rectIn('.contact .win')).slice(0, 2), [0, 0], 'a janela de escolhas fica no canto, como no jogo');
+assert.equal(await focused(), 'GITHUB');
+await key('z');
+assert.deepEqual(await ev('window.__opened'), ['https://github.com/']);
+await menuTo('E-MAIL');
+await key('z', 300);
+assert.equal(await ev(`document.querySelectorAll('.contact .win').length`), 2, 'E-MAIL não perguntou escrever/copiar');
+assert.equal((await rectIn('.contact .win:last-of-type'))[2], 224, 'a pergunta fica onde o SIM/NÃO do jogo fica');
+await key('ArrowDown');
+await key('z', 700);
+assert.match((await msg()) ?? '', /copiado|@/);
+await closeMsg();
+await key('x');
+assert.ok(!(await has('.contact')));
+assert.equal(await ev('location.hash'), '');
+await key('x');
+assert.ok(!(await has('.menu')));
+ok('CONTATO: abre o link, e-mail pergunta escrever/copiar, endereço vai para o link');
 
 await keyDown('ArrowLeft');
 assert.ok(await ev(`document.getElementById('gba').classList.contains('p-dpad')`), 'direcional não afundou');

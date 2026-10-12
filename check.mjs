@@ -151,7 +151,11 @@ moves.forEach((m, i) => {
   both(m.text, w);
 });
 
-contact.forEach((c, i) => url(c.url, `contact[${i}] ${c.label}`));
+contact.forEach((c, i) => {
+  const w = `contact[${i}] ${c.label}`;
+  if (c.url.startsWith('assets/')) assert.ok(existsSync(here(c.url)), `${w}: arquivo não existe (${c.url})`);
+  else url(c.url, w);
+});
 
 const keys = (l) => Object.keys(ui[l]).sort();
 assert.deepEqual(keys('pt'), keys('en'), 'ui: pt e en têm chaves diferentes');
@@ -190,5 +194,9 @@ for (const l of ['pt', 'en']) {
   for (const k of ['slow', 'mid', 'fast', 'on', 'off', 'lang_pt', 'lang_en']) assert.ok(textWidth(u[k], widthsOf) <= 70, `ui.${l}.${k} largo demais (o jogo limpa 70px)`);
   assert.ok(textWidth(`${u.frame_type}10`, widthsOf) <= 70, `ui.${l}.frame_type largo demais`);
 }
+
+const contactLabels = [...contact.map((c) => c.label), ui.pt.menu_sair, ui.en.menu_sair];
+const ct = multiTiles(Math.max(...contactLabels.map((l) => textWidth(l, widthsOf))), contact.length + 1);
+assert.ok(contact.length + 1 <= 8 && 1 + ct.w <= 28, 'CONTATO: itens demais ou largos demais para a janela do jogo');
 
 console.log('check ok');

@@ -5,7 +5,7 @@ import { esc } from '../../logic.js';
 // right after the last letter while more pages follow.
 export function createDialog(root, api) {
   const box = document.createElement('div');
-  box.className = 'msg';
+  box.className = 'msg dialog';
   box.hidden = true;
   const spoken = document.createElement('p');   // screen readers get each page whole, not letter by letter
   spoken.className = 'sr';

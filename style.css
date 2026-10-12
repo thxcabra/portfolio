@@ -76,6 +76,8 @@ body:not(.ready) .gba { opacity: 0; }   /* not visibility: hidden, which would b
 .ui > * { position: absolute; inset: 0; pointer-events: none; }   /* clicks between windows reach .ui = "outside" */
 .ui .win, .ui .help, .ui .msg, .ui > .full { pointer-events: auto; }
 .world.talking .ui, .world.talking .ui * { pointer-events: none; }   /* a message is up: clicks advance it */
+.ui > :not(:last-child) { visibility: hidden; }   /* only the top screen shows, as the game swaps its windows */
+.world.talking .help { visibility: hidden; }        /* a message takes the help bar's place */
 .win { position: absolute; border: 8px solid transparent; border-image: var(--frame) 8 repeat; background: #fff padding-box; }
 .win.std { border-image-source: url(assets/ui/frame-std.png); }
 .txt { position: absolute; }

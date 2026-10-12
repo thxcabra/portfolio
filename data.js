@@ -51,6 +51,7 @@ export const DATA = {
     { name: 'DOCKER', type: 'steel', power: 60, pp: 25, text: { pt: 'Exemplo: o que você faz com essa habilidade.', en: 'Example: what you do with this skill.' } },
   ],
 
+  // Cada contato: { label, url }. url = https://..., mailto:... ou um arquivo em assets/ (ex.: 'assets/curriculo.pdf').
   contact: [
     { label: 'GITHUB', url: 'https://github.com/' },
     { label: 'LINKEDIN', url: 'https://www.linkedin.com/' },
@@ -77,6 +78,8 @@ export const DATA = {
       stairs: ['A sala de minijogos lá em\ncima está em obras!'],
       door: ['Lá fora ainda está em\nconstrução. Volte depois!'],
       soon: ['Essa parte do Centro chega\nem breve!'],
+      contact_ask: ['Por onde você quer falar\ncom o JOÃO?'],
+      copied: ['Endereço copiado!'],
     },
     en: {
       nurse_welcome: [
@@ -96,6 +99,8 @@ export const DATA = {
       stairs: ['The minigames room upstairs\nis under construction!'],
       door: ['The town outside is still\nbeing built. Come back later!'],
       soon: ['This part of the Center is\ncoming soon!'],
+      contact_ask: ['How would you like to\nreach JOÃO?'],
+      copied: ['Address copied!'],
     },
   },
 

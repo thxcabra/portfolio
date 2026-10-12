@@ -81,7 +81,7 @@ carts/center/
 - `trainer.role` (CARGO, pt/en).
 - `projects[].shots`: lista opcional de `{ src, alt }` (imagem ou vídeo, pelo arquivo) em `assets/projects/`; `check.mjs` confere se existem.
 - `moves[].years` substitui `pp`; `power` = proficiência 0–100.
-- `contact[]`: aceita `cv` (caminho do PDF) além dos links.
+- `contact[]`: cada item `{ label, url }`; `url` pode ser `https://`, `mailto:` ou um arquivo em `assets/` (o PDF do currículo).
 - Textos da barra de ajuda, menus e telas em `ui.pt` / `ui.en`; tudo precisa caber nas janelas (o `check.mjs` mede pela tabela de larguras da fonte).
 - Equipe (`party`) e opções no `localStorage`.
 

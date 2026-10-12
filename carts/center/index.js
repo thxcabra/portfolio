@@ -7,10 +7,13 @@ import { createStack, win, text } from './ui.js';
 import { textWidth } from '../../logic.js';
 import { createMenu } from './screens/menu.js';
 import { createOptions } from './screens/options.js';
+import { createContact } from './screens/contact.js';
+import { DATA } from '../../data.js';
 
 const VOICE = { nurse: 'female', gentleman: 'male', boy: 'male', youngster: 'male' };   // by the game's gender table
 const SCREENS = {   // menu id -> () => screen; the ones not built yet say "coming soon"
   opcoes: () => createOptions({ api, setFrame, close: () => stack.pop() }),
+  contato: () => createContact({ api, widths, contact: DATA.contact, say, close: () => stack.pop() }),
 };
 
 let api = null;
