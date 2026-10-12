@@ -6,9 +6,12 @@ import { createTitle } from './title.js';
 import { createStack, win, text } from './ui.js';
 import { textWidth } from '../../logic.js';
 import { createMenu } from './screens/menu.js';
+import { createOptions } from './screens/options.js';
 
 const VOICE = { nurse: 'female', gentleman: 'male', boy: 'male', youngster: 'male' };   // by the game's gender table
-const SCREENS = {};   // menu id -> () => screen; the ones not built yet say "coming soon"
+const SCREENS = {   // menu id -> () => screen; the ones not built yet say "coming soon"
+  opcoes: () => createOptions({ api, setFrame, close: () => stack.pop() }),
+};
 
 let api = null;
 let screen = null;
@@ -22,6 +25,12 @@ let titleScreen = null;
 let mode = 'off';   // off | title | loading | world
 
 const json = async (url) => (await fetch(url)).json();
+
+// The window frame chosen in OPÇÕES (the game's 10 types); the message box keeps its own.
+function setFrame(n) {
+  api.store.set('frame', n);
+  screen.style.setProperty('--frame', `url(assets/ui/frame-${n}.png)`);
+}
 
 function title() {
   mode = 'title';
@@ -131,6 +140,7 @@ export default {
   start(el, a) {
     screen = el;
     api = a;
+    setFrame(api.store.get('frame', 1));
     title();
   },
   stop() {

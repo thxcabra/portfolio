@@ -19,6 +19,19 @@ export function text(str, x, y, cls = '') {
   return p;
 }
 
+// Mouse hover that only counts when the mouse really moved: redrawing a screen under a resting
+// mouse makes the browser report a hover on the new element, which must not steal the cursor.
+let lastXY = '';
+export function onHover(el, fn) {
+  el.addEventListener('pointermove', (e) => {
+    if (e.pointerType !== 'mouse') return;
+    const xy = `${e.clientX},${e.clientY}`;
+    if (xy === lastXY) return;
+    lastXY = xy;
+    fn();
+  });
+}
+
 // A list with FireRed's ▶ cursor (x 0, items at x 8, `pitch` px apart). Keys move it with SE_SELECT;
 // the mouse over an item moves it silently; a tap or click on another item moves it, and A or a
 // click on the pointed item chooses it. Items are buttons and the pointed one has focus, so screen
@@ -37,7 +50,7 @@ export function createList(box, { labels, y = 0, pitch, wrap, start = 0, api, on
     b.className = 'item';
     b.style.top = `${y + pitch * i}px`;
     b.innerHTML = `<span class="line">${esc(label)}</span>`;
-    b.addEventListener('pointerover', (e) => { if (e.pointerType === 'mouse') set(i, false); });
+    onHover(b, () => set(i, false));
     b.addEventListener('click', (e) => {
       if (e.detail === 0) return;   // keyboard activation comes through button() instead
       if (i === cur) choose();

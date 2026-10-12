@@ -186,6 +186,9 @@ for (const l of ['pt', 'en']) {
   }
   const widest = Math.max(...MENU.map((id) => textWidth(u[`menu_${id}`], widthsOf)));
   assert.ok(widest <= 96, `ui.${l}: item do menu START largo demais (${widest}px)`);
+  for (const k of ['opt_text', 'opt_sound', 'opt_frame', 'opt_lang', 'opt_exit']) assert.ok(textWidth(u[k], widthsOf) <= 120, `ui.${l}.${k} largo demais para OPÇÕES`);
+  for (const k of ['slow', 'mid', 'fast', 'on', 'off', 'lang_pt', 'lang_en']) assert.ok(textWidth(u[k], widthsOf) <= 70, `ui.${l}.${k} largo demais (o jogo limpa 70px)`);
+  assert.ok(textWidth(`${u.frame_type}10`, widthsOf) <= 70, `ui.${l}.frame_type largo demais`);
 }
 
 console.log('check ok');

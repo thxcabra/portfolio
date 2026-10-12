@@ -82,6 +82,23 @@ body:not(.ready) .gba { opacity: 0; }   /* not visibility: hidden, which would b
 .item { position: absolute; left: 8px; text-align: left; }
 .item:focus { outline: none; }   /* the ▶ shows where the cursor is */
 .hint { z-index: 1; cursor: pointer; }
+
+/* OPÇÕES (option_menu.c). Dark tones = the game's colors darkened 2/16 per 5-bit channel. */
+.options { background: #000; animation: from-black .3s steps(3); }
+.opt-bar { position: absolute; left: 0; top: 0; width: 240px; height: 16px; background: #007bc5; color: #fff; --sh: #626262; font-family: 'Gen3 Small'; }
+.opt-bar .keys { position: absolute; right: 12px; top: 0; line-height: 14px; white-space: pre; }   /* right edge at x=228 */
+.key { display: inline-block; vertical-align: top; width: 8px; height: 12px; background: url(assets/ui/keys.png); }
+.key.b { background-position: -8px 0; }
+.key.ud { background-position: -16px 0; }
+.key.lr { background-position: -24px 0; }
+.win.opt-list { background-color: #e7e7e7; }
+.opt-sel { position: absolute; left: 0; width: 208px; height: 14px; background: #fff; }
+.opt-row { position: absolute; left: 0; width: 208px; height: 13px; color: #5a5a5a; --sh: #bdbdb5; }
+.opt-row .line { position: absolute; left: 8px; top: 0; }
+.opt-row .val { left: 130px; color: #e7ad6b; --sh: #ce0808; }
+.opt-row.cur { color: #636363; --sh: #d6d6ce; }
+.opt-row.cur .val { color: #ffbd73; --sh: #e60808; }
+.opt-row:focus { outline: none; }
 .help { position: absolute; left: 0; top: 120px; width: 240px; height: 40px; background: url(assets/ui/help.png); color: #fff; --sh: #626262; }
 
 @media (prefers-reduced-motion: reduce) {
