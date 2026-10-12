@@ -50,7 +50,7 @@ O GBA não sabe nada de Pokémon; o cartucho não sabe nada de escala, teclado o
 ## 4. O GBA
 
 - Tela 240×160; corpo 432×202 px de jogo com a silhueta do GBA original (laterais arredondadas, L/R abraçando os cantos de cima), estilizado para a tela ocupar a maior parte. `k` = maior inteiro (em pixels físicos) que cabe na janela: 1920×1080 → 4× (tela 960×640); 1366×768 → 3× (720×480).
-- Corpo em SVG de grade, como o GBA: direcional (esq.) com START/SELECT abaixo dele (rótulo à esquerda do botão), A/B (dir.) com B mais baixo, luz POWER no alto à direita, alto-falante em fendas diagonais embaixo à direita com o botão SOM. Na moldura sob a tela, **"JOÃO CABRAL"** na fonte do jogo. Faixa inferior com os atalhos **PROJETOS · SOBRE · CONTATO** (`Gen3 Small`).
+- Corpo em SVG de grade, como o GBA: direcional (esq.) com START/SELECT abaixo dele (rótulo à esquerda do botão), A/B (dir.) com B mais baixo, luz POWER no alto à direita, alto-falante em fendas diagonais embaixo à direita com o botão SOM. Na moldura sob a tela, **"JOÃO CABRAL"** na fonte do jogo.
 - **Botões:** setas/WASD = direcional · Z/Espaço = A · X/Esc = B · Enter = START · Shift = SELECT · Q/E = L/R; clique/toque nos botões do corpo; botão do corpo afunda quando a tecla é usada.
 - **Fundo da página:** vídeo de gameplay quando houver clipes (como no passe visual); senão o pontilhado escuro.
 - **Celular em pé:** um GBA SP aberto (256×320) — tampa com a tela na largura toda (`k` fracionário em CSS, inteiro em pixels físicos), dobradiça, base com direcional, A/B, SELECT/START e alto-falante com SOM; áreas de toque maiores que o desenho. **Deitado:** o GBA horizontal com o `k` que couber. A troca acontece ao girar, sem recarregar.
@@ -73,6 +73,8 @@ O GBA não sabe nada de Pokémon; o cartucho não sabe nada de escala, teclado o
 **Quadro na parede:** um elemento de parede do próprio tileset do Centro; se a sala não tiver um adequado, usa-se o painel/cartaz de outro tileset interno do FireRed — nunca um desenho novo. Definido na fase 1 ao montar o mapa.
 
 ## 6. Interações e telas
+
+> Substituída por `2026-10-12-telas-e-menu-design.md` (menu START, telas e fases 2–4). Mantida aqui como histórico.
 
 | Onde | Comportamento | Gráficos do jogo |
 |---|---|---|
@@ -100,7 +102,7 @@ O GBA não sabe nada de Pokémon; o cartucho não sabe nada de escala, teclado o
 
 ## 8. Acessibilidade
 
-- Todo conteúdo é alcançável pela barra de atalhos e pelo menu START (botões/links reais, foco visível como ▶).
+- Todo conteúdo é alcançável pelo menu START (botões/links reais, foco visível como ▶).
 - Caixa de diálogo com `aria-live="polite"`; o mapa é decorativo (`aria-hidden`).
 - `prefers-reduced-motion`: abertura e texto instantâneos, sem transições; andar continua.
 - Toque: alvos ≥ 24px nos controles do celular.
