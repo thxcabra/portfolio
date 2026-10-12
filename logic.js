@@ -93,6 +93,13 @@ export function rrectPath(x, y, w, h, ins = [2, 1]) {
   return p + `M${x} ${y + ins.length}h${w}v${h - 2 * ins.length}h${-w}z`;
 }
 
+// Insets for a rounded corner of radius r, in the format rrectPath takes.
+export function corner(r) {
+  const ins = Array.from({ length: Math.max(0, r) }, (_, k) => r - Math.round(Math.sqrt(r * r - (r - k - 0.5) ** 2)));
+  while (ins.at(-1) === 0) ins.pop();
+  return ins;
+}
+
 export const DIRS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
 
 // The 4 tiles from which (x, y) can be reached, and the way to face from each.
@@ -124,9 +131,11 @@ export function pathToAny(walkable, from, goals) {
 }
 
 // A message box page: at most 2 lines, each at most `max` pixels in the game font.
-export function pageFits(page, widths, max = 208) {
+// tail: room needed after the last line (10 for the 'more' arrow when another page follows).
+export function pageFits(page, widths, max = 208, tail = 0) {
   const lines = page.split('\n');
-  return lines.length <= 2 && lines.every((l) => [...l].reduce((w, ch) => w + (widths[ch] ?? 6), 0) <= max);
+  const width = (l) => [...l].reduce((w, ch) => w + (widths[ch] ?? 6), 0);
+  return lines.length <= 2 && lines.every((l, i) => width(l) + (i === lines.length - 1 ? tail : 0) <= max);
 }
 
 export const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);

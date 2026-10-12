@@ -7,7 +7,8 @@ def read(path):
     """Returns (width, height, pixels, palette).
 
     pixels[y][x] is a palette index for indexed images and an (r, g, b, a)
-    tuple for truecolor ones; palette is None for truecolor images."""
+    tuple for truecolor ones; palette is None for truecolor images.
+    Grayscale images give gray levels as ints (palette None)."""
     data = open(path, 'rb').read()
     if data[:8] != b'\x89PNG\r\n\x1a\n':
         raise ValueError(f'not a PNG: {path}')
@@ -51,10 +52,10 @@ def read(path):
         prev = line
     pixels = []
     for line in rows:
-        if ctype == 3 and depth < 8:
+        if ctype in (0, 3) and depth < 8:
             per, mask = 8 // depth, (1 << depth) - 1
             pixels.append([(line[x // per] >> (8 - depth * (x % per + 1))) & mask for x in range(w)])
-        elif ctype == 3:
+        elif ctype in (0, 3) and depth == 8:
             pixels.append(list(line[:w]))
         elif ctype == 6 and depth == 8:
             pixels.append([tuple(line[x * 4:x * 4 + 4]) for x in range(w)])

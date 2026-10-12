@@ -49,11 +49,12 @@ O GBA não sabe nada de Pokémon; o cartucho não sabe nada de escala, teclado o
 
 ## 4. O GBA
 
-- Tela 240×160 com borda estreita; corpo ~352×208 px de jogo (estilizado para a tela ocupar a maior parte). `k` = maior inteiro (em pixels físicos) que cabe na janela: 1920×1080 → 4× (tela 960×640); 1366×768 → 3× (720×480).
-- Corpo em SVG de grade: direcional (esq.), A/B (dir.), L/R (topo), START/SELECT (baixo), luz de ligado, grade do alto-falante. Na moldura sob a tela, **"JOÃO CABRAL"** na fonte do jogo. Faixa inferior com os atalhos **PROJETOS · SOBRE · CONTATO** (`Gen3 Small`).
+- Tela 240×160; corpo 432×202 px de jogo com a silhueta do GBA original (laterais arredondadas, L/R abraçando os cantos de cima), estilizado para a tela ocupar a maior parte. `k` = maior inteiro (em pixels físicos) que cabe na janela: 1920×1080 → 4× (tela 960×640); 1366×768 → 3× (720×480).
+- Corpo em SVG de grade, como o GBA: direcional (esq.) com START/SELECT abaixo dele (rótulo à esquerda do botão), A/B (dir.) com B mais baixo, luz POWER no alto à direita, alto-falante em fendas diagonais embaixo à direita com o botão SOM. Na moldura sob a tela, **"JOÃO CABRAL"** na fonte do jogo. Faixa inferior com os atalhos **PROJETOS · SOBRE · CONTATO** (`Gen3 Small`).
 - **Botões:** setas/WASD = direcional · Z/Espaço = A · X/Esc = B · Enter = START · Shift = SELECT · Q/E = L/R; clique/toque nos botões do corpo; botão do corpo afunda quando a tecla é usada.
 - **Fundo da página:** vídeo de gameplay quando houver clipes (como no passe visual); senão o pontilhado escuro.
-- **Celular em pé:** layout de Game Boy vertical — tela em cima na largura toda (`k` fracionário em CSS, inteiro em pixels físicos), controles grandes embaixo (direcional, A/B, START/SELECT, atalhos). **Deitado:** GBA horizontal com o `k` que couber.
+- **Celular em pé:** um GBA SP aberto (256×320) — tampa com a tela na largura toda (`k` fracionário em CSS, inteiro em pixels físicos), dobradiça, base com direcional, A/B, SELECT/START e alto-falante com SOM; áreas de toque maiores que o desenho. **Deitado:** o GBA horizontal com o `k` que couber. A troca acontece ao girar, sem recarregar.
+- **Dentro da tela, fiel ao FireRed:** tela de título montada das camadas originais (`title_screen.c`: chamas com o mesmo gerador e semente, brilho no logo a cada 574 quadros, PRESS START piscando 60/30); caixa de mensagem com a moldura `menu_message` (240×48 em y=112), texto em (16,121), 15 px por linha, cores #626262/#D5D5CD e a seta vermelha logo após a última letra. Conferido pixel a pixel contra uma referência desenhada pelas regras do jogo.
 
 ## 5. O mundo (Centro Pokémon 1º andar)
 

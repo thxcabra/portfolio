@@ -2,11 +2,10 @@
 // mouse, touch), the sound switch and the page background. Games are cartridges: they get the
 // screen and the buttons and know nothing about scaling or input devices.
 import { DATA } from './data.js';
-import { fitScale, coverScale, pickNext, discPath, rrectPath } from './logic.js';
+import { fitScale, coverScale, pickNext, discPath, rrectPath, corner } from './logic.js';
 import { setEnabled, sfx, cry } from './sound.js';
 import cart from './carts/center/index.js';
 
-const W = 400, H = 196;
 const SPEEDS = { slow: 30, mid: 60, fast: 120 };   // characters per second
 const KEYS = {
   ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right',
@@ -34,35 +33,76 @@ const api = {
   cps: () => SPEEDS[store.get('textSpeed', 'fast')] ?? SPEEDS.fast,
 };
 
-// ---------- body: SVG on the game-pixel grid, geometric, no logos ----------
-const INK = '#1c1638', BODY = '#4b3f8f', HI = '#6a5cb5', LO = '#31285f', KEY = '#2a2a32', KEY_INK = '#101014';
+// ---------- body: two shells on the game-pixel grid, geometric, no logos ----------
+// Landscape: the original GBA. Portrait (phones): an opened GBA SP, screen on top, buttons below.
+const INK = '#221c4f', BODY = '#5a52b4', HI = '#7c75d4', LO = '#463e9c', PALE = '#c9c5e6';
+const KEY = '#d4d1ea', KEY_LO = '#a5a0cb', KEY_INK = '#2a2552', BEZEL = '#2a2a33', BEZEL_INK = '#141418';
 const path = (d, fill, cls = '') => `<path d="${d}" fill="${fill}"${cls && ` class="${cls}"`}/>`;
-const box = (x, y, w, h, fill, ink, ins = [2, 1]) => path(rrectPath(x, y, w, h, ins), ink) + path(rrectPath(x + 2, y + 2, w - 4, h - 4, ins.slice(1)), fill);
+const box = (x, y, w, h, fill, ink, r) => path(rrectPath(x, y, w, h, corner(r)), ink) + path(rrectPath(x + 2, y + 2, w - 4, h - 4, corner(r - 2)), fill);
 const disc = (x, y, d, fill, ink) => path(discPath(x, y, d), ink) + path(discPath(x + 2, y + 2, d - 4), fill);
-// Layout (game px): 68px side columns. Left: d-pad, then START and SELECT below it, as on the real GBA.
-// Right: A/B, then the speaker with the sound switch. Every control keeps >= 10px from the screen bezel.
-const GRILL = Array.from({ length: 16 }, (_, i) => `M${356 + (i % 4) * 8} ${108 + Math.floor(i / 4) * 8}h4v4h-4z`).join('');
-const BODY_SVG = `<svg class="body" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true">
-  ${box(0, 0, W, H, BODY, INK, [6, 3, 2, 1, 1])}
-  ${path('M8 4h384v2h-384z', HI)}${path('M8 188h384v2h-384z', LO)}
-  ${box(68, 6, 264, 182, '#2c2c34', KEY_INK, [3, 1, 1])}
-  ${path('M78 10h244v164h-244z', KEY_INK)}
-  ${path(discPath(14, 12, 6), '#78f878')}
-  <g class="g-dpad">${path(rrectPath(27, 56, 14, 36, [1]) + rrectPath(16, 67, 36, 14, [1]), KEY_INK)}${path(rrectPath(29, 58, 10, 32, []) + rrectPath(18, 69, 32, 10, []), KEY)}</g>
-  <g class="g-start">${box(20, 116, 28, 8, KEY, KEY_INK, [1])}</g><g class="g-select">${box(20, 146, 28, 8, KEY, KEY_INK, [1])}</g>
-  <g class="g-a">${disc(366, 46, 22, '#c8c8d0', KEY_INK)}</g><g class="g-b">${disc(342, 64, 22, '#c8c8d0', KEY_INK)}</g>
-  ${path(discPath(344, 112, 6), '#2a3a2a', 'led-sound')}
-  ${path(GRILL, LO)}
-</svg>`;
+const round = (x, y, d) => path(discPath(x, y, d), KEY_INK) + path(discPath(x + 2, y + 2, d - 4), KEY_LO) + path(discPath(x + 3, y + 2, d - 6), KEY);
+function dpad(x, y, size, arm) {
+  const o = (size - arm) / 2;
+  const cross = (i) => rrectPath(x + o + i, y + i, arm - 2 * i, size - 2 * i, []) + rrectPath(x + i, y + o + i, size - 2 * i, arm - 2 * i, []);
+  return path(cross(0), KEY_INK) + path(cross(2), KEY) + path(discPath(x + size / 2 - 3, y + size / 2 - 3, 6), KEY_LO);
+}
+const led = (x, y, cls = '') => path(discPath(x, y, 4), cls ? '#2a3a2a' : '#78f878', cls);
 const btn = (name, x, y, w, h, text = '', cls = 'hw') =>
   `<button type="button" class="${cls}" data-btn="${name}" tabindex="-1" aria-label="${name}" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px">${text}</button>`;
-const CONTROLS = [
-  btn('up', 27, 56, 14, 12), btn('down', 27, 80, 14, 12), btn('left', 16, 67, 12, 14), btn('right', 40, 67, 12, 14),
-  btn('start', 14, 112, 40, 28), btn('select', 14, 142, 40, 28),
-  btn('a', 366, 46, 22, 22, 'A', 'hw round'), btn('b', 342, 64, 22, 22, 'B', 'hw round'),
-  btn('sound', 338, 104, 54, 52),
-].join('');
-const LABELS = `<p class="label name">${DATA.trainer.name}</p><p class="label sel">SELECT</p><p class="label sta">START</p><p class="label snd">${t('opt_sound')}</p>`;
+// Labels use a 14px line box: the small font's capitals then sit on rows top+4..top+10.
+const label = (text, x, y, w, align = 'center') => `<p class="label" style="left:${x}px;top:${y}px;width:${w}px;text-align:${align}">${text}</p>`;
+
+const SHELLS = {
+  gba: {
+    W: 432, H: 202, screen: [96, 18],
+    svg: [
+      // L/R: a slightly bigger corner behind the body's, so they wrap the top corners
+      `<g class="g-l">${box(0, 0, 112, 120, PALE, INK, 48)}</g><g class="g-r">${box(320, 0, 112, 120, PALE, INK, 48)}</g>`,
+      box(0, 6, 432, 196, BODY, INK, 44),
+      path('M44 9h344v1h-344z', HI), path('M44 198h344v1h-344z', LO),
+      box(84, 10, 264, 186, BEZEL, BEZEL_INK, 8),
+      path('M94 16h244v164h-244z', '#101014'),
+      `<g class="g-dpad">${dpad(22, 54, 40, 14)}</g>`,
+      `<g class="g-start">${disc(58, 122, 8, KEY, KEY_INK)}</g><g class="g-select">${disc(58, 140, 8, KEY, KEY_INK)}</g>`,
+      `<g class="g-a">${round(393, 59, 22)}</g><g class="g-b">${round(367, 73, 22)}</g>`,
+      led(360, 26),
+      path(Array.from({ length: 6 }, (_, i) => Array.from({ length: 14 }, (_, t) => `M${366 + 7 * i + t} ${156 - t}h2v1h-2z`).join('')).join(''), LO),
+      led(362, 168, 'led-sound'),
+    ].join(''),
+    labels: label(DATA.trainer.name, 96, 179, 240) + label('START', 14, 119, 40, 'right') + label('SELECT', 14, 137, 40, 'right') +
+      label('POWER', 368, 21, 40, 'left') + label(t('opt_sound'), 370, 163, 40, 'left'),
+    controls: [
+      btn('up', 32, 50, 20, 18), btn('down', 32, 80, 20, 18), btn('left', 18, 64, 18, 20), btn('right', 48, 64, 18, 20),
+      btn('start', 12, 118, 58, 18), btn('select', 12, 136, 58, 18),
+      btn('a', 391, 57, 26, 26, 'A', 'hw round'), btn('b', 365, 71, 26, 26, 'B', 'hw round'),
+      btn('l', 0, 0, 88, 16), btn('r', 344, 0, 88, 16),
+      btn('sound', 356, 110, 66, 72),
+    ],
+  },
+  sp: {
+    W: 256, H: 320, screen: [8, 12],
+    svg: [
+      box(0, 0, 256, 198, BODY, INK, 10),
+      path('M12 3h232v1h-232z', HI),
+      box(4, 4, 248, 188, BEZEL, BEZEL_INK, 6),
+      box(0, 202, 256, 118, BODY, INK, 12),
+      box(14, 192, 228, 14, LO, INK, 4),   // hinge
+      `<g class="g-dpad">${dpad(32, 230, 44, 16)}</g>`,
+      `<g class="g-a">${round(204, 226, 28)}</g><g class="g-b">${round(170, 244, 28)}</g>`,
+      `<g class="g-select">${disc(105, 285, 10, KEY, KEY_INK)}</g><g class="g-start">${disc(141, 285, 10, KEY, KEY_INK)}</g>`,
+      path(Array.from({ length: 12 }, (_, i) => `M${22 + (i % 4) * 7} ${280 + Math.floor(i / 4) * 6}h3v3h-3z`).join(''), LO),
+      led(234, 212),
+      led(16, 307, 'led-sound'),
+    ].join(''),
+    labels: label(DATA.trainer.name, 8, 174, 240) + label('SELECT', 90, 297, 40) + label('START', 126, 297, 40) + label(t('opt_sound'), 22, 302, 30, 'left'),
+    controls: [
+      btn('up', 40, 220, 28, 26), btn('down', 40, 258, 28, 26), btn('left', 20, 240, 26, 28), btn('right', 62, 240, 26, 28),
+      btn('a', 200, 222, 36, 36, 'A', 'hw round'), btn('b', 166, 240, 36, 36, 'B', 'hw round'),
+      btn('select', 92, 280, 36, 34), btn('start', 128, 280, 36, 34),
+      btn('sound', 10, 274, 54, 44),
+    ],
+  },
+};
 
 // ---------- buttons ----------
 const held = new Set();
@@ -131,8 +171,21 @@ function fitBg() {
   const w = w0 * kb, h = h0 * kb;
   Object.assign(bg.style, { width: `${w}px`, height: `${h}px`, left: `${Math.floor((innerWidth - w) / 2)}px`, top: `${Math.floor((innerHeight - h) / 2)}px` });
 }
+let shell = null;
+function mount() {
+  const next = SHELLS[innerHeight > innerWidth ? 'sp' : 'gba'];
+  if (next === shell) return;
+  [...held].forEach((n) => press(n, false));
+  shell = next;
+  $gba.querySelectorAll('.body, .label, .hw').forEach((el) => el.remove());
+  Object.assign($gba.style, { width: `${shell.W}px`, height: `${shell.H}px` });
+  Object.assign($screen.style, { left: `${shell.screen[0]}px`, top: `${shell.screen[1]}px` });
+  $gba.insertAdjacentHTML('afterbegin', `<svg class="body" viewBox="0 0 ${shell.W} ${shell.H}" width="${shell.W}" height="${shell.H}" aria-hidden="true">${shell.svg}</svg>`);
+  $gba.insertAdjacentHTML('beforeend', shell.labels + shell.controls.join(''));
+}
 function fit() {
-  document.documentElement.style.setProperty('--k', fitScale(W, H, innerWidth - 16, innerHeight - 16, devicePixelRatio || 1));
+  mount();
+  document.documentElement.style.setProperty('--k', fitScale(shell.W, shell.H, innerWidth - 16, innerHeight - 16, devicePixelRatio || 1));
   fitBg();
 }
 async function startVideo() {
@@ -161,8 +214,6 @@ async function startVideo() {
 }
 
 // ---------- power on ----------
-$gba.insertAdjacentHTML('afterbegin', BODY_SVG);
-$gba.insertAdjacentHTML('beforeend', LABELS + CONTROLS);
 document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
 document.body.classList.toggle('sound-on', soundOn);
 addEventListener('resize', fit);

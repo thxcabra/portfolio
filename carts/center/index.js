@@ -1,21 +1,19 @@
 // Cartridge 1: the Pokémon Center. Title screen first, then the room you walk around in.
 import { createWorld, BEHAVIOR } from './world.js';
 import { createDialog } from './dialog.js';
+import { createTitle } from './title.js';
 
 let api = null;
 let screen = null;
 let map = null;
 let world = null;
 let dialog = null;
+let titleScreen = null;
 let mode = 'off';   // off | title | loading | world
 
 function title() {
   mode = 'title';
-  screen.innerHTML = `<div class="title">
-    <img class="logo" src="assets/ui/logo.png" alt="Pokémon FireRed">
-    <p class="flames">${'<i></i>'.repeat(5)}</p>
-    <p class="blink">${api.t('press_start')}</p>
-  </div>`;
+  titleScreen = createTitle(screen, { reduced: api.reduced() });
 }
 
 function say(pages, done) {
@@ -53,6 +51,7 @@ async function enter() {
   if (mode !== 'title') return;
   mode = 'loading';
   api.sfx('select');
+  titleScreen.stop();
   map ??= await (await fetch('assets/world/center.json')).json();
   screen.innerHTML = '<div class="world"></div>';
   const root = screen.firstElementChild;
@@ -73,6 +72,7 @@ export default {
     title();
   },
   stop() {
+    titleScreen?.stop();
     world?.stop();
     world = null;
     dialog = null;

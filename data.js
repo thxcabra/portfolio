@@ -97,7 +97,6 @@ export const DATA = {
 
   ui: {
     pt: {
-      press_start: 'APERTE START',
       menu_dex: 'POKéDEX', menu_badges: 'INSÍGNIAS', menu_moves: 'GOLPES', menu_contact: 'POKéNAV', menu_options: 'OPÇÕES',
       help_dex: 'Meus projetos. Cada um é um Pokémon.',
       help_card: 'Quem é o treinador.',
@@ -117,7 +116,6 @@ export const DATA = {
       back: 'Voltar', prev: '< ANT', next: 'PRÓX >',
     },
     en: {
-      press_start: 'PRESS START',
       menu_dex: 'POKéDEX', menu_badges: 'BADGES', menu_moves: 'MOVES', menu_contact: 'POKéNAV', menu_options: 'OPTION',
       help_dex: 'My projects. Each one is a Pokémon.',
       help_card: 'Who the trainer is.',

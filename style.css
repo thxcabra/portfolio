@@ -28,26 +28,23 @@ noscript { color: #f8f8f8; }
 .bg-dim { position: fixed; inset: 0; z-index: -1; background: rgb(0 0 0 / .5); }
 
 /* ---------- the GBA (game pixels, scaled by --k) ---------- */
-.gba { position: relative; width: 400px; height: 196px; zoom: var(--k); }
+.gba { position: relative; zoom: var(--k); }   /* size comes from the shell (gba.js) */
 body:not(.ready) .gba { opacity: 0; }   /* not visibility: hidden, which would block focus */
 .gba .body { position: absolute; inset: 0; shape-rendering: crispEdges; }
-.p-dpad .g-dpad, .p-a .g-a, .p-b .g-b, .p-start .g-start, .p-select .g-select { transform: translateY(1px); }
+.p-dpad .g-dpad, .p-a .g-a, .p-b .g-b, .p-start .g-start, .p-select .g-select, .p-l .g-l, .p-r .g-r { transform: translateY(1px); }
 .gba:has([data-btn="a"]:hover) .g-a, .gba:has([data-btn="b"]:hover) .g-b,
-.gba:has([data-btn="start"]:hover) .g-start, .gba:has([data-btn="select"]:hover) .g-select { filter: brightness(1.2); }
+.gba:has([data-btn="start"]:hover) .g-start, .gba:has([data-btn="select"]:hover) .g-select,
+.gba:has([data-btn="l"]:hover) .g-l, .gba:has([data-btn="r"]:hover) .g-r { filter: brightness(1.1); }
 .led-sound { fill: #2a3a2a; }
 .sound-on .led-sound { fill: #78f878; }
 .hw { position: absolute; }
-.round { display: grid; place-items: center; color: #2c2c34; font-family: 'Gen3 Small'; }
-.label { position: absolute; font-family: 'Gen3 Small'; color: #a69ed8; text-align: center; white-space: nowrap; pointer-events: none; }
-.label.name { left: 80px; top: 172px; width: 240px; }
-.label.sel { left: 14px; top: 152px; width: 40px; }
-.label.sta { left: 14px; top: 122px; width: 40px; }
-.label.snd { left: 338px; top: 142px; width: 54px; }
+.round { display: grid; place-items: center; line-height: 14px; color: #8f8ab8; font-family: 'Gen3 Small'; }
+.label { position: absolute; height: 14px; font-family: 'Gen3 Small'; line-height: 14px; color: #a7a1e6; white-space: nowrap; pointer-events: none; }
 
 /* ---------- the screen (240x160, Gen 3 UI) ---------- */
 .screen {
-  position: absolute; left: 80px; top: 12px; width: 240px; height: 160px; overflow: hidden;
-  background: #000; color: #383838; --sh: #d8d8d8;
+  position: absolute; width: 240px; height: 160px; overflow: hidden;
+  background: #000; color: #626262; --sh: #d5d5cd;   /* FireRed text: dark gray, light gray shadow */
   touch-action: none; user-select: none; cursor: pointer;
 }
 .screen, .screen * { text-shadow: 1px 0 0 var(--sh), 0 1px 0 var(--sh), 1px 1px 0 var(--sh); }
@@ -56,11 +53,8 @@ body:not(.ready) .gba { opacity: 0; }   /* not visibility: hidden, which would b
 @keyframes blink { 50% { opacity: 0; } }
 .tw-rest { color: transparent; --sh: transparent; }
 
-.title { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 4px; background: #000; color: #f8f8f8; --sh: #484848; }
-.flames { display: flex; }
-.flames i { width: 16px; height: 16px; background: url(assets/ui/flames.png) 0 0; animation: flame .5s steps(10) infinite; }
-.flames i:nth-child(2n) { animation-delay: -.25s; }
-@keyframes flame { to { background-position: 0 -160px; } }
+.title { position: absolute; inset: 0; background: #000; }
+.title .layer { position: absolute; left: 0; top: 0; width: 240px; height: 160px; }
 
 .world { position: absolute; inset: 0; animation: from-black .3s steps(3); }
 @keyframes from-black { from { filter: brightness(0); } }
@@ -68,11 +62,15 @@ body:not(.ready) .gba { opacity: 0; }   /* not visibility: hidden, which would b
 .people { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
 .person { position: absolute; width: 16px; height: 32px; background-repeat: no-repeat; }
 .person.flip { transform: scaleX(-1); }
-.msg { position: absolute; left: 4px; right: 4px; bottom: 4px; height: 48px; z-index: 1; white-space: pre-line; }
+/* Message box as FireRed draws it: 240x48 frame at y=112, text window at (16,120), first line at y=1,
+   lines 15px apart (14px font + 1px spacing). A 14px line box puts the glyph cell top on the line top. */
+.msg { position: absolute; left: 0; top: 112px; width: 240px; height: 48px; z-index: 1; background: url(assets/ui/dialog.png); color: #626262; --sh: #d5d5cd; }
 .msg[hidden] { display: none; }
-.msg .next { position: absolute; right: 0; bottom: 0; visibility: hidden; font-style: normal; }
-.msg .next::before { content: '▼'; }
-.msg.more .next { visibility: visible; animation: blink .6s steps(1) infinite; }
+.msg p { position: absolute; left: 16px; top: 9px; }
+.msg .line { display: block; height: 15px; line-height: 14px; white-space: pre; }
+.msg .next { display: inline-block; vertical-align: top; width: 10px; height: 12px; background: url(assets/ui/arrow.png); visibility: hidden; }
+.msg.more .next { visibility: visible; animation: arrow .536s steps(1) infinite; }   /* 4 steps of 8 frames */
+@keyframes arrow { 25%, 75% { background-position: -10px 0; } 50% { background-position: -20px 0; } }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }

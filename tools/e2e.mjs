@@ -92,8 +92,10 @@ await send('Page.reload');
 await sleep(1500);
 
 assert.ok(await ev(`document.fonts.check('16px Gen3')`), 'fonte do jogo não carregou');
-assert.ok(await ev(`!!document.querySelector('.title .logo')`), 'tela de título não apareceu');
-ok('tela de título do FireRed');
+assert.ok(await ev(`!!document.querySelector('.title .flames')`), 'tela de título não apareceu');
+await sleep(1200);
+assert.ok(await ev(`(() => { const c = document.querySelector('.title .flames'); return c.getContext('2d').getImageData(0, 60, 240, 52).data.some((v, i) => i % 4 === 3 && v); })()`), 'as chamas não sobem');
+ok('tela de título do FireRed, com as chamas');
 
 await key('Enter', 900);
 assert.deepEqual(await me(), [7, 8, 'up']);
@@ -141,6 +143,16 @@ await sleep(200);
 assert.ok(await ev(`document.body.classList.contains('sound-on')`));
 assert.equal(await ev(`localStorage.getItem('sound')`), 'true');
 ok('direcional afunda com o teclado; botão de som liga');
+
+await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 750, deviceScaleFactor: 3, mobile: true });
+await sleep(400);
+assert.equal(await ev(`document.getElementById('gba').style.width`), '256px', 'celular em pé não virou GBA SP');
+await click('[data-btn="a"]');
+assert.equal(await ev(`document.querySelectorAll('[data-btn]').length`), 9);
+await send('Emulation.clearDeviceMetricsOverride');
+await sleep(400);
+assert.equal(await ev(`document.getElementById('gba').style.width`), '432px', 'deitado não voltou ao GBA');
+ok('celular em pé vira GBA SP e volta');
 
 assert.deepEqual(errors, [], 'erros no console: ' + errors.join('\n'));
 ok('nenhum erro no console');

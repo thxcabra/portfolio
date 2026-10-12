@@ -28,50 +28,129 @@ def rgba_png(src, out, palette_file=None):
     pngio.write(out, pngio.to_rgba(px, pal))
 
 
-def build_logo(out):
-    """The title logo is 8x8 tiles placed by a 32-column tilemap (u16: tile, hflip, vflip)."""
-    w, _, tiles, _ = pngio.read(GFX / 'title_screen/firered/game_title_logo.png')
-    pal = pngio.read_jasc(GFX / 'title_screen/firered/game_title_logo.pal')
-    data = (GFX / 'title_screen/firered/game_title_logo.bin').read_bytes()
-    cols, rows, per_row = 32, len(data) // 64, w // 8
-    img = [[0] * (cols * 8) for _ in range(rows * 8)]
-    for i in range(cols * rows):
+def draw_bg(img, tiles, per_row, tilemap, pal):
+    """Draws the visible 30x20 part of a 32-column BG tilemap (u16: tile, hflip, vflip, palette)
+    into img. pal(entry) gives the colors for a tile's pixels; pixel index 0 is transparent."""
+    data = tilemap.read_bytes()
+    for i in range(min(len(data) // 2, 32 * 20)):
+        col, row = i % 32, i // 32
+        if col >= 30:
+            continue
         e = data[i * 2] | data[i * 2 + 1] << 8
         t, hflip, vflip = e & 0x3FF, e >> 10 & 1, e >> 11 & 1
-        tx, ty = (t % per_row) * 8, (t // per_row) * 8
+        tx, ty, colors = (t % per_row) * 8, (t // per_row) * 8, pal(e)
         for y in range(8):
             for x in range(8):
-                sx, sy = 7 - x if hflip else x, 7 - y if vflip else y
-                img[(i // cols) * 8 + y][(i % cols) * 8 + x] = tiles[ty + sy][tx + sx]
-    xs = [x for row in img for x, v in enumerate(row) if v]
-    ys = [y for y, row in enumerate(img) if any(row)]
-    crop = [row[min(xs):max(xs) + 1] for row in img[min(ys):max(ys) + 1]]
-    pngio.write(out, pngio.to_rgba(crop, pal))
+                v = tiles[ty + (7 - y if vflip else y)][tx + (7 - x if hflip else x)]
+                if v:
+                    img[row * 8 + y][col * 8 + x] = (v, colors)
+
+
+def build_title(out):
+    """FireRed's title screen as title_screen.c sets it up, one PNG per part that moves on its own:
+    back (BG3), front (BG2 + Charizard on BG1 + logo on BG0), press (the PRESS START pixels, which
+    blink), lit (the logo brightened by the shine, BLDY 13) and slash (the shine's window shape)."""
+    out.mkdir(parents=True, exist_ok=True)
+    T = GFX / 'title_screen'
+    blank = lambda: [[None] * 240 for _ in range(160)]
+    rgba = lambda img, keep=lambda v: True: [[tuple(c[v]) + (255,) if (v, c) != (None, None) and keep(v) else (0, 0, 0, 0)
+                                              for v, c in ((p if p else (None, None)) for p in row)] for row in img]
+    bg = pngio.read_jasc(T / 'firered/background.pal')
+    _, _, gray, _ = pngio.read(T / 'border_bg.png')
+    back = blank()
+    draw_bg(back, [[15 - g for g in row] for row in gray], 1, T / 'firered/border_bg.bin', lambda e: bg)   # gbagfx inverts gray
+    pngio.write(out / 'back.png', rgba(back))
+
+    bg2 = blank()
+    _, _, tiles, _ = pngio.read(T / 'copyright_press_start.png')
+    draw_bg(bg2, tiles, 16, T / 'copyright_press_start.bin', lambda e: bg)
+    press = lambda v: 1 <= v <= 5   # the colors the blink turns black
+    pngio.write(out / 'press.png', rgba(bg2, press))
+    front = [[(6, bg) if p and press(p[0]) else p for p in row] for row in bg2]
+    _, _, tiles, _ = pngio.read(T / 'firered/box_art_mon.png')
+    draw_bg(front, tiles, 12, T / 'firered/box_art_mon.bin', lambda e: pngio.read_jasc(T / 'firered/box_art_mon.pal'))
+    logo = blank()
+    _, _, tiles, _ = pngio.read(T / 'firered/game_title_logo.png')
+    logo_pal = pngio.read_jasc(T / 'firered/game_title_logo.pal')
+    draw_bg(logo, tiles, 32, T / 'firered/game_title_logo.bin', lambda e: logo_pal)   # 8bpp: index into all 208 colors
+    front = [[l or f for f, l in zip(fr, lr)] for fr, lr in zip(front, logo)]
+    pngio.write(out / 'front.png', rgba(front))
+
+    def lighten(c):   # per 5-bit channel: I + (31 - I) * 13 / 16
+        i = c >> 3
+        i += (31 - i) * 13 >> 4
+        return i << 3 | i >> 2
+    pngio.write(out / 'lit.png', [[tuple(lighten(ch) for ch in px[:3]) + (255,) if px[3] else px for px in row] for row in rgba(logo)])
+    _, _, mask, _ = pngio.read(T / 'slash.png')
+    pngio.write(out / 'slash.png', [[(255, 255, 255, 255) if v else (0, 0, 0, 0) for v in row] for row in mask])
+    rgba_png(T / 'firered/flames.png', out / 'flames.png')
+
+
+def check_title():
+    for name, size in (('back', (240, 160)), ('front', (240, 160)), ('press', (240, 160)), ('lit', (240, 160)),
+                       ('slash', (64, 64)), ('flames', (16, 160))):
+        w, h, px, _ = pngio.read(OUT / f'title/{name}.png')
+        assert (w, h) == size, f'title/{name}.png is {w}x{h}'
+    _, _, back, _ = pngio.read(OUT / 'title/back.png')
+    assert all(p[3] == 255 for row in back for p in row), 'BG3 must cover the whole screen'
+    _, _, press, _ = pngio.read(OUT / 'title/press.png')
+    ys = [y for y, row in enumerate(press) if any(p[3] for p in row)]
+    assert ys and min(ys) >= 128 and max(ys) < 136, f'PRESS START should be on tile row 16, got rows {ys[:1]}..{ys[-1:]}'
+    print('title ok')
+
+
+def build_dialog(out_box, out_arrow):
+    """The field message box exactly as WindowFunc_DrawDialogueFrame lays it out: a 26x4-tile text
+    window at tile (2, 15) inside a frame 2 tiles wide at the sides and 1 tile at top and bottom,
+    so the whole box is 240x48 at y=112. Plus the 3 frames of the 'more text' arrow (10x12 each)."""
+    _, _, tiles, _ = pngio.read(GFX / 'text_window/menu_message.png')
+    pal = pngio.read_jasc(GFX / 'text_window/stdpal_0.pal')
+    win_w = 26
+    layout = [[0, 1] + [2] * win_w + [3, 4],
+              [5, 6] + [None] * win_w + [8, 9],
+              [10, 11] + [None] * win_w + [12, 13]]
+    layout += [[(t, 'v') if t is not None else None for t in row] for row in reversed(layout)]
+    img = [[(0, 0, 0, 0)] * (len(layout[0]) * 8) for _ in range(len(layout) * 8)]
+    for ty, row in enumerate(layout):
+        for tx, cell in enumerate(row):
+            t, vflip = (cell if isinstance(cell, tuple) else (cell, ''))
+            for y in range(8):
+                for x in range(8):
+                    if t is None:
+                        img[ty * 8 + y][tx * 8 + x] = tuple(pal[1]) + (255,)   # window filled with color 1 (white)
+                        continue
+                    v = tiles[(t // 6) * 8 + (7 - y if vflip else y)][(t % 6) * 8 + x]
+                    if v:
+                        img[ty * 8 + y][tx * 8 + x] = tuple(pal[v]) + (255,)
+    pngio.write(out_box, img)
+    _, _, arrows, _ = pngio.read(GFX / 'fonts/down_arrows.png')   # drawn with the window's palette
+    strip = [[tuple(pal[arrows[y][sx + x]]) + (255,) if arrows[y][sx + x] > 1 else (0, 0, 0, 0)
+              for sx in (0, 16, 32) for x in range(10)] for y in range(12)]
+    pngio.write(out_arrow, strip)
 
 
 def build_ui():
     ui = OUT / 'ui'
     ui.mkdir(parents=True, exist_ok=True)
+    build_dialog(ui / 'dialog.png', ui / 'arrow.png')
     for n in range(1, 11):
         rgba_png(GFX / f'text_window/type{n}.png', ui / f'frame-{n}.png')
     rgba_png(GFX / 'trainer_card/badges.png', ui / 'badges.png')
     rgba_png(GFX / 'interface/menu_info.png', ui / 'menu_info.png')
     rgba_png(GFX / 'items/icons/poke_ball.png', ui / 'ball.png', GFX / 'items/icon_palettes/poke_ball.pal')
     rgba_png(GFX / 'battle_anims/sprites/gold_stars.png', ui / 'sparkle.png')
-    rgba_png(GFX / 'title_screen/firered/flames.png', ui / 'flames.png')
-    build_logo(ui / 'logo.png')
 
 
 def check_ui():
-    names = [f'frame-{n}.png' for n in range(1, 11)] + ['badges.png', 'menu_info.png', 'ball.png', 'sparkle.png', 'flames.png', 'logo.png']
+    names = [f'frame-{n}.png' for n in range(1, 11)] + ['badges.png', 'menu_info.png', 'ball.png', 'sparkle.png', 'dialog.png', 'arrow.png']
     for name in names:
         assert (OUT / 'ui' / name).exists(), f'missing assets/ui/{name}'
     w, h, px, _ = pngio.read(OUT / 'ui/badges.png')
     assert (w, h) == (128, 16), (w, h)
     assert px[0][0][3] == 0, 'badge background must be transparent'
-    w, h, _, _ = pngio.read(OUT / 'ui/logo.png')
-    assert w <= 240 and h <= 160, f'logo {w}x{h} does not fit the 240x160 screen'
-    print(f'ui ok (logo {w}x{h})')
+    w, h, _, _ = pngio.read(OUT / 'ui/dialog.png')
+    assert (w, h) == (240, 48), f'dialog box {w}x{h}'
+    print('ui ok')
 
 
 UPM, PX, BASE = 1024, 64, 11          # 1 pixel = 64 units; baseline under cell row 10
@@ -377,6 +456,8 @@ def check_world(walls, behavior, people):
 def main():
     build_ui()
     check_ui()
+    build_title(OUT / 'title')
+    check_title()
     check_fonts(*build_fonts())
     check_audio(build_audio(), build_video())
     check_world(*build_world())

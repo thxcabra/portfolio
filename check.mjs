@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { DATA } from './data.js';
 import {
   parseRoute, parent, spritePath, nextIndex, fitScale, coverScale, cycle, splitShown, pickNext,
-  discPath, rrectPath, TYPES, SHAPES, DIRS, around, pathToAny, pageFits, esc,
+  discPath, rrectPath, corner, TYPES, SHAPES, DIRS, around, pathToAny, pageFits, esc,
 } from './logic.js';
 
 // routes
@@ -86,6 +86,9 @@ const widths = (d) => [...d.matchAll(/h(\d+)/g)].map((m) => +m[1]);
 assert.deepEqual(widths(discPath(0, 0, 8)), [4, 6, 8, 8, 8, 8, 6, 4]);
 assert.equal(rrectPath(0, 0, 10, 6), 'M2 0h6v1h-6zM2 5h6v1h-6zM1 1h8v1h-8zM1 4h8v1h-8zM0 2h10v2h-10z');
 assert.equal(rrectPath(0, 0, 4, 2, []), 'M0 0h4v2h-4z');
+assert.deepEqual(corner(4), [2, 1]);
+assert.deepEqual(corner(0), []);
+assert.ok(corner(44).every((v, i, a) => i === 0 || v <= a[i - 1]), 'corner insets must shrink row by row');
 
 // world: paths over the real Pokémon Center collision map
 const here0 = (path) => new URL(path, import.meta.url);
@@ -171,7 +174,7 @@ for (const s of strings) {
 assert.deepEqual(Object.keys(DATA.talk.pt).sort(), Object.keys(DATA.talk.en).sort(), 'talk: pt e en com chaves diferentes');
 for (const l of ['pt', 'en']) {
   for (const [k, pages] of Object.entries(DATA.talk[l])) {
-    pages.forEach((page, i) => assert.ok(pageFits(page, widthsOf), `talk.${l}.${k}[${i}] não cabe na caixa: "${page}"`));
+    pages.forEach((page, i) => assert.ok(pageFits(page, widthsOf, 208, i < pages.length - 1 ? 10 : 0), `talk.${l}.${k}[${i}] não cabe na caixa: "${page}"`));
   }
 }
 
