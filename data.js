@@ -6,7 +6,7 @@
 // Sugestão tech -> tipo: JS/TS = electric · Python = psychic · banco de dados = rock
 //   infra/DevOps = steel · design/UI = psychic · automação/IA = dragon · mobile = flying
 // Formatos de insígnia (máx. 8): boulder cascade thunder rainbow soul marsh volcano earth
-// dex: número do Pokémon (1–386). #1–151 usam o sprite do FireRed, o resto o do Emerald.
+// dex: número do Pokémon (1–386). Sprites e gritos saem do número. Todo texto precisa existir na fonte do jogo (node check.mjs avisa).
 
 const lorem = {
   pt: 'Texto de exemplo. Aqui entra a descrição do projeto: qual problema ele resolve, o que você construiu, as decisões técnicas mais interessantes e o resultado que ele trouxe. Duas ou três frases curtas costumam bastar.',
@@ -70,8 +70,12 @@ export const DATA = {
       seen: 'VISTOS', year: 'ANO', shiny: 'SHINY!', repo: 'CÓDIGO', live: 'VER AO VIVO',
       trainer_card: 'CARTÃO DE TREINADOR', id_no: 'IDNº', name: 'NOME', time: 'TEMPO', years: 'ANOS', about: 'SOBRE MIM',
       badge_empty: 'Nenhuma insígnia ainda.', type: 'TIPO', power: 'PODER', open_hint: 'Aperte A ou clique para abrir.',
-      language: 'IDIOMA', sound: 'SOM', on: 'SIM', off: 'NÃO',
-      help_language: 'Troca o idioma do site.', help_sound: 'Liga os bipes da Pokédex.',
+      on: 'SIM', off: 'NÃO',
+      opt_lang: 'IDIOMA', opt_sound: 'SOM', opt_textSpeed: 'TEXTO', opt_frame: 'MOLDURA',
+      help_opt_lang: 'Troca o idioma do site.', help_opt_sound: 'Liga os sons do jogo. Também no botão preto da Pokédex.',
+      help_opt_textSpeed: 'Velocidade em que o texto aparece.', help_opt_frame: 'Estilo das caixas de texto.',
+      slow: 'LENTO', mid: 'MÉDIO', fast: 'RÁPIDO', type_frame: 'TIPO',
+      registered: 'Os dados de {name} foram registrados na POKéDEX!',
       back: 'Voltar', prev: '< ANT', next: 'PRÓX >',
     },
     en: {
@@ -86,8 +90,12 @@ export const DATA = {
       seen: 'SEEN', year: 'YEAR', shiny: 'SHINY!', repo: 'CODE', live: 'LIVE',
       trainer_card: 'TRAINER CARD', id_no: 'IDNo.', name: 'NAME', time: 'TIME', years: 'YRS', about: 'ABOUT ME',
       badge_empty: 'No badges yet.', type: 'TYPE', power: 'POWER', open_hint: 'Press A or click to open.',
-      language: 'LANGUAGE', sound: 'SOUND', on: 'ON', off: 'OFF',
-      help_language: 'Switch the site language.', help_sound: 'Turn the Pokédex beeps on.',
+      on: 'ON', off: 'OFF',
+      opt_lang: 'LANGUAGE', opt_sound: 'SOUND', opt_textSpeed: 'TEXT', opt_frame: 'FRAME',
+      help_opt_lang: 'Switch the site language.', help_opt_sound: 'Turn the game sounds on. Also the black button on the Pokédex.',
+      help_opt_textSpeed: 'How fast the text appears.', help_opt_frame: 'Style of the text boxes.',
+      slow: 'SLOW', mid: 'MID', fast: 'FAST', type_frame: 'TYPE',
+      registered: "{name}'s data was added to the POKéDEX!",
       back: 'Back', prev: '< PREV', next: 'NEXT >',
     },
   },

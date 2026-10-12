@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { DATA } from './data.js';
-import { parseRoute, parent, spritePath, nextIndex, fitScale, discPath, rrectPath, TYPES, SHAPES } from './app.js';
+import {
+  parseRoute, parent, spritePath, nextIndex, fitScale, coverScale, cycle, splitShown, pickNext,
+  discPath, rrectPath, TYPES, SHAPES,
+} from './logic.js';
 
 // routes
 const R = (h) => parseRoute(h, { dex: 8, badges: 3 });
@@ -29,11 +32,11 @@ assert.equal(parent(at('badges', 1)), '#/menu');
 assert.equal(parent(at('menu')), null);
 assert.equal(parent(at('intro')), null);
 
-// sprites
-assert.equal(spritePath(6), 'assets/sprites/firered-leafgreen/6.png');
-assert.equal(spritePath(6, { shiny: true }), 'assets/sprites/firered-leafgreen/shiny/6.png');
-assert.equal(spritePath(250), 'assets/sprites/emerald/250.png');
-assert.equal(spritePath(250, { shiny: true }), 'assets/sprites/emerald/shiny/250.png');
+// sprites: always Emerald art
+assert.equal(spritePath(6), 'assets/sprites/emerald/6.png');
+assert.equal(spritePath(6, { shiny: true }), 'assets/sprites/emerald/shiny/6.png');
+assert.equal(spritePath(250, { frame2: true }), 'assets/sprites/emerald/frame2/250.png');
+assert.equal(spritePath(250, { shiny: true, frame2: true }), 'assets/sprites/emerald/shiny/frame2/250.png');
 assert.equal(spritePath(6, { animated: true }), 'assets/sprites/emerald/animated/6.gif');
 assert.equal(spritePath(250, { shiny: true, animated: true }), 'assets/sprites/emerald/animated/shiny/250.gif');
 
@@ -46,11 +49,37 @@ assert.equal(nextIndex(1, 8, 4, 0, 1), 5);
 assert.equal(nextIndex(5, 8, 4, 0, -1), 1);
 assert.equal(nextIndex(0, 3, 4, 0, 1), 0);
 
-// scale: integer in physical pixels
+// scales: integer in physical pixels
 assert.equal(fitScale(576, 320, 1888, 1048, 1), 3);
 assert.equal(fitScale(576, 320, 1334, 736, 1), 2);
 assert.equal(fitScale(240, 160, 358, 380, 3), 4 / 3);
 assert.equal(fitScale(576, 320, 100, 100, 1), 1);
+assert.equal(coverScale(240, 160, 1920, 1080, 1), 8);
+assert.equal(coverScale(240, 160, 1366, 768, 1), 6);
+assert.equal(coverScale(240, 160, 1440, 900, 2), 6);
+
+// options
+assert.equal(cycle(['pt', 'en'], 'pt'), 'en');
+assert.equal(cycle(['pt', 'en'], 'en'), 'pt');
+assert.equal(cycle([1, 2, 3], 1, -1), 3);
+assert.equal(cycle([1, 2, 3], 9), 2);
+
+// typing
+assert.deepEqual(splitShown([3, 4], 0), [0, 0]);
+assert.deepEqual(splitShown([3, 4], 2.7), [2, 0]);
+assert.deepEqual(splitShown([3, 4], 5), [3, 2]);
+assert.deepEqual(splitShown([3, 4], 99), [3, 4]);
+
+// background clips
+assert.equal(pickNext(-1, 1, 0.9), 0);
+assert.equal(pickNext(0, 1, 0.5), 0);
+assert.equal(pickNext(-1, 4, 0.99), 3);
+for (let cur = 0; cur < 4; cur++) {
+  for (const r of [0, 0.3, 0.6, 0.99]) {
+    const n = pickNext(cur, 4, r);
+    assert.ok(n !== cur && n >= 0 && n < 4, `pickNext(${cur}, 4, ${r}) = ${n}`);
+  }
+}
 
 // pixel shapes
 const widths = (d) => [...d.matchAll(/h(\d+)/g)].map((m) => +m[1]);
@@ -59,13 +88,14 @@ assert.equal(rrectPath(0, 0, 10, 6), 'M2 0h6v1h-6zM2 5h6v1h-6zM1 1h8v1h-8zM1 4h8
 assert.equal(rrectPath(0, 0, 4, 2, []), 'M0 0h4v2h-4z');
 
 // --- content (data.js)
+const here = (path) => new URL(path, import.meta.url);
 const both = (o, w) => assert.ok(o?.pt?.trim() && o?.en?.trim(), `${w}: falta texto pt ou en`);
 const url = (u, w) => assert.match(u, /^(https:\/\/|mailto:)/, `${w}: link precisa começar com https:// ou mailto: (${u})`);
 const dex = (n, w) => {
   assert.ok(Number.isInteger(n) && n >= 1 && n <= 386, `${w}: dex ${n} fora de 1–386`);
-  for (const o of [{}, { shiny: true }, { animated: true }, { shiny: true, animated: true }]) {
-    assert.ok(existsSync(new URL(spritePath(n, o), import.meta.url)), `${w}: sprite não existe (${spritePath(n, o)})`);
-  }
+  const variants = [{}, { shiny: true }, { frame2: true }, { shiny: true, frame2: true }, { animated: true }, { shiny: true, animated: true }];
+  for (const o of variants) assert.ok(existsSync(here(spritePath(n, o))), `${w}: sprite não existe (${spritePath(n, o)})`);
+  assert.ok(existsSync(here(`assets/cries/${n}.wav`)), `${w}: grito não existe (assets/cries/${n}.wav) — rode python tools/build_assets.py`);
 };
 const { trainer, projects, badges, moves, contact, ui } = DATA;
 
@@ -104,5 +134,17 @@ contact.forEach((c, i) => url(c.url, `contact[${i}] ${c.label}`));
 const keys = (l) => Object.keys(ui[l]).sort();
 assert.deepEqual(keys('pt'), keys('en'), 'ui: pt e en têm chaves diferentes');
 for (const l of ['pt', 'en']) for (const [k, v] of Object.entries(ui[l])) assert.ok(String(v).trim(), `ui.${l}.${k} vazio`);
+
+// every character on screen must exist in the game font
+const charset = new Set(JSON.parse(readFileSync(here('assets/font/charset.json'), 'utf8')));
+const strings = [];
+(function walk(v) {
+  if (typeof v === 'string') strings.push(v);
+  else if (v && typeof v === 'object') Object.values(v).forEach(walk);
+})(DATA);
+for (const s of strings) {
+  const shown = s.replace(/\{\w+\}/g, '');   // {name}-style placeholders are filled in before display
+  for (const ch of shown) assert.ok(charset.has(ch), `caractere "${ch}" não existe na fonte do jogo (em "${s.slice(0, 40)}")`);
+}
 
 console.log('check ok');
