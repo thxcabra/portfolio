@@ -75,119 +75,70 @@ await send('Runtime.enable');
 await send('Log.enable');
 await send('Page.enable');
 await send('Emulation.setFocusEmulationEnabled', { enabled: true });   // a headless page never gets window focus otherwise
-await send('Page.navigate', { url: BASE + '#/' });
+const me = () => ev(`(() => { const p = document.querySelector('.person[data-me]'); return p ? [Number(p.dataset.x), Number(p.dataset.y), p.dataset.dir] : null; })()`);
+const msg = () => ev(`(() => { const m = document.querySelector('.msg'); return m && !m.hidden ? m.textContent : null; })()`);
+const hold = async (k, ms) => { await keyDown(k); await sleep(ms); await send('Input.dispatchKeyEvent', { type: 'keyUp', key: k, ...KEYS[k], text: undefined }); await sleep(150); };
+const closeMsg = async () => { for (let i = 0; i < 15 && (await msg()) !== null; i++) await key('z', 250); assert.equal(await msg(), null, 'caixa de diálogo não fechou'); };
+const clickTile = async (tx, ty) => {
+  const r = await ev(`(() => { const b = document.getElementById('screen').getBoundingClientRect(); return [b.left, b.top, b.width / 240]; })()`);
+  const x = r[0] + (tx * 16 + 8) * r[2], y = r[1] + (ty * 16 + 8) * r[2];
+  for (const type of ['mouseMoved', 'mousePressed', 'mouseReleased']) await send('Input.dispatchMouseEvent', { type, x, y, button: 'left', clickCount: 1 });
+};
+
+await send('Page.navigate', { url: BASE });
 await sleep(1500);
 await ev('localStorage.clear()');
 await send('Page.reload');
 await sleep(1500);
 
-// intro + fonts
-assert.ok((await ev('document.body.className')).includes('closed'));
-assert.ok(await ev(`document.fonts.check('16px Gen3') && document.fonts.check('16px "Gen3 Small"')`), 'fonte do jogo não carregou');
-ok('abre fechada, com a fonte do jogo carregada');
-await key('Enter', 2400);
-assert.equal(await hash(), '#/menu');
-assert.equal(await focused(), 'POKéDEX');
-ok('tecla abre, roda a abertura e cai no menu');
+assert.ok(await ev(`document.fonts.check('16px Gen3')`), 'fonte do jogo não carregou');
+assert.ok(await ev(`!!document.querySelector('.title .logo')`), 'tela de título não apareceu');
+ok('tela de título do FireRed');
 
-// menu + typing
-await key('ArrowDown');
-assert.equal(await focused(), 'JOÃO');
-assert.equal(await ev(`document.querySelector('#panel p').textContent`), 'Quem é o treinador.');
-ok('seta move o cursor e o painel acompanha');
-await key('z', 150);
-assert.equal(await hash(), '#/card');
-assert.ok(await ev(`document.body.classList.contains('talking') && !!document.querySelector('#panel .tw-rest')`), 'texto não está digitando');
-await key('z', 100);
-assert.ok(await ev(`!document.body.classList.contains('talking') && !document.querySelector('#panel .tw-rest')`), 'A não completou o texto');
-ok('texto digita e A completa na hora');
-await key('x', 500);
-assert.equal(await hash(), '#/menu');
-assert.equal(await focused(), 'JOÃO');
-ok('X volta e o cursor lembra a posição');
+await key('Enter', 900);
+assert.deepEqual(await me(), [7, 8, 'up']);
+ok('START entra no Centro Pokémon, Red na porta');
 
-// dex + first visit
-await key('ArrowUp');
-await key('Enter', 500);
-assert.equal(await hash(), '#/dex');
-await key('ArrowDown');
-await key('ArrowDown');
-assert.match(await ev(`document.querySelector('#dex-name').textContent`), /GENGAR/);
-assert.match(await ev(`document.querySelector('#dex-stage .sprite').getAttribute('src')`), /emerald\/94\.png$/);
-assert.ok(await has('#dex-stage .f2'), 'sem segundo quadro na lista');
-ok('lista troca o sprite (Emerald, 2 quadros)');
-await key('z', 250);
-assert.equal(await hash(), '#/dex/3');
-assert.ok(await has('.entry .stage.sil'), 'primeira visita sem silhueta');
-await sleep(1000);
-assert.ok(!(await has('.entry .stage.sil')), 'silhueta não revelou');
-assert.match(await ev(`document.querySelector('#panel').textContent`), /registrados na POKéDEX/);
-ok('primeira visita: silhueta → cores → registrado');
-await key('ArrowRight', 500);
-assert.equal(await hash(), '#/dex/4');
-await key('Escape', 500);
-assert.equal(await hash(), '#/dex');
-assert.match(await focused(), /LAPRAS/);
-assert.match(await ev(`document.querySelector('.bar').textContent`), /VISTOS 2\/8/);
-await ev(`location.hash = '#/dex/3'`);
-await sleep(500);
-assert.ok(!(await has('.entry .stage.sil')), 'segunda visita não deve ter silhueta');
-ok('segunda visita vai direto');
+await sleep(700);
+assert.match((await msg()) ?? '', /Bem-vindo/);
+await closeMsg();
+assert.equal(await ev(`localStorage.getItem('welcomed')`), 'true');
+ok('Enfermeira dá as boas-vindas uma vez');
 
-// device reacting
-await ev(`location.hash = '#/moves'`);
-await sleep(500);
-await keyDown('ArrowDown');
-assert.ok(await ev(`document.querySelector('[data-hw="down"]').classList.contains('pressed')`), 'direcional não afundou');
-await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'ArrowDown', ...KEYS.ArrowDown });
-await sleep(300);
-assert.match(await ev(`document.querySelector('#panel h2').textContent`), /PYTHON/);
-ok('teclado afunda o direcional; golpes mostram o selecionado');
-await click('[data-hw="sound"]');
+await hold('ArrowUp', 4 * 266 + 200);
+assert.deepEqual(await me(), [7, 4, 'up']);
+await hold('ArrowUp', 400);
+assert.deepEqual(await me(), [7, 4, 'up'], 'atravessou o balcão');
+ok('anda com o teclado e o balcão bloqueia');
+
+await key('z', 400);
+assert.match((await msg()) ?? '', /JOÃO/);
+await closeMsg();
+ok('fala com a Enfermeira por cima do balcão');
+
+await clickTile(11, 1);
+await sleep(8 * 266 + 900);
+assert.deepEqual(await me(), [11, 2, 'up']);
+assert.match((await msg()) ?? '', /PC/);
+await closeMsg();
+ok('clique no PC: anda até ele e liga');
+
+await clickTile(1, 6);
+await sleep(12 * 266 + 900);
+assert.match((await msg()) ?? '', /obras/);
+await closeMsg();
+ok('escada: sala de minijogos em obras');
+
+await keyDown('ArrowLeft');
+assert.ok(await ev(`document.getElementById('gba').classList.contains('p-dpad')`), 'direcional não afundou');
+await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'ArrowLeft', ...KEYS.ArrowLeft });
+await sleep(400);
+const box = await ev(`(() => { const b = document.querySelector('[data-btn="sound"]').getBoundingClientRect(); return [b.left + b.width / 2, b.top + b.height / 2]; })()`);
+for (const type of ['mousePressed', 'mouseReleased']) await send('Input.dispatchMouseEvent', { type, x: box[0], y: box[1], button: 'left', clickCount: 1 });
+await sleep(200);
 assert.ok(await ev(`document.body.classList.contains('sound-on')`));
 assert.equal(await ev(`localStorage.getItem('sound')`), 'true');
-await click('[data-hw="sound"]');
-assert.ok(!(await ev(`document.body.classList.contains('sound-on')`)));
-ok('botão preto liga/desliga o som e a luz verde');
-await click('[data-key="badges"]', 500);
-assert.equal(await hash(), '#/badges');
-await key('ArrowRight');
-assert.equal(await ev(`document.querySelector('#badge-name').textContent`), 'EMPRESA EXEMPLO B');
-ok('teclas azuis e grade de insígnias');
-
-// options
-await ev(`location.hash = '#/options'`);
-await sleep(500);
-await key('z', 400);
-assert.equal(await ev('document.documentElement.lang'), 'en');
-assert.match(await ev(`document.querySelector('#screen').textContent`), /LANGUAGE/);
-assert.equal(await ev(`document.querySelector('[data-key="badges"]').textContent`), 'BADGES');
-await key('ArrowDown');
-await key('ArrowDown');
-await key('ArrowRight', 400);
-assert.equal(await ev(`localStorage.getItem('textSpeed')`), '"slow"');
-await key('ArrowDown');
-await key('z', 400);
-assert.match(await ev(`getComputedStyle(document.documentElement).getPropertyValue('--frame')`), /frame-2\.png/);
-ok('opções: idioma, velocidade do texto e moldura');
-await send('Page.reload');
-await sleep(2000);
-assert.equal(await ev('document.documentElement.lang'), 'en');
-assert.match(await ev(`getComputedStyle(document.documentElement).getPropertyValue('--frame')`), /frame-2\.png/);
-ok('recarregar mantém as opções');
-
-// routes, shiny, background
-await ev(`location.hash = '#/dex/99'`);
-await sleep(500);
-assert.equal(await hash(), '#/menu');
-await send('Page.navigate', { url: BASE + '?shiny#/dex/1' });
-await sleep(2500);
-assert.equal(await ev(`document.querySelectorAll('.spark').length`), 4);
-assert.match(await ev(`document.querySelector('.entry .sprite').getAttribute('src')`), /animated\/shiny\/6\.gif$/);
-ok('rota inválida vai pro menu; ?shiny mostra o shiny');
-const clips = await ev(`fetch('assets/video/clips.json').then((r) => r.json())`);
-assert.equal(await has('.bg-video'), clips.length > 0, 'vídeo de fundo não bate com clips.json');
-ok(`fundo: ${clips.length ? 'vídeo tocando' : 'sem clipes, fundo provisório'}`);
+ok('direcional afunda com o teclado; botão de som liga');
 
 assert.deepEqual(errors, [], 'erros no console: ' + errors.join('\n'));
 ok('nenhum erro no console');
