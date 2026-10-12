@@ -2,11 +2,10 @@
 // mouse, touch), the sound switch and the page background. Games are cartridges: they get the
 // screen and the buttons and know nothing about scaling or input devices.
 import { DATA } from './data.js';
-import { fitScale, coverScale, pickNext, discPath, rrectPath, corner } from './logic.js';
+import { fitScale, coverScale, pickNext, discPath, rrectPath, corner, TEXT_SPEEDS } from './logic.js';
 import { setEnabled, sfx, cry } from './sound.js';
 import cart from './carts/center/index.js';
 
-const SPEEDS = { slow: 30, mid: 60, fast: 120 };   // characters per second
 const KEYS = {
   ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right',
   w: 'up', s: 'down', a: 'left', d: 'right', W: 'up', S: 'down', A: 'left', D: 'right',
@@ -20,7 +19,7 @@ const store = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* storage blocked: just don't remember */ } },
 };
 const saved = store.get('lang', null);
-const lang = saved === 'pt' || saved === 'en' ? saved : navigator.language?.toLowerCase().startsWith('pt') ? 'pt' : 'en';
+let lang = saved === 'pt' || saved === 'en' ? saved : navigator.language?.toLowerCase().startsWith('pt') ? 'pt' : 'en';
 const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 let soundOn = store.get('sound', false) === true;
 let bg = null;
@@ -30,7 +29,21 @@ const t = (k) => DATA.ui[lang][k] ?? DATA.ui.pt[k] ?? k;
 const api = {
   sfx, cry, store, reduced, t,
   talk: (k) => DATA.talk[lang][k] ?? DATA.talk.pt[k] ?? [k],
-  cps: () => SPEEDS[store.get('textSpeed', 'fast')] ?? SPEEDS.fast,
+  cps: () => TEXT_SPEEDS[store.get('textSpeed', 'fast')] ?? TEXT_SPEEDS.fast,
+  lang: () => lang,
+  setLang(l) {
+    if (l !== 'pt' && l !== 'en') return;
+    lang = l;
+    store.set('lang', l);
+    document.documentElement.lang = l === 'pt' ? 'pt-BR' : 'en';
+    mount(true);   // the SOUND label on the body
+  },
+  sound(on) {
+    if (on !== undefined && on !== soundOn) toggleSound();
+    return soundOn;
+  },
+  // The open screen goes to the address bar (#/contato) without adding history entries.
+  link: (path) => history.replaceState(null, '', path ? `#/${path}` : location.pathname + location.search),
 };
 
 // ---------- body: two shells on the game-pixel grid, geometric, no logos ----------
@@ -69,7 +82,7 @@ const SHELLS = {
       path(Array.from({ length: 6 }, (_, i) => Array.from({ length: 14 }, (_, t) => `M${366 + 7 * i + t} ${156 - t}h2v1h-2z`).join('')).join(''), LO),
       led(362, 168, 'led-sound'),
     ].join(''),
-    labels: label(DATA.trainer.name, 96, 179, 240) + label('START', 14, 119, 40, 'right') + label('SELECT', 14, 137, 40, 'right') +
+    labels: () => label(DATA.trainer.name, 96, 179, 240) + label('START', 14, 119, 40, 'right') + label('SELECT', 14, 137, 40, 'right') +
       label('POWER', 368, 21, 40, 'left') + label(t('opt_sound'), 370, 163, 40, 'left'),
     controls: [
       btn('up', 32, 50, 20, 18), btn('down', 32, 80, 20, 18), btn('left', 18, 64, 18, 20), btn('right', 48, 64, 18, 20),
@@ -94,7 +107,7 @@ const SHELLS = {
       led(234, 212),
       led(16, 307, 'led-sound'),
     ].join(''),
-    labels: label(DATA.trainer.name, 8, 174, 240) + label('SELECT', 90, 297, 40) + label('START', 126, 297, 40) + label(t('opt_sound'), 22, 302, 30, 'left'),
+    labels: () => label(DATA.trainer.name, 8, 174, 240) + label('SELECT', 90, 297, 40) + label('START', 126, 297, 40) + label(t('opt_sound'), 22, 302, 30, 'left'),
     controls: [
       btn('up', 40, 220, 28, 26), btn('down', 40, 258, 28, 26), btn('left', 20, 240, 26, 28), btn('right', 62, 240, 26, 28),
       btn('a', 200, 222, 36, 36, 'A', 'hw round'), btn('b', 166, 240, 36, 36, 'B', 'hw round'),
@@ -172,16 +185,16 @@ function fitBg() {
   Object.assign(bg.style, { width: `${w}px`, height: `${h}px`, left: `${Math.floor((innerWidth - w) / 2)}px`, top: `${Math.floor((innerHeight - h) / 2)}px` });
 }
 let shell = null;
-function mount() {
+function mount(force = false) {
   const next = SHELLS[innerHeight > innerWidth ? 'sp' : 'gba'];
-  if (next === shell) return;
+  if (next === shell && !force) return;
   [...held].forEach((n) => press(n, false));
   shell = next;
   $gba.querySelectorAll('.body, .label, .hw').forEach((el) => el.remove());
   Object.assign($gba.style, { width: `${shell.W}px`, height: `${shell.H}px` });
   Object.assign($screen.style, { left: `${shell.screen[0]}px`, top: `${shell.screen[1]}px` });
   $gba.insertAdjacentHTML('afterbegin', `<svg class="body" viewBox="0 0 ${shell.W} ${shell.H}" width="${shell.W}" height="${shell.H}" aria-hidden="true">${shell.svg}</svg>`);
-  $gba.insertAdjacentHTML('beforeend', shell.labels + shell.controls.join(''));
+  $gba.insertAdjacentHTML('beforeend', shell.labels() + shell.controls.join(''));
 }
 function fit() {
   mount();
@@ -218,8 +231,11 @@ document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
 document.body.classList.toggle('sound-on', soundOn);
 addEventListener('resize', fit);
 fit();
+const pathOf = () => location.hash.replace(/^#\/?/, '');
 Promise.all([document.fonts.load('16px Gen3'), document.fonts.load('16px "Gen3 Small"')]).finally(() => {
   document.body.classList.add('ready');
   cart.start($screen, api);
+  if (pathOf()) cart.open(pathOf());
+  addEventListener('hashchange', () => cart.open(pathOf()));
 });
 startVideo();
