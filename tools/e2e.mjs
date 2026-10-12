@@ -232,6 +232,24 @@ assert.ok(await ev(`document.body.classList.contains('sound-on')`));
 assert.equal(await ev(`localStorage.getItem('sound')`), 'true');
 ok('direcional afunda com o teclado; botão de som liga');
 
+await ev('localStorage.clear()');
+await send('Page.navigate', { url: `${BASE}?link=1#/contato` });   // a query change forces a full load
+await sleep(2200);
+assert.ok(!(await has('.title')), 'o link direto não pulou o título');
+assert.ok(await has('.contact .win'), 'o link direto não abriu o CONTATO');
+assert.equal(await msg(), null, 'link direto não mostra as boas-vindas');
+await key('x');
+assert.ok(!(await has('.contact')) && !(await has('.menu')), 'B não voltou para a sala');
+assert.equal(await ev('location.hash'), '');
+await ev(`location.hash = '#/sobre'`);
+await sleep(600);
+assert.match((await msg()) ?? '', /breve/);
+await closeMsg();
+await ev(`location.hash = '#/nada'`);
+await sleep(400);
+assert.ok(!(await has('.contact')) && (await msg()) === null, 'link inválido deveria só mostrar a sala');
+ok('links: #/contato abre direto, B volta para a sala, link inválido cai na sala');
+
 await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 750, deviceScaleFactor: 3, mobile: true });
 await sleep(400);
 assert.equal(await ev(`document.getElementById('gba').style.width`), '256px', 'celular em pé não virou GBA SP');

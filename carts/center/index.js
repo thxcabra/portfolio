@@ -4,7 +4,7 @@ import { createWorld, BEHAVIOR } from './world.js';
 import { createDialog } from './dialog.js';
 import { createTitle } from './title.js';
 import { createStack, win, text } from './ui.js';
-import { textWidth } from '../../logic.js';
+import { route, textWidth } from '../../logic.js';
 import { createMenu } from './screens/menu.js';
 import { createOptions } from './screens/options.js';
 import { createContact } from './screens/contact.js';
@@ -115,7 +115,7 @@ function blocked(to, dir, from) {
   return false;
 }
 
-async function enter() {
+async function enter({ welcome = true } = {}) {
   if (mode !== 'title') return;
   mode = 'loading';
   api.sfx('select');
@@ -129,7 +129,7 @@ async function enter() {
   hint = makeHint(root);
   mode = 'world';
   sync();
-  if (!api.store.get('welcomed', false)) {
+  if (welcome && !api.store.get('welcomed', false)) {
     setTimeout(() => {
       if (mode === 'world' && !dialog.open && !stack.size) say(api.talk('nurse_welcome'), () => {
         api.store.set('welcomed', true);
@@ -176,5 +176,12 @@ export default {
     if (stack.size) return;   // the screens take their own clicks
     world.pointer(x, y);
   },
-  open() {},   // links arrive in Tarefa 9
+  // A link (#/contato) opens its screen straight away: no title, no welcome, B goes to the room.
+  async open(path) {
+    const r = route(path, DATA.projects.length);
+    if (mode === 'title') await enter({ welcome: false });
+    if (mode !== 'world') return;
+    stack.clear();
+    if (r) openScreen(r.screen);
+  },
 };
