@@ -67,7 +67,7 @@ Medida na folha `latin_normal.png` (células 16×16, índice 1 = traço, 2 = som
 - **Todo texto** em `font-family: Gen3` com `font-size: 16px; line-height: 16px` (pixels de jogo); etiquetas em `Gen3 Small`. Nenhum outro tamanho de fonte.
 - **Molduras:** `.box` usa `border-image` com `assets/ui/frame-N.png`, fatia 8, `border-width: 8px`, `stretch`. N vem de OPÇÕES.
 - **Insígnias:** sprite de `badges.png` por `background-position` (16×16, ampliadas só por inteiros). Somem os `clip-path`.
-- **Tipos:** imagens reais recortadas de `menu_info.png` (e os rótulos TYPE / POWER / PP na tela de golpes). Somem as etiquetas em CSS.
+- **Tipos:** imagens reais recortadas de `menu_info.png`. Somem as etiquetas em CSS. Os rótulos "PODER" e "PP" da tela de golpes ficam em texto na fonte do jogo (os rótulos gráficos do jogo são escuros e sumiriam no painel verde, e não têm versão em português).
 - **Botões redondos** do aparelho só em SVG de grade (já é assim no casco; a área de clique pode ser retangular).
 - **Animações** só com deslocamentos inteiros de pixel e `steps()`; nada de `scale` fracionário.
 - **Sprites:** lista, Trainer Card e entrada usam a arte do Emerald (estático, `frame2` e GIF animado). O FireRed deixa de ser usado nos sprites — `spritePath` passa a sempre resolver para `emerald/`.
