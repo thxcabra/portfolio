@@ -2,35 +2,33 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { DATA } from './data.js';
 import {
-  parseRoute, parent, spritePath, nextIndex, fitScale, coverScale, cycle, splitShown, pickNext,
+  route, textWidth, fitsLines, TEXT_SPEEDS, multiTiles, spritePath, nextIndex, fitScale, coverScale, cycle, splitShown, pickNext,
   discPath, rrectPath, corner, TYPES, SHAPES, DIRS, around, pathToAny, pageFits, esc,
 } from './logic.js';
 
-// routes
-const R = (h) => parseRoute(h, { dex: 8, badges: 3 });
-const at = (view, i = null) => ({ view, i });
-assert.deepEqual(R(''), at('intro'));
-assert.deepEqual(R('#/'), at('intro'));
-assert.deepEqual(R('#/menu'), at('menu'));
-assert.deepEqual(R('#/dex'), at('dex'));
-assert.deepEqual(R('#/dex/3'), at('entry', 3));
-assert.deepEqual(R('#/dex/8'), at('entry', 8));
-assert.deepEqual(R('#/dex/9'), at('menu'));
-assert.deepEqual(R('#/dex/0'), at('menu'));
-assert.deepEqual(R('#/dex/abc'), at('menu'));
-assert.deepEqual(R('#/dex/1.5'), at('menu'));
-assert.deepEqual(R('#/badges'), at('badges'));
-assert.deepEqual(R('#/badges/2'), at('badges', 2));
-assert.deepEqual(R('#/badges/4'), at('menu'));
-for (const v of ['card', 'moves', 'contact', 'options']) assert.deepEqual(R(`#/${v}`), at(v));
-assert.deepEqual(R('#/foo'), at('menu'));
-assert.deepEqual(R('#/menu/2'), at('menu'));
+// routes: screens with their own link
+const R = (p) => route(p, 8);
+assert.deepEqual(R('projetos'), { screen: 'projetos', n: null });
+assert.deepEqual(R('#/projetos/3'), { screen: 'projetos', n: 3 });
+assert.deepEqual(R('projetos/8'), { screen: 'projetos', n: 8 });
+for (const s of ['sobre', 'experiencia', 'habilidades', 'contato']) assert.deepEqual(R(`#/${s}`), { screen: s, n: null });
+for (const bad of ['projetos/9', 'projetos/0', 'projetos/abc', 'projetos/1.5', 'contato/2', 'sobre/x/y', 'opcoes', 'foo', '', null]) {
+  assert.equal(R(bad), null, `route(${bad})`);
+}
 
-assert.equal(parent(at('entry', 2)), '#/dex');
-assert.equal(parent(at('dex')), '#/menu');
-assert.equal(parent(at('badges', 1)), '#/menu');
-assert.equal(parent(at('menu')), null);
-assert.equal(parent(at('intro')), null);
+// text in the game font
+const W = { a: 5, b: 6 };
+assert.equal(textWidth('', W), 0);
+assert.equal(textWidth('ab', W), 11);
+assert.equal(textWidth('?', W), 6, 'unknown characters count 6px');
+assert.ok(fitsLines('ab\nab', W, 11, 2));
+assert.ok(!fitsLines('ab\nab\nab', W, 11, 2));
+assert.ok(!fitsLines('abb', W, 11, 2));
+assert.equal(Math.round(TEXT_SPEEDS.fast * 100) / 100, 29.86, 'FAST: one letter every 2 frames');
+assert.equal(Math.round(TEXT_SPEEDS.mid * 100) / 100, 11.95);
+assert.equal(Math.round(TEXT_SPEEDS.slow * 100) / 100, 6.64);
+assert.deepEqual(multiTiles(40, 2), { w: 7, h: 4 });
+assert.deepEqual(multiTiles(48, 4), { w: 8, h: 7 });
 
 // sprites: always Emerald art
 assert.equal(spritePath(6), 'assets/sprites/emerald/6.png');

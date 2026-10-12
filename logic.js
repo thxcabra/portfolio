@@ -4,26 +4,32 @@
 export const TYPES = ['normal', 'fire', 'water', 'grass', 'electric', 'rock', 'ground', 'ice', 'flying', 'fighting', 'ghost', 'bug', 'poison', 'psychic', 'steel', 'dark', 'dragon'];
 // Same order as the badges in assets/ui/badges.png (16x16 each).
 export const SHAPES = ['boulder', 'cascade', 'thunder', 'rainbow', 'soul', 'marsh', 'volcano', 'earth'];
-const VIEWS = ['menu', 'dex', 'card', 'badges', 'moves', 'contact', 'options'];
-
-// '#/dex/3' -> { view: 'entry', i: 3 }. Anything invalid falls back to the menu.
-export function parseRoute(hash, counts) {
-  const [, view = '', n] = (hash || '').replace(/^#/, '').split('/');
-  const i = n ? Number(n) : null;
-  const inRange = (max) => Number.isInteger(i) && i >= 1 && i <= max;
-  const menu = { view: 'menu', i: null };
-  if (!view) return { view: 'intro', i: null };
-  if (view === 'dex' && i !== null) return inRange(counts.dex) ? { view: 'entry', i } : menu;
-  if (view === 'badges' && i !== null) return inRange(counts.badges) ? { view: 'badges', i } : menu;
-  if (n !== undefined || !VIEWS.includes(view)) return menu;
-  return { view, i: null };
+// Screens with their own link: 'projetos/3' (or '#/projetos/3') -> { screen: 'projetos', n: 3 }.
+// Anything else -> null, which means the room.
+export const LINKED = ['projetos', 'sobre', 'experiencia', 'habilidades', 'contato'];
+export function route(path, projects) {
+  const [screen, n, ...rest] = String(path ?? '').replace(/^#?\/?/, '').split('/');
+  if (!LINKED.includes(screen) || rest.length) return null;
+  if (n === undefined) return { screen, n: null };
+  const i = Number(n);
+  return screen === 'projetos' && Number.isInteger(i) && i >= 1 && i <= projects ? { screen, n: i } : null;
 }
 
-// Where B goes from each screen.
-export function parent({ view }) {
-  if (view === 'entry') return '#/dex';
-  return view === 'intro' || view === 'menu' ? null : '#/menu';
+// Width in game pixels of one line in the game font (assets/font/widths.json from the build).
+export const textWidth = (s, widths) => [...s].reduce((w, ch) => w + (widths[ch] ?? 6), 0);
+
+// Text that has to fit a window: at most `lines` lines, each at most `max` px.
+export function fitsLines(text, widths, max, lines) {
+  const all = text.split('\n');
+  return all.length <= lines && all.every((l) => textWidth(l, widths) <= max);
 }
+
+// FireRed prints one letter, then waits 8 / 4 / 1 frames (sTextSpeedFrameDelays): letters per second.
+export const TEXT_SPEEDS = { slow: 59.7275 / 9, mid: 59.7275 / 5, fast: 59.7275 / 2 };
+
+// Script multichoice window (script_menu.c): width from the longest item, height by item count.
+const MULTI_HEIGHT = [0, 2, 4, 6, 7, 9, 11, 13, 14];
+export const multiTiles = (maxWidth, count) => ({ w: Math.floor((maxWidth + 9) / 8) + 1, h: MULTI_HEIGHT[count] });
 
 export function spritePath(dex, { shiny = false, animated = false, frame2 = false } = {}) {
   const s = shiny ? 'shiny/' : '';
@@ -134,8 +140,7 @@ export function pathToAny(walkable, from, goals) {
 // tail: room needed after the last line (10 for the 'more' arrow when another page follows).
 export function pageFits(page, widths, max = 208, tail = 0) {
   const lines = page.split('\n');
-  const width = (l) => [...l].reduce((w, ch) => w + (widths[ch] ?? 6), 0);
-  return lines.length <= 2 && lines.every((l, i) => width(l) + (i === lines.length - 1 ? tail : 0) <= max);
+  return lines.length <= 2 && lines.every((l, i) => textWidth(l, widths) + (i === lines.length - 1 ? tail : 0) <= max);
 }
 
 export const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
