@@ -92,3 +92,41 @@ export function rrectPath(x, y, w, h, ins = [2, 1]) {
   });
   return p + `M${x} ${y + ins.length}h${w}v${h - 2 * ins.length}h${-w}z`;
 }
+
+export const DIRS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
+
+// The 4 tiles from which (x, y) can be reached, and the way to face from each.
+export const around = ({ x, y }) => Object.entries(DIRS).map(([face, [dx, dy]]) => ({ x: x - dx, y: y - dy, face }));
+
+// Shortest 4-way walk (BFS) from `from` to the nearest goal ({ x, y, face? }).
+// Returns { steps, face } or null when no goal is reachable.
+export function pathToAny(walkable, from, goals) {
+  const key = (x, y) => `${x},${y}`;
+  const goalAt = new Map(goals.map((g) => [key(g.x, g.y), g]));
+  const prev = new Map([[key(from.x, from.y), null]]);
+  const queue = [[from.x, from.y]];
+  for (let head = 0; head < queue.length; head++) {
+    const [x, y] = queue[head];
+    const goal = goalAt.get(key(x, y));
+    if (goal) {
+      const steps = [];
+      for (let k = key(x, y); prev.get(k); k = prev.get(k).from) steps.unshift(prev.get(k).dir);
+      return { steps, face: goal.face ?? null };
+    }
+    for (const [dir, [dx, dy]] of Object.entries(DIRS)) {
+      const nx = x + dx, ny = y + dy, k = key(nx, ny);
+      if (prev.has(k) || !walkable(nx, ny)) continue;
+      prev.set(k, { from: key(x, y), dir });
+      queue.push([nx, ny]);
+    }
+  }
+  return null;
+}
+
+// A message box page: at most 2 lines, each at most `max` pixels in the game font.
+export function pageFits(page, widths, max = 208) {
+  const lines = page.split('\n');
+  return lines.length <= 2 && lines.every((l) => [...l].reduce((w, ch) => w + (widths[ch] ?? 6), 0) <= max);
+}
+
+export const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);

@@ -1,5 +1,5 @@
 // Game sounds through Web Audio. Silent until enabled; any failure stays silent.
-const SFX = ['select', 'win_open', 'pc_on', 'dex_scroll', 'dex_page', 'success', 'shiny'];
+const SFX = ['select', 'win_open', 'pc_on', 'dex_scroll', 'dex_page', 'success', 'shiny', 'bump'];
 // The ripped effects peak around 5–17% of full scale and the cries near 100%;
 // these gains bring both to roughly a third of full scale.
 const SFX_GAIN = 3;

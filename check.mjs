@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { DATA } from './data.js';
 import {
   parseRoute, parent, spritePath, nextIndex, fitScale, coverScale, cycle, splitShown, pickNext,
-  discPath, rrectPath, TYPES, SHAPES,
+  discPath, rrectPath, TYPES, SHAPES, DIRS, around, pathToAny, pageFits, esc,
 } from './logic.js';
 
 // routes
@@ -87,6 +87,26 @@ assert.deepEqual(widths(discPath(0, 0, 8)), [4, 6, 8, 8, 8, 8, 6, 4]);
 assert.equal(rrectPath(0, 0, 10, 6), 'M2 0h6v1h-6zM2 5h6v1h-6zM1 1h8v1h-8zM1 4h8v1h-8zM0 2h10v2h-10z');
 assert.equal(rrectPath(0, 0, 4, 2, []), 'M0 0h4v2h-4z');
 
+// world: paths over the real Pokémon Center collision map
+const here0 = (path) => new URL(path, import.meta.url);
+const room = JSON.parse(readFileSync(here0('assets/world/center.json'), 'utf8'));
+const walk = (x, y) => x >= 0 && y >= 0 && x < room.w && y < room.h && !room.walls[y][x];
+assert.deepEqual(Object.keys(DIRS), ['up', 'down', 'left', 'right']);
+assert.deepEqual(around({ x: 5, y: 5 }).map((g) => [g.x, g.y, g.face]), [[5, 6, 'up'], [5, 4, 'down'], [6, 5, 'left'], [4, 5, 'right']]);
+assert.deepEqual(pathToAny(walk, { x: 7, y: 8 }, [{ x: 7, y: 8 }]), { steps: [], face: null });
+assert.deepEqual(pathToAny(walk, { x: 7, y: 8 }, [{ x: 7, y: 4, face: 'up' }]), { steps: ['up', 'up', 'up', 'up'], face: 'up' });
+assert.equal(pathToAny(walk, { x: 7, y: 8 }, [{ x: 7, y: 2 }]), null, 'behind the counter is unreachable');
+const toPc = pathToAny(walk, { x: 7, y: 8 }, around({ x: 11, y: 1 }));
+assert.equal(toPc.face, 'up');
+assert.equal(toPc.steps.length, 10, 'shortest walk from the door to the PC');
+
+// text that must fit the message box (2 lines, 208px in the game font)
+const widthsOf = JSON.parse(readFileSync(here0('assets/font/widths.json'), 'utf8'));
+assert.ok(pageFits('Olá!\nTudo bem?', widthsOf));
+assert.ok(!pageFits('a\nb\nc', widthsOf));
+assert.ok(!pageFits('x'.repeat(60), widthsOf));
+assert.equal(esc('<a&"\n'), '&lt;a&amp;&quot;\n');
+
 // --- content (data.js)
 const here = (path) => new URL(path, import.meta.url);
 const both = (o, w) => assert.ok(o?.pt?.trim() && o?.en?.trim(), `${w}: falta texto pt ou en`);
@@ -144,7 +164,15 @@ const strings = [];
 })(DATA);
 for (const s of strings) {
   const shown = s.replace(/\{\w+\}/g, '');   // {name}-style placeholders are filled in before display
-  for (const ch of shown) assert.ok(charset.has(ch), `caractere "${ch}" não existe na fonte do jogo (em "${s.slice(0, 40)}")`);
+  for (const ch of shown) if (ch !== '\n') assert.ok(charset.has(ch), `caractere "${ch}" não existe na fonte do jogo (em "${s.slice(0, 40)}")`);
+}
+
+// dialogue: same keys in both languages, every page fits the box
+assert.deepEqual(Object.keys(DATA.talk.pt).sort(), Object.keys(DATA.talk.en).sort(), 'talk: pt e en com chaves diferentes');
+for (const l of ['pt', 'en']) {
+  for (const [k, pages] of Object.entries(DATA.talk[l])) {
+    pages.forEach((page, i) => assert.ok(pageFits(page, widthsOf), `talk.${l}.${k}[${i}] não cabe na caixa: "${page}"`));
+  }
 }
 
 console.log('check ok');
