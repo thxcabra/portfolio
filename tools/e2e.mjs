@@ -105,6 +105,7 @@ ok('personagens com pixel nítido');
 
 await sleep(700);
 assert.match((await msg()) ?? '', /Bem-vindo/);
+assert.equal(await ev(`getComputedStyle(document.querySelector('.msg')).color`), 'rgb(230, 8, 8)', 'a Enfermeira fala em vermelho, como no FireRed');
 await closeMsg();
 assert.equal(await ev(`localStorage.getItem('welcomed')`), 'true');
 ok('Enfermeira dá as boas-vindas uma vez');

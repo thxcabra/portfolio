@@ -3,6 +3,8 @@ import { createWorld, BEHAVIOR } from './world.js';
 import { createDialog } from './dialog.js';
 import { createTitle } from './title.js';
 
+const VOICE = { nurse: 'female', gentleman: 'male', boy: 'male', youngster: 'male' };   // by the game's gender table
+
 let api = null;
 let screen = null;
 let map = null;
@@ -16,16 +18,16 @@ function title() {
   titleScreen = createTitle(screen, { reduced: api.reduced() });
 }
 
-function say(pages, done) {
+function say(pages, done, voice = '') {
   world.freeze(true);
   dialog.say(pages, () => {
     world.freeze(false);
     done?.();
-  });
+  }, voice);
 }
 
 function interact(target) {
-  if (target.person) return say(api.talk(target.person));
+  if (target.person) return say(api.talk(target.person), null, VOICE[target.person]);
   if (target.behavior === BEHAVIOR.PC) {
     api.sfx('pc_on');
     return say(api.talk('pc'));
@@ -60,7 +62,7 @@ async function enter() {
   mode = 'world';
   if (!api.store.get('welcomed', false)) {
     setTimeout(() => {
-      if (mode === 'world' && !dialog.open) say(api.talk('nurse_welcome'), () => api.store.set('welcomed', true));
+      if (mode === 'world' && !dialog.open) say(api.talk('nurse_welcome'), () => api.store.set('welcomed', true), 'female');
     }, api.reduced() ? 0 : 500);
   }
 }

@@ -31,10 +31,11 @@ export function createDialog(root, api) {
 
   return {
     get open() { return !box.hidden; },
-    say(list, onDone) {
+    say(list, onDone, voice = '') {
       pages = list;
       page = 0;
       done = onDone;
+      box.dataset.voice = voice;
       box.hidden = false;
       show();
     },

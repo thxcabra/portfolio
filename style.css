@@ -65,6 +65,8 @@ body:not(.ready) .gba { opacity: 0; }   /* not visibility: hidden, which would b
 /* Message box as FireRed draws it: 240x48 frame at y=112, text window at (16,120), first line at y=1,
    lines 15px apart (14px font + 1px spacing). A 14px line box puts the glyph cell top on the line top. */
 .msg { position: absolute; left: 0; top: 112px; width: 240px; height: 48px; z-index: 1; background: url(assets/ui/dialog.png); color: #626262; --sh: #d5d5cd; }
+.msg[data-voice="female"] { color: #e60808; }   /* FireRed: women speak in red (TEXT_COLOR_RED), */
+.msg[data-voice="male"] { color: #3152cd; }     /* men in blue (TEXT_COLOR_BLUE); the shadow stays light gray */
 .msg[hidden] { display: none; }
 .msg p { position: absolute; left: 16px; top: 9px; }
 .msg .line { display: block; height: 15px; line-height: 14px; white-space: pre; }
