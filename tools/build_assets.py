@@ -75,6 +75,7 @@ def check_ui():
 
 
 UPM, PX, BASE = 1024, 64, 11          # 1 pixel = 64 units; baseline under cell row 10
+FONT_DATE = 3_843_158_400             # 2025-10-12 in font time (seconds since 1904)
 CELLS = {'normal': (16, 16, 16), 'small': (8, 16, 32)}   # cell w, cell h, cells per row
 EXPECTED_A = ['.###.', '#...#', '#...#', '#...#', '#####', '#...#', '#...#', '#...#']   # rows 3..10 of 'A'
 REQUIRED = ('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
@@ -193,6 +194,8 @@ def save_font(glyphs, adv, family, out):
     fb.setupOS2(version=4, sTypoAscender=asc, sTypoDescender=-desc, sTypoLineGap=0, usWinAscent=asc, usWinDescent=desc,
                 sxHeight=5 * PX, sCapHeight=8 * PX, fsSelection=0xC0)   # regular + use typo metrics
     fb.setupPost()
+    fb.updateHead(created=FONT_DATE, modified=FONT_DATE)   # fixed dates: rebuilding gives byte-identical files
+    fb.font.recalcTimestamp = False
     fb.font.flavor = 'woff'
     fb.save(str(out))
 
