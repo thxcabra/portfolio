@@ -452,7 +452,9 @@ document.addEventListener('keydown', (e) => {
     return;
   }
   if (KEY_HW[e.key]) press(KEY_HW[e.key]);
-  if (skipTyping && ['z', 'Z', 'Enter', ' '].includes(e.key)) { e.preventDefault(); return skipTyping(); }
+  // A finishes the text only on reading screens; on a list it always picks the item under the cursor.
+  const onItem = document.activeElement?.matches('[data-nav]');
+  if (skipTyping && !onItem && ['z', 'Z', 'Enter', ' '].includes(e.key)) { e.preventDefault(); return skipTyping(); }
   const d = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] }[e.key];
   if (d) { e.preventDefault(); return dir(...d); }
   if (e.key === 'z' || e.key === 'Z') return pressA();
