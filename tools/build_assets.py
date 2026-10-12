@@ -206,6 +206,7 @@ def build_fonts():
     glyphs, adv = collect_glyphs('normal')
     save_font(glyphs, adv, 'Gen3', font / 'gen3.woff')
     (font / 'charset.json').write_text(json.dumps(sorted(glyphs), ensure_ascii=False), encoding='utf-8')
+    (font / 'widths.json').write_text(json.dumps(adv, ensure_ascii=False), encoding='utf-8')
     small, small_adv = collect_glyphs('small')
     save_font(small, small_adv, 'Gen3 Small', font / 'gen3-small.woff')
     return glyphs, small
@@ -224,7 +225,7 @@ def check_fonts(glyphs, small):
     print(f'fonts ok ({len(glyphs)} glyphs, small {len(small)})')
 
 
-SFX = {'select': 0x05, 'win_open': 0x06, 'pc_on': 0x04, 'dex_scroll': 0x65, 'dex_page': 0x66, 'success': 0x19, 'shiny': 0x5F}
+SFX = {'select': 0x05, 'win_open': 0x06, 'pc_on': 0x04, 'dex_scroll': 0x65, 'dex_page': 0x66, 'success': 0x19, 'shiny': 0x5F, 'bump': 0x07}
 
 
 def downmix(src, dst):
@@ -281,11 +282,104 @@ def check_audio(names, clips):
     print(f'audio ok ({len(SFX)} sfx, {len(names)} cries); video clips: {len(clips)}')
 
 
+WORLD_PEOPLE = {   # sprite sheet and palette, as in the game's object event tables
+    'red': ('red_normal', 'player'),
+    'nurse': ('nurse', 'npc_pink'),
+    'gentleman': ('gentleman', 'npc_white'),
+    'boy': ('boy', 'npc_green'),
+    'youngster': ('youngster', 'npc_blue'),
+}
+LAYER_COVERED = 1   # both halves of the metatile sit under the people
+
+
+def load_tileset(kind, name):
+    d = FR / 'data/tilesets' / kind / name
+    _, _, tiles, _ = pngio.read(d / 'tiles.png')
+    pals = [pngio.read_jasc(d / f'palettes/{i:02d}.pal') for i in range(16)]
+    mt, at = (d / 'metatiles.bin').read_bytes(), (d / 'metatile_attributes.bin').read_bytes()
+    metas = [struct.unpack_from('<8H', mt, i * 16) for i in range(len(mt) // 16)]
+    attrs = [struct.unpack_from('<I', at, i * 4)[0] for i in range(len(at) // 4)]
+    return tiles, pals, metas, attrs
+
+
+def build_world():
+    """FireRed's Pokémon Center 1F: a floor layer (under people), an over layer (the parts of
+    metatiles drawn above people) and a JSON with collision, behaviors and who stands where."""
+    out = OUT / 'world'
+    (out / 'people').mkdir(parents=True, exist_ok=True)
+    prim, sec = load_tileset('primary', 'building'), load_tileset('secondary', 'pokemon_center')
+    W, H = 15, 10
+    blocks = struct.unpack(f'<{W * H}H', (FR / 'data/layouts/PokemonCenter_1F/map.bin').read_bytes())
+    backdrop = tuple(prim[1][0][0]) + (255,)
+    floor = [[backdrop] * (W * 16) for _ in range(H * 16)]
+    over = [[(0, 0, 0, 0)] * (W * 16) for _ in range(H * 16)]
+
+    def meta(mid):
+        return (prim[2][mid], prim[3][mid]) if mid < 640 else (sec[2][mid - 640], sec[3][mid - 640])
+
+    def draw(img, bx, by, entries):
+        for k, e in enumerate(entries):
+            idx, hflip, vflip, p = e & 0x3FF, e >> 10 & 1, e >> 11 & 1, e >> 12
+            tiles, i = (prim[0], idx) if idx < 640 else (sec[0], idx - 640)
+            colors = prim[1][p] if p < 7 else sec[1][p]
+            tx, ty = (i % 16) * 8, (i // 16) * 8
+            ox, oy = bx + (k % 2) * 8, by + (k // 2) * 8
+            for y in range(8):
+                for x in range(8):
+                    v = tiles[ty + (7 - y if vflip else y)][tx + (7 - x if hflip else x)]
+                    if v:
+                        img[oy + y][ox + x] = tuple(colors[v]) + (255,)
+
+    walls, behavior = [], []
+    for y in range(H):
+        walls.append([])
+        behavior.append([])
+        for x in range(W):
+            b = blocks[y * W + x]
+            entries, attr = meta(b & 0x3FF)
+            draw(floor, x * 16, y * 16, entries[:4])
+            draw(floor if (attr >> 29) & 3 == LAYER_COVERED else over, x * 16, y * 16, entries[4:])
+            walls[y].append(1 if b >> 10 & 3 else 0)
+            behavior[y].append(attr & 0x1FF)
+    pngio.write(out / 'center-floor.png', floor)
+    pngio.write(out / 'center-over.png', over)
+
+    events = json.loads((FR / 'data/maps/ViridianCity_PokemonCenter_1F/map.json').read_text(encoding='utf-8'))
+    people = [{'id': o['graphics_id'].replace('OBJ_EVENT_GFX_', '').lower(), 'x': o['x'], 'y': o['y'],
+               'wander': o['movement_type'] == 'MOVEMENT_TYPE_WANDER_AROUND'} for o in events['object_events']]
+    (out / 'center.json').write_text(json.dumps({'w': W, 'h': H, 'walls': walls, 'behavior': behavior, 'people': people}),
+                                     encoding='utf-8')
+    G = GFX / 'object_events'
+    for name, (pic, pal) in WORLD_PEOPLE.items():
+        _, _, px, _ = pngio.read(G / f'pics/people/{pic}.png')
+        pngio.write(out / f'people/{name}.png', pngio.to_rgba(px, pngio.read_jasc(G / f'palettes/{pal}.pal')))
+    return walls, behavior, people
+
+
+def check_world(walls, behavior, people):
+    w, h, _, _ = pngio.read(OUT / 'world/center-floor.png')
+    assert (w, h) == (240, 160), (w, h)
+    assert len(walls) == 10 and all(len(r) == 15 for r in walls)
+
+    def find(b):
+        return [(x, y) for y, row in enumerate(behavior) for x, v in enumerate(row) if v == b]
+    assert find(0x83) == [(11, 1)], f'PC: {find(0x83)}'
+    assert find(0x85) == [(12, 1), (13, 1)], f'region map: {find(0x85)}'
+    assert find(0x6A) == [(1, 6)] and find(0x65) == [(7, 8)], (find(0x6A), find(0x65))
+    assert {p['id'] for p in people} == {'nurse', 'gentleman', 'boy', 'youngster'}, people
+    assert walls[8][7] == 0 and walls[4][7] == 0, 'door mat and counter front must be walkable'
+    for name in WORLD_PEOPLE:
+        w, h, _, _ = pngio.read(OUT / f'world/people/{name}.png')
+        assert h == 32 and w % 16 == 0, (name, w, h)
+    print(f'world ok ({len(people)} people)')
+
+
 def main():
     build_ui()
     check_ui()
     check_fonts(*build_fonts())
     check_audio(build_audio(), build_video())
+    check_world(*build_world())
 
 
 if __name__ == '__main__':
