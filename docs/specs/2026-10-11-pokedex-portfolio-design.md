@@ -163,9 +163,9 @@ Isso mantém os pixels nítidos em monitor comum (dpr 1 → 2×, 3×…), em Win
 
 ## 11. Celular (primeira classe)
 
-- Com `(max-width: 899px), (orientation: portrait)`, o aparelho some e vira layout DS: em retrato, tela esquerda em cima e painel direito embaixo; em paisagem (celular deitado), os dois lado a lado. Ocupa a tela toda.
+- Quando a janela está em retrato **ou** o aparelho não cabe em escala ≥ 2 (texto do painel ficaria abaixo de 16px), o aparelho some e vira layout DS: em retrato, tela esquerda em cima e painel direito embaixo; em paisagem (celular deitado), os dois lado a lado. Ocupa a tela toda. A regra fica no `fit()` do JS, que já calcula a escala.
 - Mesmas rotas, mesmas telas, mesmo conteúdo. Nada é exclusivo do desktop, exceto os botões físicos do aparelho, que no celular são substituídos pelo toque e pelo botão B fixo.
-- Alvos de toque ≥44px.
+- Alvos de toque: ~24px no mínimo (WCAG 2.2 AA) nos itens da tela de cima — a tela tem só 160 pixels de altura, então 44px não cabem com 6 itens; no painel e no botão B, ≥28px e 56px.
 - O painel de baixo rola se o texto for longo; a tela de cima fica fixa.
 - Intro também existe no celular (Pokédex fechada centralizada, toque para abrir).
 - Verificado em 390×844 e em paisagem.
