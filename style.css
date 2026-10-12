@@ -28,26 +28,25 @@ noscript { color: #f8f8f8; }
 .bg-dim { position: fixed; inset: 0; z-index: -1; background: rgb(0 0 0 / .5); }
 
 /* ---------- the GBA (game pixels, scaled by --k) ---------- */
-.gba { position: relative; width: 352px; height: 208px; zoom: var(--k); }
+.gba { position: relative; width: 400px; height: 196px; zoom: var(--k); }
 body:not(.ready) .gba { opacity: 0; }   /* not visibility: hidden, which would block focus */
 .gba .body { position: absolute; inset: 0; shape-rendering: crispEdges; }
-.p-dpad .g-dpad, .p-a .g-a, .p-b .g-b, .p-start .g-start, .p-select .g-select, .p-l .g-l, .p-r .g-r { transform: translateY(1px); }
+.p-dpad .g-dpad, .p-a .g-a, .p-b .g-b, .p-start .g-start, .p-select .g-select { transform: translateY(1px); }
 .gba:has([data-btn="a"]:hover) .g-a, .gba:has([data-btn="b"]:hover) .g-b,
-.gba:has([data-btn="start"]:hover) .g-start, .gba:has([data-btn="select"]:hover) .g-select,
-.gba:has([data-btn="l"]:hover) .g-l, .gba:has([data-btn="r"]:hover) .g-r { filter: brightness(1.2); }
+.gba:has([data-btn="start"]:hover) .g-start, .gba:has([data-btn="select"]:hover) .g-select { filter: brightness(1.2); }
 .led-sound { fill: #2a3a2a; }
 .sound-on .led-sound { fill: #78f878; }
 .hw { position: absolute; }
 .round { display: grid; place-items: center; color: #2c2c34; font-family: 'Gen3 Small'; }
 .label { position: absolute; font-family: 'Gen3 Small'; color: #a69ed8; text-align: center; white-space: nowrap; pointer-events: none; }
-.label.name { left: 56px; top: 174px; width: 240px; }
-.label.sel { left: 114px; top: 194px; width: 48px; }
-.label.sta { left: 190px; top: 194px; width: 48px; }
-.label.snd { left: 310px; top: 178px; width: 42px; }
+.label.name { left: 80px; top: 172px; width: 240px; }
+.label.sel { left: 14px; top: 152px; width: 40px; }
+.label.sta { left: 14px; top: 122px; width: 40px; }
+.label.snd { left: 338px; top: 142px; width: 54px; }
 
 /* ---------- the screen (240x160, Gen 3 UI) ---------- */
 .screen {
-  position: absolute; left: 56px; top: 14px; width: 240px; height: 160px; overflow: hidden;
+  position: absolute; left: 80px; top: 12px; width: 240px; height: 160px; overflow: hidden;
   background: #000; color: #383838; --sh: #d8d8d8;
   touch-action: none; user-select: none; cursor: pointer;
 }

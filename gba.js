@@ -6,7 +6,7 @@ import { fitScale, coverScale, pickNext, discPath, rrectPath } from './logic.js'
 import { setEnabled, sfx, cry } from './sound.js';
 import cart from './carts/center/index.js';
 
-const W = 352, H = 208;
+const W = 400, H = 196;
 const SPEEDS = { slow: 30, mid: 60, fast: 120 };   // characters per second
 const KEYS = {
   ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right',
@@ -39,28 +39,28 @@ const INK = '#1c1638', BODY = '#4b3f8f', HI = '#6a5cb5', LO = '#31285f', KEY = '
 const path = (d, fill, cls = '') => `<path d="${d}" fill="${fill}"${cls && ` class="${cls}"`}/>`;
 const box = (x, y, w, h, fill, ink, ins = [2, 1]) => path(rrectPath(x, y, w, h, ins), ink) + path(rrectPath(x + 2, y + 2, w - 4, h - 4, ins.slice(1)), fill);
 const disc = (x, y, d, fill, ink) => path(discPath(x, y, d), ink) + path(discPath(x + 2, y + 2, d - 4), fill);
-const GRILL = Array.from({ length: 16 }, (_, i) => `M${318 + (i % 4) * 8} ${150 + Math.floor(i / 4) * 8}h4v4h-4z`).join('');
+// Layout (game px): 68px side columns. Left: d-pad, then START and SELECT below it, as on the real GBA.
+// Right: A/B, then the speaker with the sound switch. Every control keeps >= 10px from the screen bezel.
+const GRILL = Array.from({ length: 16 }, (_, i) => `M${356 + (i % 4) * 8} ${108 + Math.floor(i / 4) * 8}h4v4h-4z`).join('');
 const BODY_SVG = `<svg class="body" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true">
-  <g class="g-l">${box(16, 0, 72, 12, LO, INK)}</g><g class="g-r">${box(264, 0, 72, 12, LO, INK)}</g>
-  ${box(0, 4, W, H - 4, BODY, INK, [6, 3, 2, 1, 1])}
-  ${path('M8 8h336v2h-336z', HI)}${path('M8 202h336v2h-336z', LO)}
-  ${box(44, 8, 264, 180, '#2c2c34', KEY_INK, [3, 1, 1])}
-  ${path('M54 12h244v164h-244z', KEY_INK)}
-  ${path(discPath(14, 20, 6), '#78f878')}
-  <g class="g-dpad">${path(rrectPath(19, 82, 14, 36, [1]) + rrectPath(8, 93, 36, 14, [1]), KEY_INK)}${path(rrectPath(21, 84, 10, 32, []) + rrectPath(10, 95, 32, 10, []), KEY)}</g>
-  <g class="g-a">${disc(326, 78, 20, '#c8c8d0', KEY_INK)}</g><g class="g-b">${disc(310, 104, 20, '#c8c8d0', KEY_INK)}</g>
-  <g class="g-select">${box(126, 190, 24, 8, KEY, KEY_INK, [1])}</g><g class="g-start">${box(202, 190, 24, 8, KEY, KEY_INK, [1])}</g>
-  ${path(discPath(324, 138, 6), '#2a3a2a', 'led-sound')}
+  ${box(0, 0, W, H, BODY, INK, [6, 3, 2, 1, 1])}
+  ${path('M8 4h384v2h-384z', HI)}${path('M8 188h384v2h-384z', LO)}
+  ${box(68, 6, 264, 182, '#2c2c34', KEY_INK, [3, 1, 1])}
+  ${path('M78 10h244v164h-244z', KEY_INK)}
+  ${path(discPath(14, 12, 6), '#78f878')}
+  <g class="g-dpad">${path(rrectPath(27, 56, 14, 36, [1]) + rrectPath(16, 67, 36, 14, [1]), KEY_INK)}${path(rrectPath(29, 58, 10, 32, []) + rrectPath(18, 69, 32, 10, []), KEY)}</g>
+  <g class="g-start">${box(20, 116, 28, 8, KEY, KEY_INK, [1])}</g><g class="g-select">${box(20, 146, 28, 8, KEY, KEY_INK, [1])}</g>
+  <g class="g-a">${disc(366, 46, 22, '#c8c8d0', KEY_INK)}</g><g class="g-b">${disc(342, 64, 22, '#c8c8d0', KEY_INK)}</g>
+  ${path(discPath(344, 112, 6), '#2a3a2a', 'led-sound')}
   ${path(GRILL, LO)}
 </svg>`;
 const btn = (name, x, y, w, h, text = '', cls = 'hw') =>
   `<button type="button" class="${cls}" data-btn="${name}" tabindex="-1" aria-label="${name}" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px">${text}</button>`;
 const CONTROLS = [
-  btn('up', 19, 82, 14, 12), btn('down', 19, 106, 14, 12), btn('left', 8, 93, 12, 14), btn('right', 32, 93, 12, 14),
-  btn('a', 326, 78, 20, 20, 'A', 'hw round'), btn('b', 310, 104, 20, 20, 'B', 'hw round'),
-  btn('select', 122, 186, 32, 16), btn('start', 198, 186, 32, 16),
-  btn('l', 16, 0, 72, 12), btn('r', 264, 0, 72, 12),
-  btn('sound', 314, 132, 34, 48),
+  btn('up', 27, 56, 14, 12), btn('down', 27, 80, 14, 12), btn('left', 16, 67, 12, 14), btn('right', 40, 67, 12, 14),
+  btn('start', 14, 112, 40, 28), btn('select', 14, 142, 40, 28),
+  btn('a', 366, 46, 22, 22, 'A', 'hw round'), btn('b', 342, 64, 22, 22, 'B', 'hw round'),
+  btn('sound', 338, 104, 54, 52),
 ].join('');
 const LABELS = `<p class="label name">${DATA.trainer.name}</p><p class="label sel">SELECT</p><p class="label sta">START</p><p class="label snd">${t('opt_sound')}</p>`;
 
