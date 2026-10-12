@@ -221,10 +221,68 @@ def check_fonts(glyphs, small):
     print(f'fonts ok ({len(glyphs)} glyphs, small {len(small)})')
 
 
+SFX = {'select': 0x05, 'win_open': 0x06, 'pc_on': 0x04, 'dex_scroll': 0x65, 'dex_page': 0x66, 'success': 0x19, 'shiny': 0x5F}
+
+
+def downmix(src, dst):
+    """44.1 kHz stereo 16-bit -> 22.05 kHz mono 16-bit (exact 2:1, averaging)."""
+    with wave.open(str(src)) as w:
+        ch, width, rate, n = w.getnchannels(), w.getsampwidth(), w.getframerate(), w.getnframes()
+        frames = w.readframes(n)
+    assert width == 2 and rate == 44100, f'{src.name}: expected 16-bit 44.1 kHz, got {width * 8}-bit {rate} Hz'
+    samples = struct.unpack(f'<{n * ch}h', frames)
+    mono = [sum(samples[i:i + ch]) // ch for i in range(0, len(samples), ch)]
+    half = [(mono[i] + mono[i + 1]) // 2 for i in range(0, len(mono) - 1, 2)]
+    with wave.open(str(dst), 'wb') as o:
+        o.setnchannels(1)
+        o.setsampwidth(2)
+        o.setframerate(22050)
+        o.writeframes(struct.pack(f'<{len(half)}h', *half))
+
+
+def dex_names():
+    src = (FR / 'include/constants/pokedex.h').read_text(encoding='utf-8')
+    block = src[src.index('NATIONAL_DEX_NONE'):]
+    return [n for n in re.findall(r'NATIONAL_DEX_(\w+),', block) if n != 'NONE'][:386]
+
+
+def build_audio():
+    sfx, cries = OUT / 'sfx', OUT / 'cries'
+    sfx.mkdir(parents=True, exist_ok=True)
+    cries.mkdir(parents=True, exist_ok=True)
+    for name, song in SFX.items():
+        downmix(SFX_DIR / f'firered_{song:04X}.wav', sfx / f'{name}.wav')
+    names = dex_names()
+    for number, name in enumerate(names, 1):
+        shutil.copyfile(FR / f'sound/direct_sound_samples/cries/{name.lower()}.wav', cries / f'{number}.wav')
+    return names
+
+
+def build_video():
+    out = OUT / 'video'
+    out.mkdir(parents=True, exist_ok=True)
+    src = RAW / 'videos'
+    clips = sorted(p.name for p in src.iterdir() if p.suffix.lower() in ('.webm', '.mp4')) if src.exists() else []
+    for name in clips:
+        shutil.copyfile(src / name, out / name)
+    (out / 'clips.json').write_text(json.dumps(clips), encoding='utf-8')
+    return clips
+
+
+def check_audio(names, clips):
+    assert names[5] == 'CHARIZARD' and names[385] == 'DEOXYS', (names[5], names[385])
+    assert len(list((OUT / 'cries').glob('*.wav'))) >= 386, 'missing cries'
+    for name in SFX:
+        with wave.open(str(OUT / 'sfx' / f'{name}.wav')) as w:
+            assert w.getnchannels() == 1 and w.getframerate() == 22050, name
+    print(f'audio ok ({len(SFX)} sfx, {len(names)} cries); video clips: {len(clips)}')
+
+
 def main():
     build_ui()
     check_ui()
     check_fonts(*build_fonts())
+    check_audio(build_audio(), build_video())
 
 
 if __name__ == '__main__':
