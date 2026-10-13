@@ -11,12 +11,15 @@ import { createOptions } from './screens/options.js';
 import { createContact } from './screens/contact.js';
 import { createDex } from './screens/dex.js';
 import { createSummary } from './screens/summary.js';
+import { createCard } from './screens/card.js';
+import { createAsk } from './screens/ask.js';
 import { DATA } from '../../data.js';
 
 const VOICE = { nurse: 'female', gentleman: 'male', boy: 'male', youngster: 'male' };   // by the game's gender table
 const SCREENS = {   // menu id -> (n) => screen; the ones not built yet say "coming soon"
   projetos: (n) => createDex({ api, widths, projects: DATA.projects, start: n ? n - 1 : 0, open: openProject, close: () => stack.pop() }),
   opcoes: () => createOptions({ api, setFrame, close: () => stack.pop() }),
+  sobre: () => createCard({ api, widths, data: DATA, say, close: () => stack.pop() }),
   contato: () => createContact({ api, widths, contact: DATA.contact, say, close: () => stack.pop() }),
 };
 
@@ -148,15 +151,32 @@ function openProject(i) {
   }));
 }
 
+// The Nurse greets, then asks what she can do; each answer takes her question away first.
+function nurse() {
+  const then = (fn) => () => {
+    stack.pop();
+    fn();
+  };
+  say(api.talk('nurse'), () => stack.push(createAsk({
+    api, widths, question: api.talk('nurse_ask')[0], voice: 'female',
+    items: [
+      { label: api.t('nurse_about'), run: then(() => openScreen('sobre')) },
+      { label: api.t('menu_contato'), run: then(() => openScreen('contato')) },
+      { label: api.t('nurse_bye'), run: then(() => say(api.talk('nurse_bye'), null, 'female')) },
+    ],
+  })), 'female');
+}
+
 const THINGS = { [BEHAVIOR.REGION_MAP]: 'board', [BEHAVIOR.BOOKSHELF]: 'shelf' };
 function interact(target) {
   if (target.behavior === BEHAVIOR.PC) {
     api.sfx('pc_on');   // the PC plays its own sound instead of SE_SELECT
-    return say(api.talk('pc'));
+    return say(api.talk('pc'), () => openScreen('projetos'));   // the Box comes later: the list for now
   }
   const key = target.person ?? THINGS[target.behavior];
   if (!key) return;   // nothing there: no sound, like the game
   api.sfx('select');   // A on someone or something (field_control_avatar.c)
+  if (key === 'nurse') return nurse();
   say(api.talk(key), null, VOICE[key]);
 }
 

@@ -138,6 +138,16 @@ body:not(.ready) .gba { opacity: 0; }   /* not visibility: hidden, which would b
 .memo .line { height: 14px; }
 .summary .move { color: #202020; --sh: #dedede; }
 .sum-shot canvas { display: block; }
+/* SOBRE (trainer_card.c): the card turns over BG2; text, stars, badges and Red hide while it turns. */
+.card { background: #000; animation: from-black .15s steps(8); }
+.card.to-black { animation: to-black .15s steps(8) forwards; }
+.card-face, .card-top { position: absolute; inset: 0; }
+.card-face { transform-origin: 50% 50%; }
+.card-face.turning .card-top { visibility: hidden; }
+.card-star { position: absolute; top: 56px; }
+.badge { position: absolute; top: 128px; width: 16px; height: 16px; background: url(assets/ui/badges.png); }
+.card-red { position: absolute; left: 165px; top: 44px; }
+.card .stat { color: #e60808; --sh: #ffbd73; }
 .help { position: absolute; left: 0; top: 120px; width: 240px; height: 40px; background: url(assets/ui/help.png); color: #fff; --sh: #626262; }
 
 /* ---------- full-size pictures (api.show), over the whole page ---------- */

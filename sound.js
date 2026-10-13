@@ -1,6 +1,6 @@
 // Game sounds through Web Audio, all through one volume. Silent until a level is set (the first
 // time inside a user gesture, for the browser's autoplay rules); any failure stays silent.
-const SFX = ['select', 'win_open', 'pc_on', 'dex_scroll', 'dex_page', 'success', 'shiny', 'bump'];
+const SFX = ['select', 'win_open', 'pc_on', 'dex_scroll', 'dex_page', 'success', 'shiny', 'bump', 'card_flip', 'card_flipping', 'card_open'];
 // The ripped effects peak around 5–17% of full scale and the cries near 100%: these even them out.
 const SFX_GAIN = 3;
 const CRY_GAIN = 0.4;

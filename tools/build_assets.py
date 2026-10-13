@@ -29,12 +29,12 @@ def rgba_png(src, out, palette_file=None):
     pngio.write(out, pngio.to_rgba(px, pal))
 
 
-def draw_bg(img, tiles, per_row, tilemap, pal):
-    """Draws the visible 30x20 part of a 32-column BG tilemap (u16: tile, hflip, vflip, palette)
-    into img. pal(entry) gives the colors for a tile's pixels; pixel index 0 is transparent."""
+def draw_bg(img, tiles, per_row, tilemap, pal, cols=32):
+    """Draws the visible 30x20 part of a BG tilemap `cols` entries wide (u16: tile, hflip, vflip,
+    palette) into img. pal(entry) gives the colors for a tile's pixels; pixel index 0 is transparent."""
     data = tilemap.read_bytes()
-    for i in range(min(len(data) // 2, 32 * 20)):
-        col, row = i % 32, i // 32
+    for i in range(min(len(data) // 2, cols * 20)):
+        col, row = i % cols, i // cols
         if col >= 30:
             continue
         e = data[i * 2] | data[i * 2 + 1] << 8
@@ -361,7 +361,8 @@ def check_fonts(glyphs, small):
     print(f'fonts ok ({len(glyphs)} glyphs, small {len(small)})')
 
 
-SFX = {'select': 0x05, 'win_open': 0x06, 'pc_on': 0x04, 'dex_scroll': 0x65, 'dex_page': 0x66, 'success': 0x19, 'shiny': 0x5F, 'bump': 0x07}
+SFX = {'select': 0x05, 'win_open': 0x06, 'pc_on': 0x04, 'dex_scroll': 0x65, 'dex_page': 0x66, 'success': 0x19, 'shiny': 0x5F, 'bump': 0x07,
+       'card_flip': 0xF2, 'card_flipping': 0xF3, 'card_open': 0xF4}
 
 
 def downmix(src, dst):
@@ -687,6 +688,40 @@ def check_kanto(data):
     print(f'kanto ok ({len(data["metas"])} metatiles, {len(data["people"])} people)')
 
 
+CARD_COLORS = ['blue', 'green', 'bronze', 'silver', 'gold']   # sKantoTrainerCardPals: 0 to 4 stars
+
+
+def build_card(out):
+    """FireRed's trainer card (trainer_card.c). For each card colour (0-4 stars): the screen behind
+    the card (bg.bin, BG2) and the card's front and back (front.bin, back.bin, BG0), 30-column
+    tilemaps on tiles.png (index & 15) with palettes 0-2 from <colour>.pal; the card layers are
+    transparent where BG2 shows. Plus the star (tile 143 in star.pal) and Red's front picture."""
+    out.mkdir(parents=True, exist_ok=True)
+    T = GFX / 'trainer_card'
+    _, _, tiles, _ = pngio.read(T / 'tiles.png')
+    tiles = [[v & 15 for v in row] for row in tiles]
+    for stars, color in enumerate(CARD_COLORS):
+        pal = pngio.read_jasc(T / f'{color}.pal')
+        slot = lambda e: pal[(e >> 12) * 16:(e >> 12) * 16 + 16]
+        for name, tilemap, back in (('bg', 'bg.bin', tuple(pal[0]) + (255,)), ('front', 'front.bin', (0, 0, 0, 0)), ('back', 'back.bin', (0, 0, 0, 0))):
+            img = [[None] * 240 for _ in range(160)]
+            draw_bg(img, tiles, 16, T / tilemap, slot, 30)
+            pngio.write(out / f'{name}-{stars}.png', [[tuple(p[1][p[0]]) + (255,) if p else back for p in row] for row in img])
+    star = pngio.read_jasc(T / 'star.pal')
+    pngio.write(out / 'star.png', [[tuple(star[v]) + (255,) if v else (0, 0, 0, 0) for v in tiles[(143 // 16) * 8 + y][(143 % 16) * 8:(143 % 16) * 8 + 8]] for y in range(8)])
+    rgba_png(GFX / 'trainers/front_pics/red_front_pic.png', out / 'red.png', GFX / 'trainers/palettes/red.pal')
+
+
+def check_card():
+    for stars in range(5):
+        for name in ('bg', 'front', 'back'):
+            assert pngio.read(OUT / f'card/{name}-{stars}.png')[:2] == (240, 160), f'card/{name}-{stars}.png'
+    _, _, front, _ = pngio.read(OUT / 'card/front-0.png')
+    assert front[40][40][3] == 255 and front[0][0][3] == 0, 'the card covers its middle and leaves the corners to BG2'
+    assert pngio.read(OUT / 'card/red.png')[:2] == (64, 64) and pngio.read(OUT / 'card/star.png')[:2] == (8, 8)
+    print('card ok')
+
+
 def check_intro():
     for name, size in (('gf-text', (144, 16)), ('gf-logo', (32, 64)), ('star', (16, 16)),
                        ('sparkles-small', (16, 16)), ('sparkles-big', (32, 128))):
@@ -709,6 +744,8 @@ def main():
     build_summary(OUT / 'summary')
     check_mons_dex_summary()
     check_kanto(build_kanto(OUT / 'kanto'))
+    build_card(OUT / 'card')
+    check_card()
     check_fonts(*build_fonts())
     check_audio(build_audio())
     check_world(*build_world())

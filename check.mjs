@@ -215,6 +215,14 @@ badges.forEach((b, i) => {
   both(b.text, w);
 });
 
+assert.equal(new Set(badges.map((b) => b.shape)).size, badges.length, 'insígnias: um formato por emprego (cada uma tem o seu lugar no cartão)');
+// SOBRE: the card's lines fit (front values end at x=142, back lines run from x=18 to the card's edge)
+for (const l of ['pt', 'en']) {
+  const [role, ...more] = trainer.role[l].split(' · ');
+  for (const s of [role, more.join(' · '), trainer.location, trainer.languages[l]]) assert.ok(fw(s) <= 212, `cartão: "${s}" não cabe no verso`);
+  assert.ok(fw(ui[l].card_name + trainer.name) <= 112, `cartão: nome não cabe na frente (${l})`);
+}
+
 const { education } = DATA;
 assert.ok(Array.isArray(education) && education.length >= 1, 'education precisa ser uma lista');
 education.forEach((e, i) => {
