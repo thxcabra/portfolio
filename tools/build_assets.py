@@ -48,7 +48,7 @@ def draw_bg(img, tiles, per_row, tilemap, pal):
 
 def build_title(out):
     """FireRed's title screen as title_screen.c sets it up, one PNG per part that moves on its own:
-    back (BG3), front (BG2 + Charizard on BG1 + logo on BG0), press (the PRESS START pixels, which
+    back (BG3), bars (BG2), charizard (BG1), logo (BG0), press (the PRESS START pixels, which
     blink), lit (the logo brightened by the shine, BLDY 13) and slash (the shine's window shape)."""
     out.mkdir(parents=True, exist_ok=True)
     T = GFX / 'title_screen'
@@ -66,15 +66,17 @@ def build_title(out):
     draw_bg(bg2, tiles, 16, T / 'copyright_press_start.bin', lambda e: bg)
     press = lambda v: 1 <= v <= 5   # the colors the blink turns black
     pngio.write(out / 'press.png', rgba(bg2, press))
-    front = [[(6, bg) if p and press(p[0]) else p for p in row] for row in bg2]
+    bars = [[(6, bg) if p and press(p[0]) else p for p in row] for row in bg2]
+    pngio.write(out / 'bars.png', rgba(bars))
+    charizard = blank()
     _, _, tiles, _ = pngio.read(T / 'firered/box_art_mon.png')
-    draw_bg(front, tiles, 12, T / 'firered/box_art_mon.bin', lambda e: pngio.read_jasc(T / 'firered/box_art_mon.pal'))
+    draw_bg(charizard, tiles, 12, T / 'firered/box_art_mon.bin', lambda e: pngio.read_jasc(T / 'firered/box_art_mon.pal'))
+    pngio.write(out / 'charizard.png', rgba(charizard))
     logo = blank()
     _, _, tiles, _ = pngio.read(T / 'firered/game_title_logo.png')
     logo_pal = pngio.read_jasc(T / 'firered/game_title_logo.pal')
     draw_bg(logo, tiles, 32, T / 'firered/game_title_logo.bin', lambda e: logo_pal)   # 8bpp: index into all 208 colors
-    front = [[l or f for f, l in zip(fr, lr)] for fr, lr in zip(front, logo)]
-    pngio.write(out / 'front.png', rgba(front))
+    pngio.write(out / 'logo.png', rgba(logo))
 
     def lighten(c):   # per 5-bit channel: I + (31 - I) * 13 / 16
         i = c >> 3
@@ -86,8 +88,29 @@ def build_title(out):
     rgba_png(T / 'firered/flames.png', out / 'flames.png')
 
 
+def build_intro(out):
+    """The GAME FREAK scene's pieces (intro.c): the name (game_freak.png, grayscale, so index = 15 - gray,
+    in logo.png's palette as on BG2), the logo, the star and the two sparkle sheets (sparkles.pal), plus
+    intro.json with the band's navy (bg.pal colour 1) and gSineTable from trig.c (Q8.8 values)."""
+    out.mkdir(parents=True, exist_ok=True)
+    G = GFX / 'intro/game_freak'
+    _, _, logo_px, logo_pal = pngio.read(G / 'logo.png')
+    _, _, gray, _ = pngio.read(G / 'game_freak.png')
+    pngio.write(out / 'gf-text.png', pngio.to_rgba([[15 - g for g in row] for row in gray], logo_pal))
+    pngio.write(out / 'gf-logo.png', pngio.to_rgba(logo_px, logo_pal))
+    rgba_png(G / 'star.png', out / 'star.png')
+    rgba_png(G / 'sparkles_small.png', out / 'sparkles-small.png', G / 'sparkles.pal')
+    rgba_png(G / 'sparkles_big.png', out / 'sparkles-big.png', G / 'sparkles.pal')
+    src = (FR / 'src/trig.c').read_text(encoding='utf-8')
+    table = src[src.index('gSineTable[]'):]
+    table = table[:table.index('};')]
+    sine = [int(float(v) * 256) for v in re.findall(r'Q_8_8\(([-0-9.]+)\)', table)]
+    navy = pngio.read_jasc(G / 'bg.pal')[1]
+    (out / 'intro.json').write_text(json.dumps({'navy': list(navy), 'sine': sine}, separators=(',', ':')), encoding='utf-8')
+
+
 def check_title():
-    for name, size in (('back', (240, 160)), ('front', (240, 160)), ('press', (240, 160)), ('lit', (240, 160)),
+    for name, size in (('back', (240, 160)), ('bars', (240, 160)), ('charizard', (240, 160)), ('logo', (240, 160)), ('press', (240, 160)), ('lit', (240, 160)),
                        ('slash', (64, 64)), ('flames', (16, 160))):
         w, h, px, _ = pngio.read(OUT / f'title/{name}.png')
         assert (w, h) == size, f'title/{name}.png is {w}x{h}'
@@ -486,11 +509,24 @@ def check_world(walls, behavior, people):
     print(f'world ok ({len(people)} people)')
 
 
+def check_intro():
+    for name, size in (('gf-text', (144, 16)), ('gf-logo', (32, 64)), ('star', (16, 16)),
+                       ('sparkles-small', (16, 16)), ('sparkles-big', (32, 128))):
+        w, h, _, _ = pngio.read(OUT / f'intro/{name}.png')
+        assert (w, h) == size, f'intro/{name}.png is {w}x{h}'
+    data = json.loads((OUT / 'intro/intro.json').read_text(encoding='utf-8'))
+    assert len(data['sine']) == 320 and data['sine'][0] == 0 and data['sine'][64] == 256, 'gSineTable'
+    assert tuple(data['navy']) == (24, 41, 74), data['navy']
+    print('intro ok')
+
+
 def main():
     build_ui()
     check_ui()
     build_title(OUT / 'title')
     check_title()
+    build_intro(OUT / 'intro')
+    check_intro()
     check_fonts(*build_fonts())
     check_audio(build_audio(), build_video())
     check_world(*build_world())
