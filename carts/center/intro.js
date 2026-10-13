@@ -10,7 +10,7 @@ const FIRST = -8, LAST = 474;
 const load = (src) => Object.assign(new Image(), { src });
 const sheet = () => Object.assign(document.createElement('canvas'), { width: 240, height: 160 });
 
-export function createIntro(root, { onDone }) {
+export function createIntro(root, { onDone, onStar = () => {} }) {
   root.innerHTML = '<canvas class="layer intro" width="240" height="160"></canvas>';
   const ctx = root.querySelector('canvas').getContext('2d');
   ctx.fillRect(0, 0, 240, 160);
@@ -79,7 +79,10 @@ export function createIntro(root, { onDone }) {
       if (s.t > 90) s.hidden = !s.hidden;
       return s.t <= 120 && s.y >= 0 && s.y <= 160;
     });
-    if (T === 0) star = { n: 0 };
+    if (T === 0) {   // IntroCB_GF_Star: the star and MUS_GAME_FREAK start together
+      star = { n: 0 };
+      onStar();
+    }
     if (star) {   // SpriteCB_Star
       star.n += 1;
       Object.assign(star, starPos(star.n, data.sine));

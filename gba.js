@@ -3,7 +3,7 @@
 // screen and the buttons and know nothing about scaling or input devices.
 import { DATA } from './data.js';
 import { fitScale, centerBox, discPath, rrectPath, corner, TEXT_SPEEDS } from './logic.js';
-import { setVolume, sfx, cry } from './sound.js';
+import { setVolume, sfx, cry, music, fadeOutMusic, fanfare } from './sound.js';
 import cart from './carts/center/index.js';
 import { startKanto } from './kanto.js';
 import { createSimple } from './simple.js';
@@ -48,6 +48,9 @@ const api = {
   // The open screen goes to the address bar (#/contato) without adding history entries.
   link: (path) => history.replaceState(null, '', path ? `#/${path}` : location.pathname + location.search),
   show: (media, i = 0) => show.open(media, i),
+  music: (name) => music(name),            // the game's songs (music.js): the one that plays now
+  fadeOutMusic: (seconds) => fadeOutMusic(seconds),
+  fanfare: (name) => fanfare(name),        // a jingle over the paused song; resolves when it ends
 };
 
 // ---------- full-size pictures, over the whole page (api.show) ----------

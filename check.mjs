@@ -7,6 +7,7 @@ import {
 } from './logic.js';
 import { MENU } from './carts/center/screens/menu.js';
 import { VOLUMES } from './sound.js';
+import { render as renderSong, RATE } from './music.js';
 
 // routes: screens with their own link
 const R = (p) => route(p, 8);
@@ -311,5 +312,18 @@ for (const l of ['pt', 'en']) {
 const contactLabels = [...contact.map((c) => c.label), ui.pt.menu_sair, ui.en.menu_sair];
 const ct = multiTiles(Math.max(...contactLabels.map((l) => textWidth(l, widthsOf))), contact.length + 1);
 assert.ok(contact.length + 1 <= 8 && 1 + ct.w <= 28, 'CONTATO: itens demais ou largos demais para a janela do jogo');
+
+// music: the songs render from the game's data (music.js), with the right length, loop and level
+const musicBank = JSON.parse(readFileSync(here('assets/music/bank.json'), 'utf8'));
+const midiOf = (n) => { const b = readFileSync(here(`assets/music/${n}.mid`)); return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength); };
+const heal = await renderSong(musicBank, 'mus_heal', midiOf('mus_heal'));
+assert.ok(Math.abs(heal.left.length / RATE - 2.03) < 0.1 && heal.loop === null, `MUS_HEAL deveria durar ~2 s sem loop (${heal.left.length / RATE})`);
+const center = await renderSong(musicBank, 'mus_poke_center', midiOf('mus_poke_center'));
+assert.ok(center.loop && center.loop[1] - center.loop[0] > 20 * RATE, 'MUS_POKE_CENTER deveria ter um loop');
+for (const r of [heal, center]) {
+  let peak = 0;
+  for (const v of r.left) { assert.ok(!Number.isNaN(v), 'música com NaN'); peak = Math.max(peak, Math.abs(v)); }
+  assert.ok(peak > 0.05 && peak <= 1, `música com nível estranho (${peak})`);
+}
 
 console.log('check ok');

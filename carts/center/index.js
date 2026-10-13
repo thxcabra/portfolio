@@ -15,6 +15,7 @@ import { createCard } from './screens/card.js';
 import { createAsk } from './screens/ask.js';
 import { createBag } from './screens/bag.js';
 import { createTm } from './screens/tm.js';
+import { createBox } from './screens/box.js';
 import { DATA } from '../../data.js';
 
 const VOICE = { nurse: 'female', gentleman: 'male', boy: 'male', youngster: 'male' };   // by the game's gender table
@@ -38,6 +39,7 @@ let hint = null;
 let titleScreen = null;
 let intro = null;
 let mode = 'off';   // off | title | loading | world
+let healing = false;   // the machine is running: nothing else happens
 
 const json = async (url) => (await fetch(url)).json();
 
@@ -59,15 +61,18 @@ function title() {
   } catch { /* no session storage: play it every time */ }
   if (!first || api.reduced()) {
     titleScreen = createTitle(screen, { reduced: api.reduced() });
+    api.music('mus_title');
     return;
   }
   mode = 'intro';
   TITLE_ART.forEach((n) => { new Image().src = `assets/title/${n}.png`; });
   intro = createIntro(screen, {
+    onStar: () => api.music('mus_game_freak'),
     onDone() {
       intro = null;
       mode = 'title';
       titleScreen = createTitle(screen, { reduced: false, entrance: true });
+      api.music('mus_title');   // title_screen.c: MUS_TITLE when the scene starts
     },
   });
 }
@@ -79,6 +84,7 @@ function skipOpening() {
     intro = null;
     mode = 'title';
     titleScreen = createTitle(screen, { reduced: api.reduced() });
+    api.music('mus_title');
     return true;
   }
   if (mode === 'title' && titleScreen.entering) {
@@ -90,7 +96,7 @@ function skipOpening() {
 
 // The room stands still while a message or any screen is up; the address shows the open screen.
 function sync() {
-  world.freeze(dialog.open || stack.size > 0);
+  world.freeze(dialog.open || stack.size > 0 || healing);
   screen.firstElementChild.classList.toggle('talking', dialog.open);
   api.link(stack.path());
   hint.hidden = stack.size > 0 || dialog.open || api.store.get('menuUsed', false);
@@ -142,17 +148,91 @@ function openScreen(id, n = null) {
   if (id === 'projetos' && n) openProject(n - 1);
 }
 
-// A project's page over the list; ↑/↓ on it move the list's cursor too.
+// A project's page over the list (↑/↓ on it move the list's cursor too) or over the PC's Box.
 function openProject(i) {
-  const dex = stack.top;
+  const below = stack.top;
   stack.push(createSummary({
     api, widths, data: DATA, index: i, say,
     onIndex(j) {
-      dex.index = j;
+      if (below?.path === 'projetos') below.index = j;
       sync();
     },
     close: () => stack.pop(),
   }));
+}
+
+// CURAR (pkmn_center_nurse.inc, FLDEFF_POKECENTER_HEAL): she turns to the machine, one ball per team
+// member lands on it every 25 frames (SE_BALL), 32 frames later the jingle starts and the monitor
+// flickers, the balls flash (96 + 24 frames) and go after 30 more; when the jingle is over she turns
+// back, thanks you and bows (8 frames up, 32 bowed, 8 up).
+const FRAME = 1000 / 59.7275;
+const wait = (frames) => new Promise((r) => setTimeout(r, api.reduced() ? 0 : frames * FRAME));
+const BALL_AT = [[0, 0], [6, 0], [0, 4], [6, 4], [0, 8], [6, 8]];   // sPokeballCoordOffsets, from (93, 36)
+async function healMachine(n) {
+  const fx = document.createElement('div');
+  fx.className = 'heal';
+  screen.firstElementChild.append(fx);
+  const balls = [];
+  for (let k = 0; k < n; k++) {
+    if (k) await wait(25);
+    const b = Object.assign(document.createElement('i'), { className: 'heal-ball' });
+    Object.assign(b.style, { left: `${89 + BALL_AT[k][0]}px`, top: `${32 + BALL_AT[k][1]}px` });
+    fx.append(b);
+    balls.push(b);
+    api.sfx('ball');
+  }
+  await wait(32);
+  const jingle = api.fanfare('mus_heal');
+  const monitor = Object.assign(document.createElement('i'), { className: 'heal-monitor' });
+  fx.append(monitor);
+  (async () => {
+    for (let loop = 0; loop < 4; loop++) {
+      for (const [f, d] of [[1, 5], [2, 5], [3, 7], [2, 5], [1, 5], [0, 5]]) {
+        monitor.style.backgroundPosition = `0 ${-16 * f}px`;
+        await wait(d);
+      }
+    }
+    monitor.remove();
+  })();
+  const flash = (row) => balls.forEach((b) => { b.style.backgroundPosition = `0 ${-8 * row}px`; });
+  for (let i = 0; i < 12; i++) {   // the first three flashes: entries a phase apart
+    flash(i % 4);
+    await wait(8);
+  }
+  for (let c = 0; c < 3; c++) {    // the last one: all together
+    flash(4 + c);
+    await wait(8);
+  }
+  flash(7);
+  await wait(30);
+  balls.forEach((b) => b.remove());
+  await jingle;
+  fx.remove();
+}
+
+async function heal() {
+  const team = api.store.get('team', []) || [];
+  if (!team.length) return say(api.talk('heal_empty'), null, 'female');
+  say(api.talk('heal_take'), async () => {
+    healing = true;
+    sync();
+    world.pose('nurse', 'left');
+    await wait(8);
+    await healMachine(Math.min(6, team.length));
+    world.pose('nurse', 'down');
+    healing = false;
+    say(api.talk('heal_done'), async () => {
+      healing = true;
+      sync();
+      await wait(8);
+      world.pose('nurse', 'down', 3);
+      await wait(32);
+      world.pose('nurse', 'down');
+      await wait(8);
+      healing = false;
+      say(api.talk('nurse_bye'), null, 'female');
+    }, 'female');
+  }, 'female');
 }
 
 // The Nurse greets, then asks what she can do; each answer takes her question away first.
@@ -164,6 +244,7 @@ function nurse() {
   say(api.talk('nurse'), () => stack.push(createAsk({
     api, widths, question: api.talk('nurse_ask')[0], voice: 'female',
     items: [
+      { label: api.t('nurse_heal'), run: then(heal) },
       { label: api.t('nurse_about'), run: then(() => openScreen('sobre')) },
       { label: api.t('menu_contato'), run: then(() => openScreen('contato')) },
       { label: api.t('nurse_bye'), run: then(() => say(api.talk('nurse_bye'), null, 'female')) },
@@ -175,7 +256,7 @@ const THINGS = { [BEHAVIOR.REGION_MAP]: 'board', [BEHAVIOR.BOOKSHELF]: 'shelf' }
 function interact(target) {
   if (target.behavior === BEHAVIOR.PC) {
     api.sfx('pc_on');   // the PC plays its own sound instead of SE_SELECT
-    return say(api.talk('pc'), () => openScreen('projetos'));   // the Box comes later: the list for now
+    return say(api.talk('pc'), () => stack.push(createBox({ api, widths, data: DATA, say, openSummary: openProject, close: () => stack.pop() })));
   }
   const key = target.person ?? THINGS[target.behavior];
   if (!key) return;   // nothing there: no sound, like the game
@@ -205,6 +286,7 @@ async function enter({ fromTitle = true } = {}) {
   const loaded = Promise.all([map ?? json('assets/world/center.json'), widths ?? json('assets/font/widths.json')]);
   if (fromTitle) {
     api.cry(6);   // the title's Charizard
+    setTimeout(() => api.fadeOutMusic(64 / 59.7275), api.reduced() ? 0 : 90000 / 59.7275);   // FadeOutBGM(4) with the white fade
     await titleScreen.leave();
   }
   titleScreen.stop();
@@ -216,6 +298,7 @@ async function enter({ fromTitle = true } = {}) {
   dialog = createDialog(root, api);
   hint = makeHint(root);
   mode = 'world';
+  api.music('mus_poke_center');
   sync();
   if (fromTitle && !api.store.get('welcomed', false)) {
     setTimeout(() => {
@@ -254,7 +337,7 @@ export default {
       if (down && (name === 'start' || name === 'a')) enter();
       return;
     }
-    if (mode !== 'world') return;
+    if (mode !== 'world' || healing) return;
     if (dialog.open) {
       if (down && (name === 'a' || name === 'b')) dialog.advance();
       return;
@@ -266,7 +349,7 @@ export default {
   pointer(x, y) {
     if (mode === 'intro' || (mode === 'title' && titleScreen.entering)) return void skipOpening();
     if (mode === 'title') return enter();
-    if (mode !== 'world') return;
+    if (mode !== 'world' || healing) return;
     if (dialog.open) return dialog.advance();
     if (stack.size) return;   // the screens take their own clicks
     world.pointer(x, y);

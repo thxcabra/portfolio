@@ -203,6 +203,14 @@ export function createWorld(root, map, hooks) {
         pathDone = null;
       }
     },
+    // Turn someone to `dir`; `sheetFrame` shows a frame of their sheet as it is (the Nurse's bow is 3).
+    pose(id, dir, sheetFrame = null) {
+      const p = npcs.find((q) => q.id === id);
+      if (!p) return;
+      Object.assign(p, { dir, frame: 0 });
+      draw(p);
+      if (sheetFrame !== null) p.el.style.backgroundPosition = `${-16 * sheetFrame}px 0`;
+    },
     stop() {
       cancelAnimationFrame(raf);
     },

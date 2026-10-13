@@ -76,6 +76,11 @@ body:not(.ready) .gba { opacity: 0; }   /* not visibility: hidden, which would b
 .msg.more .next { visibility: visible; animation: arrow .536s steps(1) infinite; }   /* 4 steps of 8 frames */
 @keyframes arrow { 25%, 75% { background-position: -10px 0; } 50% { background-position: -20px 0; } }
 
+/* The healing machine (FLDEFF_POKECENTER_HEAL): ball glow states in rows of 8px, monitor frames of 16px. */
+.heal { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.heal-ball { position: absolute; width: 8px; height: 8px; background: url(assets/world/heal-balls.png) 0 -56px; }
+.heal-monitor { position: absolute; left: 112px; top: 16px; width: 32px; height: 16px; background: url(assets/world/monitor.png) 0 -16px; }
+
 /* ---------- menus (menu.c, start_menu.c, help_message.c) ---------- */
 .ui { position: absolute; inset: 0; z-index: 1; }
 .ui > * { position: absolute; inset: 0; pointer-events: none; }   /* clicks between windows reach .ui = "outside" */
@@ -187,6 +192,26 @@ img.bag-icon { left: 12px; top: 128px; }
 .tm-info { color: #414141; --sh: #dedec5; }
 .bag-arrow.tm-up { left: 152px; top: 0; }
 .bag-arrow.tm-down { left: 152px; top: 80px; }
+/* The PC's Box (pokemon_storage_system*.c). BG3 scrolls 1px every 2 frames, left and down. */
+.box { background: #000; animation: from-black .15s steps(8); }
+.box.to-black { animation: to-black .15s steps(8) forwards; }
+.box-scroll { position: absolute; inset: 0; background: url(assets/box/scroll.png); animation: box-scroll 8.572s steps(256) infinite; }
+@keyframes box-scroll { to { background-position: -256px 256px; } }
+.box-wall { position: absolute; left: 80px; top: 16px; }
+.box-title { color: #393939; --sh: #fff; }
+.box-icon { position: absolute; width: 32px; height: 32px; object-fit: none; object-position: 0 0; }
+.box-mon { position: absolute; left: 8px; top: 16px; }
+.box-mon[hidden] { display: none; }
+.box-data { color: #fff; --sh: #000; }
+.box-data .small { font-family: 'Gen3 Small'; }
+.box-party { position: absolute; left: 80px; top: -160px; width: 96px; height: 176px; }
+.box-party > img, .box-slots img { position: absolute; left: 0; top: 0; }
+.box-close { position: absolute; left: 168px; top: 0; width: 72px; height: 16px; background: url(assets/box/close.png) 0 0; }
+.box-close.on { background-position: 0 -16px; }
+.box-hand { position: absolute; width: 32px; height: 32px; background: url(assets/box/cursor.png); animation: box-hand 1.005s step-end infinite; }
+@keyframes box-hand { 50% { background-position: 0 -32px; } }   /* sAnim_Cursor_Bouncing: 30 frames each */
+.box-shadow { position: absolute; width: 16px; height: 16px; background: url(assets/box/shadow.png); }
+.box-shadow[hidden] { display: none; }
 .help { position: absolute; left: 0; top: 120px; width: 240px; height: 40px; background: url(assets/ui/help.png); color: #fff; --sh: #626262; }
 
 /* ---------- full-size pictures (api.show), over the whole page ---------- */

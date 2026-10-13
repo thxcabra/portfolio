@@ -362,7 +362,7 @@ def check_fonts(glyphs, small):
 
 
 SFX = {'select': 0x05, 'win_open': 0x06, 'pc_on': 0x04, 'dex_scroll': 0x65, 'dex_page': 0x66, 'success': 0x19, 'shiny': 0x5F, 'bump': 0x07,
-       'card_flip': 0xF2, 'card_flipping': 0xF3, 'card_open': 0xF4, 'bag_cursor': 0xF5, 'bag_pocket': 0xF6}
+       'card_flip': 0xF2, 'card_flipping': 0xF3, 'card_open': 0xF4, 'bag_cursor': 0xF5, 'bag_pocket': 0xF6, 'ball': 0x17}
 
 
 def downmix(src, dst):
@@ -798,6 +798,224 @@ def check_tm():
     print('tm ok')
 
 
+def build_box(out):
+    """FireRed's PC Box (pokemon_storage_system*.c): the scrolling Poke Ball background (BG3, 256x256),
+    the interface (menu.bin on BG1: tiles from 256 in menu.png, palettes interface/party/no-display),
+    the FOREST wallpaper (drawn at 80,16), the party panel (party_menu.bin, 12x22 tiles) with its slot
+    pieces (filled/empty, 4x3), the CLOSE BOX button (two states), the hand cursor (4 frames) and its
+    shadow in misc2.pal, plus every Pokemon's menu icon (2 frames) in its icon palette."""
+    out.mkdir(parents=True, exist_ok=True)
+    B = GFX / 'pokemon_storage'
+
+    def sheet(png, pals):
+        _, _, px, pal = pngio.read(B / png)
+        return [[v & 15 for v in row] for row in px], len(px[0]) // 8, pals or pal
+
+    def tilemap(path, cols, sheet_, base=0, rows=None):
+        tiles, per_row, pal = sheet_
+        raw = path.read_bytes()
+        ent = struct.unpack(f'<{len(raw) // 2}H', raw)
+        rows = rows or len(ent) // cols
+        img = [[(0, 0, 0, 0)] * (cols * 8) for _ in range(rows * 8)]
+        for i, e in enumerate(ent[:cols * rows]):
+            t = (e & 0x3FF) - base
+            if t < 0:
+                continue
+            hf, vf, p = e >> 10 & 1, e >> 11 & 1, e >> 12
+            colors = pal[(p % (len(pal) // 16)) * 16:(p % (len(pal) // 16)) * 16 + 16]
+            for y in range(8):
+                for x in range(8):
+                    v = tiles[(t // per_row) * 8 + (7 - y if vf else y)][(t % per_row) * 8 + (7 - x if hf else x)]
+                    if v:
+                        img[(i // cols) * 8 + y][(i % cols) * 8 + x] = tuple(colors[v]) + (255,)
+        return img
+
+    pngio.write(out / 'scroll.png', tilemap(B / 'scrolling_bg.bin', 32, sheet('scrolling_bg.png', None)))
+    ui = sheet('menu.png', pngio.read_jasc(B / 'interface.pal') + pngio.read_jasc(B / 'party_menu.pal') + pngio.read_jasc(B / 'interface_no_display_mon.pal'))
+    pngio.write(out / 'menu.png', tilemap(B / 'menu.bin', 32, ui, 256, 20))
+    pngio.write(out / 'party.png', tilemap(B / 'party_menu.bin', 12, ui, 256))
+    pngio.write(out / 'slot-filled.png', tilemap(B / 'party_slot_filled.bin', 4, ui, 256))
+    pngio.write(out / 'slot-empty.png', tilemap(B / 'party_slot_empty.bin', 4, ui, 256))
+    pngio.write(out / 'close.png', tilemap(B / 'close_box_button.bin', 9, ui, 256))
+    W = B / 'wallpapers/forest'
+    _, _, wt, wpal = pngio.read(W / 'tiles.png')
+    pngio.write(out / 'wallpaper.png', tilemap(W / 'tilemap.bin', 20, ([[v & 15 for v in r] for r in wt], len(wt[0]) // 8, wpal)))
+    rgba_png(B / 'cursor.png', out / 'cursor.png', B / 'misc2.pal')
+    rgba_png(B / 'cursor_shadow.png', out / 'shadow.png', B / 'misc2.pal')
+    # menu icons: graphics/pokemon/<name>/icon.png in icon_palette_<n>.pal (gMonIconPaletteIndices)
+    src = (FR / 'src/pokemon_icon.c').read_text(encoding='utf-8')
+    table = src[src.index('gMonIconPaletteIndices[]'):]
+    table = table[:table.index('};')]
+    pal_of = {m.group(1): int(m.group(2)) for m in re.finditer(r'\[SPECIES_(\w+)\]\s*=\s*(\d)', table)}
+    ipals = [pngio.read_jasc(GFX / f'pokemon/icon_palettes/icon_palette_{i}.pal') for i in range(3)]
+    (OUT / 'mon/icon').mkdir(parents=True, exist_ok=True)
+    for number, name in enumerate(dex_names(), 1):
+        mon = GFX / 'pokemon' / name.lower()
+        if name == 'UNOWN':
+            for letter in sorted(p.name for p in mon.iterdir() if p.is_dir()):
+                key = 'UNOWN' if letter == 'a' else f'UNOWN_{letter.upper()}'
+                _, _, px, _ = pngio.read(mon / letter / 'icon.png')
+                pngio.write(OUT / f'mon/icon/201-{letter}.png', pngio.to_rgba(px, ipals[pal_of.get(key, pal_of['UNOWN'])]))
+            _, _, px, _ = pngio.read(mon / 'a/icon.png')
+            pngio.write(OUT / 'mon/icon/201.png', pngio.to_rgba(px, ipals[pal_of['UNOWN']]))
+            continue
+        icon = mon / 'icon.png'
+        _, _, px, _ = pngio.read(icon)
+        pngio.write(OUT / f'mon/icon/{number}.png', pngio.to_rgba(px, ipals[pal_of[name]]))
+
+
+def check_box():
+    for name, size in (('scroll', (256, 256)), ('menu', (256, 160)), ('party', (96, 176)), ('slot-filled', (32, 24)), ('close', (72, 32)), ('wallpaper', (160, 144)), ('cursor', (32, 128)), ('shadow', (16, 16))):
+        got = pngio.read(OUT / f'box/{name}.png')[:2]
+        assert got == size, f'box/{name}.png is {got}'
+    for n in (6, 65, 201, '201-c', 386):
+        assert pngio.read(OUT / f'mon/icon/{n}.png')[:2] == (32, 64), f'icon {n}'
+    print('box ok')
+
+
+GLOW = [16, 12, 8, 0]   # sPokeballGlowReds/Greens: how far red and green go towards 31
+
+
+def build_heal(out):
+    """The healing machine (field_effect.c, FLDEFF_POKECENTER_HEAL): the Poke Ball glow sprite in its 8
+    states, one per row of heal-balls.png, and the monitor's 4 frames (32x16). While flashing, the game
+    tints palette entries 8, 6, 2, 5 and 3 with MultiplyInvertedPaletteRGBComponents; rows 0-3 are the
+    first three flashes (entries a phase apart: 8 at c+3, 6 at c+2, 2 at c+1, 5 and 3 at c), rows 4-7
+    the last one (all at c)."""
+    E = GFX / 'field_effects/pics'
+    _, _, ball, pal = pngio.read(E / 'pokeball_glow.png')
+
+    def tint(rgb, k):
+        r, g, b = (v >> 3 for v in rgb)
+        r += ((31 - r) * GLOW[k]) >> 4
+        g += ((31 - g) * GLOW[k]) >> 4
+        return tuple((c << 3) | (c >> 2) for c in (r, g, b))
+
+    rows = []
+    for last in (False, True):
+        for c in range(4):
+            phase = {8: c, 6: c, 2: c, 5: c, 3: c} if last else {8: (c + 3) & 3, 6: (c + 2) & 3, 2: (c + 1) & 3, 5: c, 3: c}
+            colors = [tint(pal[i], phase[i]) if i in phase else tuple(pal[i]) for i in range(16)]
+            rows += pngio.to_rgba(ball, colors)
+    pngio.write(out / 'heal-balls.png', rows)
+    rgba_png(E / 'pokemoncenter_monitor.png', out / 'monitor.png')
+
+
+MUSIC = ['mus_game_freak', 'mus_title', 'mus_poke_center', 'mus_heal']
+
+
+def build_music(out):
+    """The game's songs as the m4a engine plays them: the MIDI files (sound/songs/midi) with their
+    mid2agb options (voicegroup -G, master volume -V, reverb -R) and an instrument bank (bank.json):
+    every voicegroup laid out as in the ROM (one flat table; a label is an index into it, and a program
+    past a group's end reads into the next one, as on the GBA), the key split tables, the
+    DirectSound samples they use (signed 8-bit, base64, with pitch*1024 and loop as wav2agb makes
+    them) and the programmable waves (32 4-bit steps)."""
+    out.mkdir(parents=True, exist_ok=True)
+    S = FR / 'sound'
+    cfg = {}
+    for line in (S / 'songs/midi/midi.cfg').read_text(encoding='utf-8').splitlines():
+        if ':' in line:
+            name, opts = line.split(':', 1)
+            cfg[name.strip().removesuffix('.mid')] = opts.split()
+    # voicegroups: one flat list in file order
+    flat, labels = [], {}
+    for line in (S / 'voice_groups.inc').read_text(encoding='utf-8').splitlines():
+        line = line.split('@')[0].strip()
+        if line.endswith('::'):
+            labels[line[:-2]] = len(flat)
+        elif line.startswith('voice_'):
+            kind, _, args = line.partition(' ')
+            flat.append([kind] + [a.strip() for a in args.split(',')])
+    # key split tables: label = first key minus offset, one byte per key
+    tables, cur, base = {}, None, 0
+    for line in (S / 'keysplit_tables.inc').read_text(encoding='utf-8').splitlines():
+        m = re.match(r'\.set (\w+), \. - (\d+)', line.strip())
+        if m:
+            cur, base = m.group(1), int(m.group(2))
+            tables[cur] = {'first': base, 'map': []}
+        elif cur and line.strip().startswith('.byte'):
+            tables[cur]['map'].append(int(line.split('@')[0].split()[1]))
+    data_inc = (S / 'direct_sound_data.inc').read_text(encoding='utf-8')
+    sample_files = dict(re.findall(r'(DirectSoundWaveData_\w+)::[^\n]*\n\s*\.incbin "sound/direct_sound_samples/(\w+)\.bin"', data_inc))
+    wave_files = dict(re.findall(r'(ProgrammableWaveData_\w+)::\s*\.incbin "sound/programmable_wave_samples/(\w+)\.pcm"', (S / 'programmable_wave_data.inc').read_text(encoding='utf-8')))
+
+    def sample(name):
+        raw = (S / f'direct_sound_samples/{sample_files[name]}.wav').read_bytes()
+        pos, info = 12, {}
+        while pos + 8 <= len(raw):
+            cid, size = raw[pos:pos + 4], struct.unpack_from('<I', raw, pos + 4)[0]
+            body = raw[pos + 8:pos + 8 + size]
+            if cid == b'fmt ':
+                info['rate'] = struct.unpack_from('<I', body, 4)[0]
+                info['bits'] = struct.unpack_from('<H', body, 14)[0]
+            elif cid == b'data':
+                info['data'] = body
+            elif cid == b'smpl':
+                info['key'] = min(struct.unpack_from('<I', body, 12)[0], 127)
+                info['tune'] = struct.unpack_from('<I', body, 16)[0] / (4294967296.0 * 100.0)
+                if struct.unpack_from('<I', body, 28)[0] == 1:
+                    info['loop'] = (struct.unpack_from('<I', body, 44)[0], struct.unpack_from('<I', body, 48)[0] + 1)
+            elif cid == b'agbp':
+                info['agbp'] = struct.unpack_from('<I', body, 0)[0]
+            elif cid == b'agbl':
+                info['agbl'] = struct.unpack_from('<I', body, 0)[0]
+            pos += 8 + size + (size & 1)
+        assert info['bits'] == 8, name
+        pcm = bytes((b - 128) & 0xFF for b in info['data'])   # unsigned WAV bytes -> signed 8-bit
+        key, tune = info.get('key', 60), info.get('tune', 0.0)
+        pitch = info.get('agbp') or int(info['rate'] * (1 if key == 60 and tune == 0 else 2 ** ((60 - key) / 12 + tune / 1200)) * 1024)
+        loop = info.get('loop')
+        end = info.get('agbl', loop[1] if loop else len(pcm))
+        return {'pitch': pitch, 'loop': loop[0] if loop else -1, 'end': min(end, len(pcm)), 'data': base64.b64encode(pcm).decode()}
+
+    used_groups, samples, waves = set(), {}, {}
+
+    def visit(label, depth=0):
+        if label in used_groups or depth > 4:
+            return
+        used_groups.add(label)
+        start = labels[label]
+        for v in flat[start:start + 128]:
+            kind = v[0]
+            if kind in ('voice_keysplit', 'voice_keysplit_all'):
+                visit(v[1], depth + 1)
+            elif kind.startswith('voice_directsound'):
+                samples.setdefault(v[3], None)
+            elif kind.startswith('voice_programmable_wave'):
+                waves.setdefault(v[3], None)
+
+    songs = {}
+    for song in MUSIC:
+        opts = {o[:2]: o[2:] for o in cfg[song]}
+        group = f'voicegroup{int(opts["-G"]):03d}'
+        visit(group)
+        songs[song] = {'group': group, 'volume': int(opts.get('-V', '127')), 'reverb': int(opts.get('-R', '0'))}
+        shutil.copyfile(S / f'songs/midi/{song}.mid', out / f'{song}.mid')
+    for name in samples:
+        samples[name] = sample(name)
+    for name in waves:
+        pcm = (S / f'programmable_wave_samples/{wave_files[name]}.pcm').read_bytes()
+        waves[name] = [n for b in pcm for n in (b >> 4, b & 15)]
+    lo, hi = min(labels[g] for g in used_groups), max(labels[g] for g in used_groups) + 128
+    bank = {
+        'voices': flat[lo:hi], 'groups': {g: labels[g] - lo for g in used_groups},
+        'tables': tables, 'samples': samples, 'waves': waves, 'songs': songs,
+    }
+    (out / 'bank.json').write_text(json.dumps(bank, separators=(',', ':')), encoding='utf-8')
+    return bank
+
+
+def check_music(bank):
+    assert set(bank['songs']) == set(MUSIC)
+    assert bank['songs']['mus_heal']['group'] == 'voicegroup008' and bank['songs']['mus_heal']['volume'] == 90
+    for song in MUSIC:
+        assert (OUT / f'music/{song}.mid').read_bytes()[:4] == b'MThd', song
+    assert all(len(w) == 32 for w in bank['waves'].values())
+    kb = (OUT / 'music/bank.json').stat().st_size // 1024
+    print(f'music ok ({len(bank["samples"])} samples, {len(bank["waves"])} waves, {kb} KB)')
+
+
 def check_intro():
     for name, size in (('gf-text', (144, 16)), ('gf-logo', (32, 64)), ('star', (16, 16)),
                        ('sparkles-small', (16, 16)), ('sparkles-big', (32, 128))):
@@ -826,6 +1044,11 @@ def main():
     check_bag()
     build_tm(OUT / 'tm')
     check_tm()
+    build_box(OUT / 'box')
+    check_box()
+    build_heal(OUT / 'world')
+    check_music(build_music(OUT / 'music'))
+    assert pngio.read(OUT / 'world/heal-balls.png')[:2] == (8, 64) and pngio.read(OUT / 'world/monitor.png')[:2] == (32, 64)
     check_fonts(*build_fonts())
     check_audio(build_audio())
     check_world(*build_world())
