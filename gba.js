@@ -58,8 +58,8 @@ const show = (() => {
   el.setAttribute('role', 'dialog');
   el.setAttribute('aria-modal', 'true');
   el.innerHTML = '<p class="show-bar"><button type="button" class="show-step back" aria-label="◀">▶</button><span class="show-count"></span>'
-    + '<button type="button" class="show-step" aria-label="▶">▶</button><span class="show-hint"></span></p><div class="show-box"><img alt=""></div>';
-  const img = el.querySelector('img'), count = el.querySelector('.show-count'), hint = el.querySelector('.show-hint');
+    + '<button type="button" class="show-step" aria-label="▶">▶</button><span class="show-hint"></span></p><div class="show-box"></div>';
+  const img = el.querySelector('.show-box').appendChild(new Image()), count = el.querySelector('.show-count'), hint = el.querySelector('.show-hint');
   let list = [], cur = 0;
   const draw = () => {
     img.src = list[cur].src;
