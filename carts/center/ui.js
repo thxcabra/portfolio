@@ -1,5 +1,5 @@
 // Windows, lists and the stack of screens the START menu opens, drawn the way FireRed's menus are.
-import { esc } from '../../logic.js';
+import { esc, TYPES } from '../../logic.js';
 
 // A standard window: interior w×h at (x, y) in game px, the selected frame 8px around it
 // (WindowFunc_DrawStandardFrame). Children are placed from the interior's top-left.
@@ -19,6 +19,12 @@ export function text(str, x, y, cls = '') {
   return p;
 }
 
+// A type label (32x12) from assets/ui/types.png, top-left on (x, y). HTML, to go inside a template.
+export function typeIcon(type, x, y = 0) {
+  const i = Math.max(0, TYPES.indexOf(type));
+  return `<i class="type" style="left:${x}px;top:${y}px;background-position:${-(i % 4) * 32}px ${-16 - Math.floor(i / 4) * 16}px"></i>`;
+}
+
 // Mouse hover that only counts when the mouse really moved: redrawing a screen under a resting
 // mouse makes the browser report a hover on the new element, which must not steal the cursor.
 let lastXY = '';
@@ -35,12 +41,12 @@ export function onHover(el, fn) {
 // A list with FireRed's ▶ cursor (x 0, items at x 8, `pitch` px apart). Keys move it with SE_SELECT;
 // the mouse over an item moves it silently; a tap or click on another item moves it, and A or a
 // click on the pointed item chooses it. Items are buttons and the pointed one has focus, so screen
-// readers follow the cursor.
-export function createList(box, { labels, y = 0, pitch, wrap, start = 0, api, onMove, onChoose }) {
+// readers follow the cursor. render(i) gives an item's own HTML; quiet: A plays no sound.
+export function createList(box, { labels, y = 0, pitch, wrap, start = 0, api, onMove, onChoose, render, quiet = false }) {
   let cur = -1;
   const cursor = text('▶', 0, y, 'cursor');
   const choose = () => {
-    api.sfx('select');
+    if (!quiet) api.sfx('select');
     onChoose(cur);
   };
   const buttons = labels.map((label, i) => {
@@ -49,7 +55,7 @@ export function createList(box, { labels, y = 0, pitch, wrap, start = 0, api, on
     b.tabIndex = -1;
     b.className = 'item';
     b.style.top = `${y + pitch * i}px`;
-    b.innerHTML = `<span class="line">${esc(label)}</span>`;
+    b.innerHTML = render ? render(i) : `<span class="line">${esc(label)}</span>`;
     onHover(b, () => set(i, false));
     b.addEventListener('click', (e) => {
       if (e.detail === 0) return;   // keyboard activation comes through button() instead

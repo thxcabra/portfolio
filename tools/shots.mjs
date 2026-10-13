@@ -1,6 +1,6 @@
 // Screenshots for review: node tools/shots.mjs <outDir> [WxH[@dpr] ...]
 // Serves the site, opens each size in headless Edge (EDGE=<path> to override) and saves the title,
-// the room, the START menu, OPÇÕES and CONTATO.
+// the room, the START menu, OPÇÕES, CONTATO, PROJETOS, a project's three pages and a full-size picture.
 import { spawn } from 'node:child_process';
 import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
@@ -43,7 +43,7 @@ ws.addEventListener('message', (m) => {
   if (msg.id && pending.has(msg.id)) { pending.get(msg.id)(msg); pending.delete(msg.id); }
 });
 const send = (method, params = {}) => new Promise((r) => { const i = ++id; pending.set(i, r); ws.send(JSON.stringify({ id: i, method, params })); });
-const KEYS = { Enter: ['Enter', 13], Escape: ['Escape', 27], ArrowUp: ['ArrowUp', 38], z: ['KeyZ', 90], x: ['KeyX', 88] };
+const KEYS = { Enter: ['Enter', 13], Escape: ['Escape', 27], ArrowUp: ['ArrowUp', 38], ArrowRight: ['ArrowRight', 39], ArrowLeft: ['ArrowLeft', 37], z: ['KeyZ', 90], x: ['KeyX', 88] };
 const key = async (k, wait = 400) => {
   for (const type of ['keyDown', 'keyUp']) await send('Input.dispatchKeyEvent', { type, key: k, code: KEYS[k][0], windowsVirtualKeyCode: KEYS[k][1] });
   await sleep(wait);
@@ -75,6 +75,19 @@ for (const [n, size] of sizes.entries()) {
   await send('Page.navigate', { url: `${BASE}?s=${n}c#/contato` });
   await sleep(2500);
   await shot('contact');
+  await send('Page.navigate', { url: `${BASE}?s=${n}d#/projetos` });
+  await sleep(2500);
+  await shot('dex');
+  await send('Page.navigate', { url: `${BASE}?s=${n}e#/projetos/3` });
+  await sleep(3000);
+  await shot('page-info');
+  await key('ArrowRight', 600);
+  await shot('page-shots');
+  await key('ArrowRight', 600);
+  await shot('page-stack');
+  await key('ArrowLeft', 600);
+  await key('z', 1200);
+  await shot('picture');
 }
 ws.close();
 edge.kill();

@@ -213,7 +213,7 @@ export const DATA = {
       soon: ['Essa parte do Centro chega\nem breve!'],
       contact_ask: ['Por onde você quer falar\ncom o JOÃO CABRAL?'],
       copied: ['Endereço copiado!'],
-      shots: ['Imagem {i} de {n}.\nA: ver em tamanho real.'],
+      shots: ['Imagens deste projeto: {n}.\nA: ver em tamanho real.'],
       no_shots: ['Ainda não há imagens\ndeste projeto.'],
     },
     en: {
@@ -236,7 +236,7 @@ export const DATA = {
       soon: ['This part of the Center is\ncoming soon!'],
       contact_ask: ['How would you like to\nreach JOÃO CABRAL?'],
       copied: ['Address copied!'],
-      shots: ['Picture {i} of {n}.\nA: see it full size.'],
+      shots: ['Pictures of this project: {n}.\nA: see them full size.'],
       no_shots: ['No pictures of this\nproject yet.'],
     },
   },

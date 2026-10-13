@@ -106,7 +106,49 @@ body:not(.ready) .gba { opacity: 0; }   /* not visibility: hidden, which would b
 .opt-row.cur { color: #636363; --sh: #d6d6ce; }
 .opt-row.cur .val { color: #ffbd73; --sh: #e60808; }
 .opt-row:focus { outline: none; }
+/* PROJETOS (pokedex_screen.c, numerical list): rows 14px apart, black text, light shadow. */
+.dex { background: url(assets/ui/dex-bg.png); color: #000; --sh: #e6dec5; animation: from-black .3s steps(3); }
+.dex::after { content: ''; position: absolute; left: 0; top: 16px; width: 240px; height: 128px; background: #fff; opacity: 0; pointer-events: none; }
+.dex.fading::after { animation: to-white .15s steps(8) forwards; }   /* the bars (palette 15) don't fade */
+.dex.from-white::after { animation: to-white .15s steps(8) reverse; }
+.dex-bar { position: absolute; left: 0; top: 0; width: 240px; height: 16px; background: #c5b48b; color: #fff; --sh: #626262; }
+.dex-bar.bottom { top: 144px; font-family: 'Gen3 Small'; }
+.dex-title { top: 2px; letter-spacing: 1px; }
+.dex-bar .keys { position: absolute; right: 4px; top: 2px; line-height: 14px; white-space: pre; }   /* right edge at x=236 */
+.dex-list { position: absolute; left: 20px; top: 16px; width: 180px; height: 128px; }
+.dex-list .item { width: 172px; height: 14px; }
+.dex-list .item > * { position: absolute; top: 0; }
+.dex .small { font-family: 'Gen3 Small'; line-height: 14px; }
+.dex .num { left: 9px; }
+.dex .name { left: 44px; letter-spacing: 1px; }
+.caught { left: 28px; width: 12px; height: 12px; background: url(assets/ui/caught.png); }
+.type { position: absolute; width: 32px; height: 12px; background-image: url(assets/ui/types.png); }
+/* A project's page (pokemon_summary_screen.c): header text white with a #626262 shadow (text_header.pal),
+   INFO text #414141 on the light boxes, the moves page #202020 / #dedede (text_moves.pal). */
+.summary { background: #000; color: #414141; --sh: #dedec5; animation: from-black .15s steps(8); }
+.summary.to-black { animation: to-black .15s steps(8) forwards; }
+@keyframes to-black { to { filter: brightness(0); } }
+.sum-page { position: absolute; inset: 0; }
+.summary .hd, .summary .sum-title, .sum-keys { color: #fff; --sh: #626262; }
+.sum-keys { position: absolute; right: 4px; top: 0; font-family: 'Gen3 Small'; line-height: 14px; white-space: pre; }   /* right edge at x=236 */
+.mon { position: absolute; left: 28px; top: 33px; width: 64px; height: 64px; }
+.mon.flip { transform: scaleX(-1); }
+.sum-ball { position: absolute; left: 98px; top: 80px; }
+.sum-star { position: absolute; left: 102px; top: 36px; }
+.memo .line { height: 14px; }
+.summary .move { color: #202020; --sh: #dedede; }
+.sum-shot canvas { display: block; }
 .help { position: absolute; left: 0; top: 120px; width: 240px; height: 40px; background: url(assets/ui/help.png); color: #fff; --sh: #626262; }
+
+/* ---------- full-size pictures (api.show), over the whole page ---------- */
+.show { position: fixed; inset: 0; z-index: 10; display: grid; justify-items: center; align-content: safe center; gap: calc(var(--k) * 4px); padding: calc(var(--k) * 8px) 16px; overflow: auto; background: rgb(0 0 0 / .8); cursor: pointer; }
+.show[hidden] { display: none; }
+.show-bar { display: flex; gap: 6px; zoom: var(--k); height: 16px; line-height: 14px; color: #fff; --sh: #626262; text-shadow: 1px 0 0 var(--sh), 0 1px 0 var(--sh), 1px 1px 0 var(--sh); }
+.show-step { width: 10px; text-align: left; }
+.show-hint { margin-left: 16px; }
+.show-step.back { transform: scaleX(-1); }   /* the font has ▶ only */
+.show-box { max-width: min(100%, 1100px); border: calc(var(--k) * 8px) solid transparent; border-image: url(assets/ui/frame-1.png) 8 repeat; background: #fff padding-box; cursor: default; }
+.show img { display: block; max-width: 100%; height: auto; image-rendering: auto; }   /* screenshots are not pixel art */
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }

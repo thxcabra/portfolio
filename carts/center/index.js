@@ -9,10 +9,13 @@ import { route, textWidth } from '../../logic.js';
 import { createMenu } from './screens/menu.js';
 import { createOptions } from './screens/options.js';
 import { createContact } from './screens/contact.js';
+import { createDex } from './screens/dex.js';
+import { createSummary } from './screens/summary.js';
 import { DATA } from '../../data.js';
 
 const VOICE = { nurse: 'female', gentleman: 'male', boy: 'male', youngster: 'male' };   // by the game's gender table
-const SCREENS = {   // menu id -> () => screen; the ones not built yet say "coming soon"
+const SCREENS = {   // menu id -> (n) => screen; the ones not built yet say "coming soon"
+  projetos: (n) => createDex({ api, widths, projects: DATA.projects, start: n ? n - 1 : 0, open: openProject, close: () => stack.pop() }),
   opcoes: () => createOptions({ api, setFrame, close: () => stack.pop() }),
   contato: () => createContact({ api, widths, contact: DATA.contact, say, close: () => stack.pop() }),
 };
@@ -126,9 +129,23 @@ function useMenu() {
   openMenu();
 }
 
-function openScreen(id) {
+function openScreen(id, n = null) {
   if (!SCREENS[id]) return say(api.talk('soon'));
-  stack.push(SCREENS[id]());
+  stack.push(SCREENS[id](n));
+  if (id === 'projetos' && n) openProject(n - 1);
+}
+
+// A project's page over the list; ↑/↓ on it move the list's cursor too.
+function openProject(i) {
+  const dex = stack.top;
+  stack.push(createSummary({
+    api, widths, data: DATA, index: i, say,
+    onIndex(j) {
+      dex.index = j;
+      sync();
+    },
+    close: () => stack.pop(),
+  }));
 }
 
 const THINGS = { [BEHAVIOR.REGION_MAP]: 'board', [BEHAVIOR.BOOKSHELF]: 'shelf' };
@@ -235,6 +252,6 @@ export default {
     if (mode === 'title') await enter({ fromTitle: false });
     if (mode !== 'world') return;
     stack.clear();
-    if (r) openScreen(r.screen);
+    if (r) openScreen(r.screen, r.n);
   },
 };

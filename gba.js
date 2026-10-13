@@ -45,7 +45,67 @@ const api = {
   },
   // The open screen goes to the address bar (#/contato) without adding history entries.
   link: (path) => history.replaceState(null, '', path ? `#/${path}` : location.pathname + location.search),
+  show: (media, i = 0) => show.open(media, i),
 };
+
+// ---------- full-size pictures, over the whole page (api.show) ----------
+// media = [{ src, alt }]. While it is up the buttons are its own: ←/→ switch, B or START close; a
+// click or tap outside the picture closes it too. The window frame is the one chosen in OPÇÕES.
+const show = (() => {
+  const el = document.createElement('div');
+  el.className = 'show';
+  el.hidden = true;
+  el.setAttribute('role', 'dialog');
+  el.setAttribute('aria-modal', 'true');
+  el.innerHTML = '<p class="show-bar"><button type="button" class="show-step back" aria-label="◀">▶</button><span class="show-count"></span>'
+    + '<button type="button" class="show-step" aria-label="▶">▶</button><span class="show-hint"></span></p><div class="show-box"><img alt=""></div>';
+  const img = el.querySelector('img'), count = el.querySelector('.show-count'), hint = el.querySelector('.show-hint');
+  let list = [], cur = 0;
+  const draw = () => {
+    img.src = list[cur].src;
+    img.alt = list[cur].alt ?? '';
+    count.textContent = `${cur + 1}/${list.length}`;
+    el.querySelectorAll('.show-step').forEach((b) => { b.hidden = list.length < 2; });
+    hint.textContent = t('show_close');
+    el.querySelector('.show-box').style.borderImageSource = `url(assets/ui/frame-${store.get('frame', 1)}.png)`;
+  };
+  const close = () => {
+    el.hidden = true;
+    sfx('select');
+  };
+  const step = (d) => {
+    cur = (cur + d + list.length) % list.length;
+    sfx('select');
+    draw();
+    el.scrollTop = 0;
+  };
+  el.addEventListener('pointerdown', (e) => {
+    const arrow = e.target.closest('.show-step');
+    if (e.button === 0 && arrow) return step(arrow.classList.contains('back') ? -1 : 1);
+    if (e.button === 2 || (e.button === 0 && !e.target.closest('.show-box'))) {
+      e.preventDefault();
+      close();
+    }
+  });
+  el.addEventListener('contextmenu', (e) => e.preventDefault());
+  document.body.append(el);
+  return {
+    get up() { return !el.hidden; },
+    open(media, i) {
+      if (!media.length) return;
+      list = media;
+      cur = Math.max(0, Math.min(i, media.length - 1));
+      draw();
+      el.hidden = false;
+      el.scrollTop = 0;
+    },
+    button(name) {
+      const d = name === 'left' ? -1 : name === 'right' ? 1 : 0;
+      if (d && list.length > 1) step(d);
+      else if (name === 'b' || name === 'start') close();
+    },
+  };
+})();
 
 // ---------- body: two shells on the game-pixel grid, geometric, no logos ----------
 // Landscape: the original GBA. Portrait (phones): an opened GBA SP, screen on top, buttons below.
@@ -126,6 +186,7 @@ function press(name, down) {
   else held.delete(name);
   if (DPAD.has(name)) $gba.classList.toggle('p-dpad', [...held].some((n) => DPAD.has(n)));
   else $gba.classList.toggle(`p-${name}`, down);
+  if (show.up) return down && show.button(name);
   cart.button(name, down);
 }
 let unlocked = false;
