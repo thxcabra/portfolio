@@ -117,11 +117,6 @@ export function fitScale(w, h, W, H, dpr) {
   return Math.max(1, Math.floor(Math.min((W * dpr) / w, (H * dpr) / h))) / dpr;
 }
 
-// Smallest scale (integer in physical pixels) at which a w×h picture covers W×H.
-export function coverScale(w, h, W, H, dpr) {
-  return Math.ceil(Math.max((W * dpr) / w, (H * dpr) / h)) / dpr;
-}
-
 // Margins (game px) that put the centre of the 240x160 screen at (sx, sy) in the middle of a W×H body,
 // and the size of the body with them: centring that box centres the game screen.
 export function centerBox(W, H, sx, sy) {
@@ -146,13 +141,8 @@ export function splitShown(lengths, shown) {
   });
 }
 
-// Random clip index (r in [0, 1)), different from the current one when possible.
-export function pickNext(cur, n, r) {
-  if (n <= 1) return 0;
-  if (cur < 0) return Math.floor(r * n);
-  const i = Math.floor(r * (n - 1));
-  return i >= cur ? i + 1 : i;
-}
+// Back and forth over 0..span as t counts up: 0, 1, …, span, span − 1, …, 0, 1, …
+export const pingPong = (t, span) => (span > 0 ? span - Math.abs((t % (2 * span)) - span) : 0);
 
 // Pixel-art circle as SVG path, one 1px-tall span per row. d must be even.
 export function discPath(x, y, d) {

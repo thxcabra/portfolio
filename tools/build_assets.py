@@ -4,6 +4,7 @@ Run from the repo root:   python tools/build_assets.py
 The fonts need fontTools: pip install -r tools/requirements.txt
 (on machines that block compiled extensions: pip install --no-binary fonttools -r tools/requirements.txt)
 """
+import base64
 import json
 import re
 import shutil
@@ -397,24 +398,13 @@ def build_audio():
     return names
 
 
-def build_video():
-    out = OUT / 'video'
-    out.mkdir(parents=True, exist_ok=True)
-    src = RAW / 'videos'
-    clips = sorted(p.name for p in src.iterdir() if p.suffix.lower() in ('.webm', '.mp4')) if src.exists() else []
-    for name in clips:
-        shutil.copyfile(src / name, out / name)
-    (out / 'clips.json').write_text(json.dumps(clips), encoding='utf-8')
-    return clips
-
-
-def check_audio(names, clips):
+def check_audio(names):
     assert names[5] == 'CHARIZARD' and names[385] == 'DEOXYS', (names[5], names[385])
     assert len(list((OUT / 'cries').glob('*.wav'))) >= 386, 'missing cries'
     for name in SFX:
         with wave.open(str(OUT / 'sfx' / f'{name}.wav')) as w:
             assert w.getnchannels() == 1 and w.getframerate() == 22050, name
-    print(f'audio ok ({len(SFX)} sfx, {len(names)} cries); video clips: {len(clips)}')
+    print(f'audio ok ({len(SFX)} sfx, {len(names)} cries)')
 
 
 WORLD_PEOPLE = {   # sprite sheet and palette, as in the game's object event tables
@@ -612,6 +602,91 @@ def check_mons_dex_summary():
     print('mons, dex, summary ok')
 
 
+# The page background: maps stacked as their map.json connections join them (all offset 0), top to bottom.
+KANTO_MAPS = [('Route1', 'Route1', 40), ('PalletTown', 'PalletTown', 20), ('Route21_North', 'Route21_North', 12)]
+KANTO_PEOPLE = {'woman_1': 'npc_green', 'fat_man': 'npc_white', 'prof_oak': 'npc_white', 'clerk': 'npc_white', 'boy': 'npc_green'}
+KANTO_ANIMS = {   # tileset_anims.c, TilesetAnim_General: first tile, tile count, frames, game frames per change, phase
+    'water': (416, 48, 'water_current_landwatersedge', 16, 1),
+    'sand': (464, 18, 'sandwatersedge', 8, 0),
+    'flower': (508, 4, 'flower', 16, 2),
+}
+
+
+def tile_bytes(px, per_row, count):
+    """Tiles of an indexed image as bytes, one per pixel, tile after tile (row-major tile order)."""
+    out = bytearray()
+    for t in range(count):
+        tx, ty = (t % per_row) * 8, (t // per_row) * 8
+        for y in range(8):
+            out.extend(px[ty + y][tx:tx + 8])
+    return bytes(out)
+
+
+def build_kanto(out):
+    """Route 1, Pallet Town and the top of Route 21 on the General + Pallet Town tilesets, for the
+    page background. kanto.json: the metatile grid and its collisions, the border block (the trees
+    the game draws outside a map), the used metatiles' 8 tile entries each, the 13 palettes, every
+    tile's pixels (palette indices, base64), the animated tiles' frames and the people with their
+    movement types. Plus the people's sprite sheets."""
+    (out / 'people').mkdir(parents=True, exist_ok=True)
+    D = FR / 'data/tilesets'
+    _, _, gen, _ = pngio.read(D / 'primary/general/tiles.png')
+    _, _, pal_town, _ = pngio.read(D / 'secondary/pallet_town/tiles.png')
+    pals = [pngio.read_jasc(D / f'primary/general/palettes/{i:02d}.pal') for i in range(7)]
+    pals += [pngio.read_jasc(D / f'secondary/pallet_town/palettes/{i:02d}.pal') for i in range(7, 13)]
+    metas = []
+    for kind, name in (('primary', 'general'), ('secondary', 'pallet_town')):
+        mt = (D / kind / name / 'metatiles.bin').read_bytes()
+        metas += [list(struct.unpack_from('<8H', mt, i * 16)) for i in range(len(mt) // 16)]
+        if kind == 'primary':
+            assert len(metas) == 640, len(metas)
+    grid, walls, people, row0 = [], [], [], 0
+    for layout, mapname, rows in KANTO_MAPS:
+        W = 24
+        raw = (FR / f'data/layouts/{layout}/map.bin').read_bytes()
+        blocks = struct.unpack(f'<{len(raw) // 2}H', raw)
+        for y in range(rows):
+            grid += [b & 0x3FF for b in blocks[y * W:(y + 1) * W]]
+            walls += [1 if b >> 10 & 3 else 0 for b in blocks[y * W:(y + 1) * W]]
+        for o in json.loads((FR / f'data/maps/{mapname}/map.json').read_text(encoding='utf-8'))['object_events']:
+            gid = o['graphics_id'].replace('OBJ_EVENT_GFX_', '').lower()
+            if gid in KANTO_PEOPLE and o['y'] < rows and 'movement_type' in o:
+                people.append({'id': gid, 'x': o['x'], 'y': o['y'] + row0, 'move': o['movement_type'].replace('MOVEMENT_TYPE_', '').lower(),
+                               'rx': o.get('movement_range_x', 0), 'ry': o.get('movement_range_y', 0)})
+        row0 += rows
+    border = list(struct.unpack('<4H', (FR / 'data/layouts/PalletTown/border.bin').read_bytes()))
+    used = sorted(set(grid) | {b & 0x3FF for b in border})
+    index = {m: i for i, m in enumerate(used)}
+    anims = {}
+    for key, (start, count, folder, every, phase) in KANTO_ANIMS.items():
+        frames = sorted((D / 'primary/general/anim' / folder).glob('*.png'), key=lambda f: int(f.stem))
+        anims[key] = {'start': start, 'count': count, 'every': every, 'phase': phase,
+                      'frames': [base64.b64encode(tile_bytes(pngio.read(f)[2], 2, count)).decode() for f in frames]}
+    data = {
+        'w': 24, 'h': row0, 'map': [index[m] for m in grid], 'walls': ''.join(map(str, walls)),
+        'border': [index[b & 0x3FF] for b in border], 'metas': [metas[m] for m in used],
+        'pals': [[list(c) for c in p] for p in pals],
+        'tiles': base64.b64encode(tile_bytes(gen, 16, 640) + tile_bytes(pal_town, 16, len(pal_town) // 8 * 16)).decode(),
+        'anims': anims, 'people': people,
+    }
+    (out / 'kanto.json').write_text(json.dumps(data, separators=(',', ':')), encoding='utf-8')
+    G = GFX / 'object_events'
+    for name, pal in KANTO_PEOPLE.items():
+        _, _, px, _ = pngio.read(G / f'pics/people/{name}.png')
+        pngio.write(out / f'people/{name}.png', pngio.to_rgba(px, pngio.read_jasc(G / f'palettes/{pal}.pal')))
+    return data
+
+
+def check_kanto(data):
+    assert data['h'] == 72 and len(data['map']) == 24 * 72 and len(data['walls']) == 24 * 72
+    assert len(base64.b64decode(data['tiles'])) == (640 + 80) * 64
+    assert {p['id'] for p in data['people']} == set(KANTO_PEOPLE), data['people']
+    assert len(data['anims']['water']['frames']) == 8 and len(data['anims']['flower']['frames']) == 5
+    oak = next(p for p in data['people'] if p['id'] == 'prof_oak')
+    assert (oak['x'], oak['y'], oak['move']) == (10, 48, 'face_up'), oak
+    print(f'kanto ok ({len(data["metas"])} metatiles, {len(data["people"])} people)')
+
+
 def check_intro():
     for name, size in (('gf-text', (144, 16)), ('gf-logo', (32, 64)), ('star', (16, 16)),
                        ('sparkles-small', (16, 16)), ('sparkles-big', (32, 128))):
@@ -633,8 +708,9 @@ def main():
     build_mons(OUT / 'mon')
     build_summary(OUT / 'summary')
     check_mons_dex_summary()
+    check_kanto(build_kanto(OUT / 'kanto'))
     check_fonts(*build_fonts())
-    check_audio(build_audio(), build_video())
+    check_audio(build_audio())
     check_world(*build_world())
 
 

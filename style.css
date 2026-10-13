@@ -19,13 +19,13 @@ body {
   font: 16px/16px Gen3, monospace;
 }
 button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
-html { image-rendering: pixelated; }   /* inherited: covers <img>, video and every background image (people, flames...) */
+html { image-rendering: pixelated; }   /* inherited: covers <img>, canvases and every background image (people, flames...) */
 noscript { color: #f8f8f8; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
-/* ---------- background video ---------- */
-.bg-video { position: fixed; z-index: -2; }
-.bg-dim { position: fixed; inset: 0; z-index: -1; background: rgb(0 0 0 / .5); }
+/* ---------- the page background (kanto.js): dimmed, darker towards the edges ---------- */
+.kanto { position: fixed; z-index: -2; }
+.bg-dim { position: fixed; inset: 0; z-index: -1; background: radial-gradient(ellipse at center, rgb(8 10 24 / .45) 30%, rgb(8 10 24 / .8) 100%); }
 
 /* ---------- the GBA (game pixels, scaled by --k) ---------- */
 .gba { position: relative; zoom: var(--k); }   /* size comes from the shell (gba.js) */

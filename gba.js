@@ -2,9 +2,10 @@
 // mouse, touch), the sound switch and the page background. Games are cartridges: they get the
 // screen and the buttons and know nothing about scaling or input devices.
 import { DATA } from './data.js';
-import { fitScale, coverScale, centerBox, pickNext, discPath, rrectPath, corner, TEXT_SPEEDS } from './logic.js';
+import { fitScale, centerBox, discPath, rrectPath, corner, TEXT_SPEEDS } from './logic.js';
 import { setVolume, sfx, cry } from './sound.js';
 import cart from './carts/center/index.js';
+import { startKanto } from './kanto.js';
 
 const KEYS = {
   ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right',
@@ -23,7 +24,7 @@ let lang = saved === 'pt' || saved === 'en' ? saved : navigator.language?.toLowe
 const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 let volume = store.get('volume', store.get('sound', false) === true ? 2 : 0);   // 0–3; old saves had sound: true
 let lastVolume = volume || 2;
-let bg = null;
+let kanto = null;   // the page background, once it has loaded
 
 const $gba = document.getElementById('gba'), $screen = document.getElementById('screen');
 const t = (k) => DATA.ui[lang][k] ?? DATA.ui.pt[k] ?? k;
@@ -250,14 +251,7 @@ for (const type of ['pointerup', 'pointercancel']) {
 addEventListener('pointerup', (e) => { if (e.button === 2) press('b', false); });
 $gba.addEventListener('contextmenu', (e) => e.preventDefault());   // the right button is B here
 
-// ---------- layout + background video ----------
-function fitBg() {
-  if (!bg) return;
-  const w0 = bg.videoWidth || 240, h0 = bg.videoHeight || 160;
-  const kb = coverScale(w0, h0, innerWidth, innerHeight, devicePixelRatio || 1);
-  const w = w0 * kb, h = h0 * kb;
-  Object.assign(bg.style, { width: `${w}px`, height: `${h}px`, left: `${Math.floor((innerWidth - w) / 2)}px`, top: `${Math.floor((innerHeight - h) / 2)}px` });
-}
+// ---------- layout ----------
 let shell = null;
 function mount(force = false) {
   const next = SHELLS[innerHeight > innerWidth ? 'sp' : 'gba'];
@@ -276,33 +270,8 @@ function mount(force = false) {
 function fit() {
   mount();
   document.documentElement.style.setProperty('--k', fitScale(shell.box.w, shell.box.h, innerWidth - 16, innerHeight - 16, devicePixelRatio || 1));
-  fitBg();
+  kanto?.fit();
 }
-async function startVideo() {
-  if (reduced() || navigator.connection?.saveData || innerHeight > innerWidth) return;
-  let clips = [];
-  try {
-    clips = await (await fetch('assets/video/clips.json')).json();
-  } catch {
-    return;
-  }
-  if (!clips.length) return;
-  const video = Object.assign(document.createElement('video'), { className: 'bg-video', muted: true, playsInline: true });
-  const dim = Object.assign(document.createElement('div'), { className: 'bg-dim' });
-  let cur = -1;
-  const next = () => {
-    cur = pickNext(cur, clips.length, Math.random());
-    video.src = `assets/video/${clips[cur]}`;
-    video.play().catch(() => {});
-  };
-  video.addEventListener('loadedmetadata', fitBg);
-  video.addEventListener('ended', next);
-  video.addEventListener('error', () => { video.remove(); dim.remove(); bg = null; });
-  document.body.prepend(video, dim);
-  bg = video;
-  next();
-}
-
 // ---------- power on ----------
 document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
 document.body.classList.toggle('sound-on', volume > 0);
@@ -319,4 +288,4 @@ Promise.all([document.fonts.load('16px Gen3'), document.fonts.load('16px "Gen3 S
     addEventListener('hashchange', () => cart.open(pathOf()));
   }, reduced() ? 0 : 400);
 });
-startVideo();
+startKanto({ reduced }).then((k) => { kanto = k; }).catch(() => {});   // no background: the plain page colour stays

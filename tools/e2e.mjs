@@ -12,7 +12,7 @@ const EDGE = process.env.EDGE || 'C:/Program Files (x86)/Microsoft/Edge/Applicat
 const SITE = 8124, CDP = 9335;
 const BASE = `http://127.0.0.1:${SITE}/`;
 const ROOT = new URL('..', import.meta.url);
-const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.gif': 'image/gif', '.wav': 'audio/wav', '.woff': 'font/woff', '.json': 'application/json', '.webm': 'video/webm', '.mp4': 'video/mp4' };
+const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.gif': 'image/gif', '.wav': 'audio/wav', '.woff': 'font/woff', '.json': 'application/json' };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const server = createServer(async (req, res) => {
@@ -122,6 +122,13 @@ ok('START entra no Centro Pokémon, Red na porta');
 const off = () => ev(`(() => { const r = document.getElementById('screen').getBoundingClientRect(); return [r.left + r.width / 2 - innerWidth / 2, r.top + r.height / 2 - innerHeight / 2].map((v) => Math.abs(Math.round(v))); })()`);
 assert.ok((await off()).every((v) => v <= 1), `a tela do jogo não está no centro da janela: ${await off()}`);
 ok('tela do jogo no centro da janela');
+const bgShot = () => ev(`(() => { const c = document.querySelector('canvas.kanto'); return c ? c.toDataURL() : null; })()`);
+const bg1 = await bgShot();
+assert.ok(bg1 && bg1.length > 5000, 'o fundo de Kanto não apareceu');
+await sleep(1200);
+assert.notEqual(await bgShot(), bg1, 'o fundo deveria se mexer (câmera, água, pessoas)');
+assert.equal(await ev(`(() => { const c = document.querySelector('canvas.kanto'); return c.getBoundingClientRect().width >= innerWidth && c.getBoundingClientRect().height >= innerHeight; })()`), true, 'o fundo não cobre a janela');
+ok('fundo: Rota 1, Pallet e o mar do jogo, cobrindo a janela e se mexendo');
 assert.equal(await ev(`getComputedStyle(document.querySelector('.person[data-me]')).imageRendering`), 'pixelated', 'personagens borrados: imagem de fundo sem pixelated');
 ok('personagens com pixel nítido');
 

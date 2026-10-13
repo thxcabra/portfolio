@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { DATA } from './data.js';
 import {
-  route, textWidth, fitsLines, centerBox, fade8, grey8, brighten8, alpha8, blendLevels, nextSeed, starPos, gfWindow, titleEntrance, TEXT_SPEEDS, multiTiles, monPath, wrapText, toPages, nextIndex, fitScale, coverScale, cycle, splitShown, pickNext,
+  route, textWidth, fitsLines, centerBox, fade8, grey8, brighten8, alpha8, blendLevels, nextSeed, starPos, gfWindow, titleEntrance, TEXT_SPEEDS, multiTiles, monPath, wrapText, toPages, nextIndex, fitScale, cycle, splitShown, pingPong,
   discPath, rrectPath, corner, TYPES, SHAPES, DIRS, around, pathToAny, pageFits, esc,
 } from './logic.js';
 import { MENU } from './carts/center/screens/menu.js';
@@ -115,9 +115,6 @@ assert.equal(fitScale(576, 320, 1888, 1048, 1), 3);
 assert.equal(fitScale(576, 320, 1334, 736, 1), 2);
 assert.equal(fitScale(240, 160, 358, 380, 3), 4 / 3);
 assert.equal(fitScale(576, 320, 100, 100, 1), 1);
-assert.equal(coverScale(240, 160, 1920, 1080, 1), 8);
-assert.equal(coverScale(240, 160, 1366, 768, 1), 6);
-assert.equal(coverScale(240, 160, 1440, 900, 2), 6);
 
 // options
 assert.equal(cycle(['pt', 'en'], 'pt'), 'en');
@@ -131,16 +128,9 @@ assert.deepEqual(splitShown([3, 4], 2.7), [2, 0]);
 assert.deepEqual(splitShown([3, 4], 5), [3, 2]);
 assert.deepEqual(splitShown([3, 4], 99), [3, 4]);
 
-// background clips
-assert.equal(pickNext(-1, 1, 0.9), 0);
-assert.equal(pickNext(0, 1, 0.5), 0);
-assert.equal(pickNext(-1, 4, 0.99), 3);
-for (let cur = 0; cur < 4; cur++) {
-  for (const r of [0, 0.3, 0.6, 0.99]) {
-    const n = pickNext(cur, 4, r);
-    assert.ok(n !== cur && n >= 0 && n < 4, `pickNext(${cur}, 4, ${r}) = ${n}`);
-  }
-}
+// background camera: back and forth
+assert.deepEqual([0, 1, 2, 3, 4, 5, 6, 7, 8].map((t) => pingPong(t, 4)), [0, 1, 2, 3, 4, 3, 2, 1, 0]);
+assert.equal(pingPong(5, 0), 0);
 
 // pixel shapes
 const widths = (d) => [...d.matchAll(/h(\d+)/g)].map((m) => +m[1]);
