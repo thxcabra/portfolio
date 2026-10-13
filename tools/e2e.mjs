@@ -99,6 +99,11 @@ const rectIn = (sel) => ev(`(() => { const s = document.getElementById('screen')
 
 await send('Page.navigate', { url: BASE });
 await sleep(1500);
+assert.ok(await ev(`document.body.classList.contains('powered')`), 'a luz POWER não acendeu');
+assert.ok(await has('canvas.intro'), 'a abertura da GAME FREAK não começou numa sessão nova');
+await key('Enter', 400);
+assert.ok(!(await has('canvas.intro')) && (await has('.title')) && !(await has('.title .entrance')), 'um botão deveria pular direto para o título pronto');
+ok('abertura: a luz acende, a GAME FREAK roda e um botão pula para o título pronto');
 await ev('localStorage.clear()');
 await send('Page.reload');
 await sleep(1500);
@@ -273,6 +278,14 @@ await ev(`location.hash = '#/nada'`);
 await sleep(400);
 assert.ok(!(await has('.contact')) && (await msg()) === null, 'link inválido deveria só mostrar a sala');
 ok('links: #/contato abre direto, B volta para a sala, link inválido cai na sala');
+
+await ev('sessionStorage.clear()');
+await send('Page.navigate', { url: `${BASE}?again=1` });
+await sleep(10000);   // 0,4 s de luz + ~8,1 s da GAME FREAK
+assert.ok(await has('.title .entrance'), 'depois da GAME FREAK deveria vir a entrada do título');
+await sleep(5000);    // ~4,4 s de entrada
+assert.ok((await has('.title')) && !(await has('.title .entrance')), 'a entrada deveria terminar no título pronto');
+ok('abertura completa: GAME FREAK, entrada do título e PRESS START');
 
 await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 750, deviceScaleFactor: 3, mobile: true });
 await sleep(400);

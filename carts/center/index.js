@@ -3,6 +3,7 @@
 import { createWorld, BEHAVIOR } from './world.js';
 import { createDialog } from './dialog.js';
 import { createTitle } from './title.js';
+import { createIntro } from './intro.js';
 import { createStack, win, text } from './ui.js';
 import { route, textWidth } from '../../logic.js';
 import { createMenu } from './screens/menu.js';
@@ -25,6 +26,7 @@ let dialog = null;
 let stack = null;
 let hint = null;
 let titleScreen = null;
+let intro = null;
 let mode = 'off';   // off | title | loading | world
 
 const json = async (url) => (await fetch(url)).json();
@@ -35,9 +37,45 @@ function setFrame(n) {
   screen.style.setProperty('--frame', `url(assets/ui/frame-${n}.png)`);
 }
 
+// First visit in this browser session: the GAME FREAK scene, then the title's entrance. Afterwards (or
+// with reduced motion) straight to the ready title. The title's art loads while the scene plays.
+const TITLE_ART = ['back', 'bars', 'press', 'charizard', 'logo', 'flames', 'lit', 'slash'];
 function title() {
   mode = 'title';
-  titleScreen = createTitle(screen, { reduced: api.reduced() });
+  let first = true;
+  try {
+    first = !sessionStorage.getItem('booted');
+    sessionStorage.setItem('booted', '1');
+  } catch { /* no session storage: play it every time */ }
+  if (!first || api.reduced()) {
+    titleScreen = createTitle(screen, { reduced: api.reduced() });
+    return;
+  }
+  mode = 'intro';
+  TITLE_ART.forEach((n) => { new Image().src = `assets/title/${n}.png`; });
+  intro = createIntro(screen, {
+    onDone() {
+      intro = null;
+      mode = 'title';
+      titleScreen = createTitle(screen, { reduced: false, entrance: true });
+    },
+  });
+}
+
+// Any button during the opening goes straight to the ready title, as A/START/SELECT do in the game.
+function skipOpening() {
+  if (intro) {
+    intro.stop();
+    intro = null;
+    mode = 'title';
+    titleScreen = createTitle(screen, { reduced: api.reduced() });
+    return true;
+  }
+  if (mode === 'title' && titleScreen.entering) {
+    titleScreen.skip();
+    return true;
+  }
+  return false;
 }
 
 // The room stands still while a message or any screen is up; the address shows the open screen.
@@ -154,6 +192,7 @@ export default {
     title();
   },
   stop() {
+    intro?.stop();
     titleScreen?.stop();
     world?.stop();
     world = null;
@@ -163,7 +202,12 @@ export default {
     screen.innerHTML = '';
   },
   button(name, down) {
+    if (mode === 'intro') {
+      if (down) skipOpening();
+      return;
+    }
     if (mode === 'title') {
+      if (down && skipOpening()) return;
       if (down && (name === 'start' || name === 'a')) enter();
       return;
     }
@@ -177,6 +221,7 @@ export default {
     world.button(name, down);
   },
   pointer(x, y) {
+    if (mode === 'intro' || (mode === 'title' && titleScreen.entering)) return void skipOpening();
     if (mode === 'title') return enter();
     if (mode !== 'world') return;
     if (dialog.open) return dialog.advance();
@@ -186,6 +231,7 @@ export default {
   // A link (#/contato) opens its screen straight away: no title, no welcome, B goes to the room.
   async open(path) {
     const r = route(path, DATA.projects.length);
+    skipOpening();
     if (mode === 'title') await enter({ fromTitle: false });
     if (mode !== 'world') return;
     stack.clear();

@@ -35,6 +35,8 @@ body:not(.ready) .gba { opacity: 0; }   /* not visibility: hidden, which would b
 .gba:has([data-btn="a"]:hover) .g-a, .gba:has([data-btn="b"]:hover) .g-b,
 .gba:has([data-btn="start"]:hover) .g-start, .gba:has([data-btn="select"]:hover) .g-select,
 .gba:has([data-btn="l"]:hover) .g-l, .gba:has([data-btn="r"]:hover) .g-r { filter: brightness(1.1); }
+.led-power { fill: #2a3a2a; }
+.powered .led-power { fill: #78f878; }
 .led-sound { fill: #2a3a2a; }
 .sound-on .led-sound { fill: #78f878; }
 .hw { position: absolute; }

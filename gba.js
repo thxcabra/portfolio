@@ -79,7 +79,7 @@ const SHELLS = {
       `<g class="g-dpad">${dpad(22, 54, 40, 14)}</g>`,
       `<g class="g-start">${disc(58, 122, 8, KEY, KEY_INK)}</g><g class="g-select">${disc(58, 140, 8, KEY, KEY_INK)}</g>`,
       `<g class="g-a">${round(393, 59, 22)}</g><g class="g-b">${round(367, 73, 22)}</g>`,
-      led(360, 26),
+      led(360, 26, 'led-power'),
       path(Array.from({ length: 6 }, (_, i) => Array.from({ length: 14 }, (_, t) => `M${366 + 7 * i + t} ${156 - t}h2v1h-2z`).join('')).join(''), LO),
       led(362, 168, 'led-sound'),
     ].join(''),
@@ -105,7 +105,7 @@ const SHELLS = {
       `<g class="g-a">${round(204, 226, 28)}</g><g class="g-b">${round(170, 244, 28)}</g>`,
       `<g class="g-select">${disc(105, 285, 10, KEY, KEY_INK)}</g><g class="g-start">${disc(141, 285, 10, KEY, KEY_INK)}</g>`,
       path(Array.from({ length: 12 }, (_, i) => `M${22 + (i % 4) * 7} ${280 + Math.floor(i / 4) * 6}h3v3h-3z`).join(''), LO),
-      led(234, 212),
+      led(234, 212, 'led-power'),
       led(16, 307, 'led-sound'),
     ].join(''),
     labels: () => label(DATA.trainer.name, 8, 174, 240) + label('SELECT', 90, 297, 40) + label('START', 126, 297, 40) + label(t('opt_sound'), 22, 302, 30, 'left'),
@@ -250,8 +250,12 @@ fit();
 const pathOf = () => location.hash.replace(/^#\/?/, '');
 Promise.all([document.fonts.load('16px Gen3'), document.fonts.load('16px "Gen3 Small"')]).finally(() => {
   document.body.classList.add('ready');
-  cart.start($screen, api);
-  if (pathOf()) cart.open(pathOf());
-  addEventListener('hashchange', () => cart.open(pathOf()));
+  // The power switch: the LED lights up, then the cartridge starts.
+  setTimeout(() => {
+    document.body.classList.add('powered');
+    cart.start($screen, api);
+    if (pathOf()) cart.open(pathOf());
+    addEventListener('hashchange', () => cart.open(pathOf()));
+  }, reduced() ? 0 : 400);
 });
 startVideo();
