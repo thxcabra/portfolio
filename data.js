@@ -39,7 +39,7 @@ export const DATA = {
       },
       stack: ['NEXT.JS', 'PYTHON', 'FASTAPI', 'SUPABASE'],
       links: { repo: 'https://github.com/thxcabra/Magnifyer-Glass' },
-      shots: [],
+      shots: ['assets/projects/magnifyer/home.png', 'assets/projects/magnifyer/drafts.png'],
     },
     {
       name: 'REPLAI', dex: 279, pokemon: 'PELIPPER', types: ['water', 'flying'], year: 2026,
@@ -51,7 +51,7 @@ export const DATA = {
       },
       stack: ['TYPESCRIPT', 'CHROME MV3', 'SUPABASE', 'ANTHROPIC'],
       links: { repo: 'https://github.com/thxcabra/replai' },
-      shots: [],
+      shots: ['assets/projects/replai/side-panel.png', 'assets/projects/replai/settings.png'],
     },
     {
       name: 'PITCHIQ', dex: 65, pokemon: 'ALAKAZAM', types: ['psychic'], year: 2026,
@@ -75,7 +75,7 @@ export const DATA = {
       },
       stack: ['PYTHON', 'TELEGRAM', 'OPENROUTER', 'TAVILY'],
       links: { repo: 'https://github.com/thxcabra/Furioso-Bot' },
-      shots: [],
+      shots: ['assets/projects/furioso/commands.png'],
     },
     {
       name: 'CALLSYNC', dex: 201, form: 'c', pokemon: 'UNOWN', types: ['psychic'], year: 2026,
@@ -87,7 +87,7 @@ export const DATA = {
       },
       stack: ['REACT', 'EXPRESS', 'GEMINI', 'NOTION API'],
       links: { repo: 'https://github.com/thxcabra/CallSync' },
-      shots: [],
+      shots: ['assets/projects/callsync/projects.png', 'assets/projects/callsync/call.png', 'assets/projects/callsync/analysis.png'],
     },
     {
       name: 'MOIC SITE', dex: 233, pokemon: 'PORYGON2', types: ['normal'], year: 2026,
