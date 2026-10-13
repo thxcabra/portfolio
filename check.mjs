@@ -6,6 +6,7 @@ import {
   discPath, rrectPath, corner, TYPES, SHAPES, DIRS, around, pathToAny, pageFits, esc,
 } from './logic.js';
 import { MENU } from './carts/center/screens/menu.js';
+import { VOLUMES } from './sound.js';
 
 // routes: screens with their own link
 const R = (p) => route(p, 8);
@@ -30,6 +31,12 @@ assert.equal(Math.round(TEXT_SPEEDS.mid * 100) / 100, 11.95);
 assert.equal(Math.round(TEXT_SPEEDS.slow * 100) / 100, 6.64);
 assert.deepEqual(multiTiles(40, 2), { w: 7, h: 4 });
 assert.deepEqual(multiTiles(48, 4), { w: 8, h: 7 });
+
+// volume levels: off, low, mid (40% of the old fixed volume), high
+assert.deepEqual(VOLUMES.length, 4);
+assert.equal(VOLUMES[0], 0);
+assert.equal(VOLUMES[2], 0.4);
+assert.ok(VOLUMES.every((v, i) => i === 0 || v > VOLUMES[i - 1]), 'volume levels must grow');
 
 // sprites: always Emerald art
 assert.equal(spritePath(6), 'assets/sprites/emerald/6.png');
@@ -191,7 +198,7 @@ for (const l of ['pt', 'en']) {
   const widest = Math.max(...MENU.map((id) => textWidth(u[`menu_${id}`], widthsOf)));
   assert.ok(widest <= 96, `ui.${l}: item do menu START largo demais (${widest}px)`);
   for (const k of ['opt_text', 'opt_sound', 'opt_frame', 'opt_lang', 'opt_exit']) assert.ok(textWidth(u[k], widthsOf) <= 120, `ui.${l}.${k} largo demais para OPÇÕES`);
-  for (const k of ['slow', 'mid', 'fast', 'on', 'off', 'lang_pt', 'lang_en']) assert.ok(textWidth(u[k], widthsOf) <= 70, `ui.${l}.${k} largo demais (o jogo limpa 70px)`);
+  for (const k of ['slow', 'mid', 'fast', 'vol_0', 'vol_1', 'vol_2', 'vol_3', 'lang_pt', 'lang_en']) assert.ok(textWidth(u[k], widthsOf) <= 70, `ui.${l}.${k} largo demais (o jogo limpa 70px)`);
   assert.ok(textWidth(`${u.frame_type}10`, widthsOf) <= 70, `ui.${l}.frame_type largo demais`);
 }
 

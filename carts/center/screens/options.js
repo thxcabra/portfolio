@@ -13,7 +13,7 @@ export function createOptions({ api, setFrame, close }) {
   el.className = 'options full';
   const rows = [
     { label: 'opt_text', value: () => api.t(api.store.get('textSpeed', 'fast')), change: (d) => api.store.set('textSpeed', cycle(SPEEDS, api.store.get('textSpeed', 'fast'), d)) },
-    { label: 'opt_sound', value: () => api.t(api.sound() ? 'on' : 'off'), change: () => api.sound(!api.sound()) },
+    { label: 'opt_sound', value: () => api.t(`vol_${api.volume()}`), change: (d) => api.volume(cycle([0, 1, 2, 3], api.volume(), d)) },
     { label: 'opt_frame', value: () => `${api.t('frame_type')}${String(api.store.get('frame', 1)).padStart(2, ' ')}`, change: (d) => setFrame(cycle(FRAMES, api.store.get('frame', 1), d)) },
     { label: 'opt_lang', value: () => api.t(`lang_${api.lang()}`), change: (d) => api.setLang(cycle(['pt', 'en'], api.lang(), d)) },
     { label: 'opt_exit' },

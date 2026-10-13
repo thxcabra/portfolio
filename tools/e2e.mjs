@@ -186,6 +186,11 @@ assert.equal(await ev(`localStorage.getItem('textSpeed')`), '"mid"');
 await key('ArrowRight');
 assert.equal(await ev(`localStorage.getItem('textSpeed')`), '"fast"');
 await key('ArrowDown');
+await key('ArrowRight');
+assert.equal(await ev(`localStorage.getItem('volume')`), '1');
+assert.match(await ev(`document.querySelector('.opt-row.cur').textContent`), /BAIXO/);
+await key('ArrowLeft');
+assert.equal(await ev(`localStorage.getItem('volume')`), '0');
 await key('ArrowDown');
 await key('ArrowRight');
 assert.match(await ev(`document.getElementById('screen').style.getPropertyValue('--frame')`), /frame-2\.png/);
@@ -235,7 +240,7 @@ const box = await ev(`(() => { const b = document.querySelector('[data-btn="soun
 for (const type of ['mousePressed', 'mouseReleased']) await send('Input.dispatchMouseEvent', { type, x: box[0], y: box[1], button: 'left', clickCount: 1 });
 await sleep(200);
 assert.ok(await ev(`document.body.classList.contains('sound-on')`));
-assert.equal(await ev(`localStorage.getItem('sound')`), 'true');
+assert.equal(await ev(`localStorage.getItem('volume')`), '1', 'o botão SOM volta ao último nível escolhido (BAIXO, escolhido em OPÇÕES)');
 ok('direcional afunda com o teclado; botão de som liga');
 
 await ev('localStorage.clear()');

@@ -3,7 +3,7 @@
 // screen and the buttons and know nothing about scaling or input devices.
 import { DATA } from './data.js';
 import { fitScale, coverScale, pickNext, discPath, rrectPath, corner, TEXT_SPEEDS } from './logic.js';
-import { setEnabled, sfx, cry } from './sound.js';
+import { setVolume, sfx, cry } from './sound.js';
 import cart from './carts/center/index.js';
 
 const KEYS = {
@@ -21,7 +21,8 @@ const store = {
 const saved = store.get('lang', null);
 let lang = saved === 'pt' || saved === 'en' ? saved : navigator.language?.toLowerCase().startsWith('pt') ? 'pt' : 'en';
 const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
-let soundOn = store.get('sound', false) === true;
+let volume = store.get('volume', store.get('sound', false) === true ? 2 : 0);   // 0–3; old saves had sound: true
+let lastVolume = volume || 2;
 let bg = null;
 
 const $gba = document.getElementById('gba'), $screen = document.getElementById('screen');
@@ -38,9 +39,9 @@ const api = {
     document.documentElement.lang = l === 'pt' ? 'pt-BR' : 'en';
     mount(true);   // the SOUND label on the body
   },
-  sound(on) {
-    if (on !== undefined && on !== soundOn) toggleSound();
-    return soundOn;
+  volume(n) {
+    if (n !== undefined) setLevel(n);
+    return volume;
   },
   // The open screen goes to the address bar (#/contato) without adding history entries.
   link: (path) => history.replaceState(null, '', path ? `#/${path}` : location.pathname + location.search),
@@ -131,13 +132,18 @@ let unlocked = false;
 function unlock() {
   if (unlocked) return;
   unlocked = true;
-  setEnabled(soundOn);   // browsers only allow audio after a gesture
+  setVolume(volume);   // browsers only allow audio after a gesture
 }
+function setLevel(n) {
+  if (n) lastVolume = n;
+  volume = n;
+  store.set('volume', n);
+  setVolume(n);
+  document.body.classList.toggle('sound-on', n > 0);
+}
+// The SOUND button on the body: off, or back to the last level.
 function toggleSound() {
-  soundOn = !soundOn;
-  store.set('sound', soundOn);
-  setEnabled(soundOn);
-  document.body.classList.toggle('sound-on', soundOn);
+  setLevel(volume ? 0 : lastVolume);
   sfx('select');
 }
 
@@ -235,7 +241,7 @@ async function startVideo() {
 
 // ---------- power on ----------
 document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
-document.body.classList.toggle('sound-on', soundOn);
+document.body.classList.toggle('sound-on', volume > 0);
 addEventListener('resize', fit);
 fit();
 const pathOf = () => location.hash.replace(/^#\/?/, '');
