@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { DATA } from './data.js';
 import {
-  route, textWidth, fitsLines, TEXT_SPEEDS, multiTiles, spritePath, nextIndex, fitScale, coverScale, cycle, splitShown, pickNext,
+  route, textWidth, fitsLines, centerBox, TEXT_SPEEDS, multiTiles, spritePath, nextIndex, fitScale, coverScale, cycle, splitShown, pickNext,
   discPath, rrectPath, corner, TYPES, SHAPES, DIRS, around, pathToAny, pageFits, esc,
 } from './logic.js';
 import { MENU } from './carts/center/screens/menu.js';
@@ -31,6 +31,12 @@ assert.equal(Math.round(TEXT_SPEEDS.mid * 100) / 100, 11.95);
 assert.equal(Math.round(TEXT_SPEEDS.slow * 100) / 100, 6.64);
 assert.deepEqual(multiTiles(40, 2), { w: 7, h: 4 });
 assert.deepEqual(multiTiles(48, 4), { w: 8, h: 7 });
+
+// the game screen's centre goes to the window's centre
+assert.deepEqual(centerBox(432, 202, 96, 18), { top: 6, right: 0, bottom: 0, left: 0, w: 432, h: 208 });
+assert.deepEqual(centerBox(256, 320, 8, 12), { top: 136, right: 0, bottom: 0, left: 0, w: 256, h: 456 });
+// screen centre at (120, 120) of a 300x200 body: the box needs room on the left and at the bottom
+assert.deepEqual(centerBox(300, 200, 0, 40), { top: 0, right: 0, bottom: 40, left: 60, w: 360, h: 240 });
 
 // volume levels: off, low, mid (40% of the old fixed volume), high
 assert.deepEqual(VOLUMES.length, 4);

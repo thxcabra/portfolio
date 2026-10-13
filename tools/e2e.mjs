@@ -114,6 +114,9 @@ assert.ok(await has('.title'), 'o título deveria esperar o grito do Charizard (
 await sleep(1700);
 assert.deepEqual(await me(), [7, 8, 'up']);
 ok('START entra no Centro Pokémon, Red na porta');
+const off = () => ev(`(() => { const r = document.getElementById('screen').getBoundingClientRect(); return [r.left + r.width / 2 - innerWidth / 2, r.top + r.height / 2 - innerHeight / 2].map((v) => Math.abs(Math.round(v))); })()`);
+assert.ok((await off()).every((v) => v <= 1), `a tela do jogo não está no centro da janela: ${await off()}`);
+ok('tela do jogo no centro da janela');
 assert.equal(await ev(`getComputedStyle(document.querySelector('.person[data-me]')).imageRendering`), 'pixelated', 'personagens borrados: imagem de fundo sem pixelated');
 ok('personagens com pixel nítido');
 
@@ -273,6 +276,7 @@ ok('links: #/contato abre direto, B volta para a sala, link inválido cai na sal
 await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 750, deviceScaleFactor: 3, mobile: true });
 await sleep(400);
 assert.equal(await ev(`document.getElementById('gba').style.width`), '256px', 'celular em pé não virou GBA SP');
+assert.ok((await off()).every((v) => v <= 1), 'no GBA SP a tela do jogo também fica no centro');
 await click('[data-btn="a"]');
 assert.equal(await ev(`document.querySelectorAll('[data-btn]').length`), 9);
 await send('Emulation.clearDeviceMetricsOverride');

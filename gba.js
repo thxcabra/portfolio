@@ -2,7 +2,7 @@
 // mouse, touch), the sound switch and the page background. Games are cartridges: they get the
 // screen and the buttons and know nothing about scaling or input devices.
 import { DATA } from './data.js';
-import { fitScale, coverScale, pickNext, discPath, rrectPath, corner, TEXT_SPEEDS } from './logic.js';
+import { fitScale, coverScale, centerBox, pickNext, discPath, rrectPath, corner, TEXT_SPEEDS } from './logic.js';
 import { setVolume, sfx, cry } from './sound.js';
 import cart from './carts/center/index.js';
 
@@ -206,12 +206,15 @@ function mount(force = false) {
   $gba.querySelectorAll('.body, .label, .hw').forEach((el) => el.remove());
   Object.assign($gba.style, { width: `${shell.W}px`, height: `${shell.H}px` });
   Object.assign($screen.style, { left: `${shell.screen[0]}px`, top: `${shell.screen[1]}px` });
+  shell.box = centerBox(shell.W, shell.H, ...shell.screen);
+  const b = shell.box;
+  $gba.style.margin = `${b.top}px ${b.right}px ${b.bottom}px ${b.left}px`;   // zoomed with the GBA
   $gba.insertAdjacentHTML('afterbegin', `<svg class="body" viewBox="0 0 ${shell.W} ${shell.H}" width="${shell.W}" height="${shell.H}" aria-hidden="true">${shell.svg}</svg>`);
   $gba.insertAdjacentHTML('beforeend', shell.labels() + shell.controls.join(''));
 }
 function fit() {
   mount();
-  document.documentElement.style.setProperty('--k', fitScale(shell.W, shell.H, innerWidth - 16, innerHeight - 16, devicePixelRatio || 1));
+  document.documentElement.style.setProperty('--k', fitScale(shell.box.w, shell.box.h, innerWidth - 16, innerHeight - 16, devicePixelRatio || 1));
   fitBg();
 }
 async function startVideo() {

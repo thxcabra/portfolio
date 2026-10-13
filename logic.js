@@ -54,6 +54,14 @@ export function coverScale(w, h, W, H, dpr) {
   return Math.ceil(Math.max((W * dpr) / w, (H * dpr) / h)) / dpr;
 }
 
+// Margins (game px) that put the centre of the 240x160 screen at (sx, sy) in the middle of a W×H body,
+// and the size of the body with them: centring that box centres the game screen.
+export function centerBox(W, H, sx, sy) {
+  const cx = sx + 120, cy = sy + 80;
+  const m = { top: Math.max(0, H - 2 * cy), right: Math.max(0, 2 * cx - W), bottom: Math.max(0, 2 * cy - H), left: Math.max(0, W - 2 * cx) };
+  return { ...m, w: W + m.left + m.right, h: H + m.top + m.bottom };
+}
+
 // Next value in a list, wrapping around. Unknown values count as the first one.
 export function cycle(list, value, dir = 1) {
   const i = Math.max(0, list.indexOf(value));
