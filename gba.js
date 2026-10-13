@@ -9,7 +9,7 @@ import cart from './carts/center/index.js';
 const KEYS = {
   ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right',
   w: 'up', s: 'down', a: 'left', d: 'right', W: 'up', S: 'down', A: 'left', D: 'right',
-  z: 'a', Z: 'a', ' ': 'a', x: 'b', X: 'b', Escape: 'b', Enter: 'start', Shift: 'select',
+  z: 'a', Z: 'a', ' ': 'a', Enter: 'a', x: 'b', X: 'b', Backspace: 'b', Escape: 'start', Shift: 'select',
   q: 'l', Q: 'l', e: 'r', E: 'r',
 };
 const DPAD = new Set(['up', 'down', 'left', 'right']);
@@ -157,6 +157,11 @@ addEventListener('blur', () => [...held].forEach((n) => press(n, false)));   // 
 
 $gba.addEventListener('pointerdown', (e) => {
   unlock();
+  if (e.button === 2) {   // right mouse button = B, held while pressed (B held = run, like the game)
+    e.preventDefault();
+    return press('b', true);
+  }
+  if (e.button !== 0) return;
   const hw = e.target.closest('[data-btn]');
   if (hw) {
     e.preventDefault();
@@ -175,6 +180,8 @@ for (const type of ['pointerup', 'pointercancel']) {
     if (hw && hw.dataset.btn !== 'sound') press(hw.dataset.btn, false);
   });
 }
+addEventListener('pointerup', (e) => { if (e.button === 2) press('b', false); });
+$gba.addEventListener('contextmenu', (e) => e.preventDefault());   // the right button is B here
 
 // ---------- layout + background video ----------
 function fitBg() {

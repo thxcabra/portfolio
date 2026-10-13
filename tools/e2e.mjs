@@ -88,6 +88,12 @@ const menuTo = async (label) => {
   for (let i = 0; i < 8 && (await focused()) !== label; i++) await key('ArrowDown', 120);
   assert.equal(await focused(), label);
 };
+// Right mouse button on the screen = B.
+const rightClick = async (wait = 300) => {
+  const r = await ev(`(() => { const b = document.getElementById('screen').getBoundingClientRect(); return [b.left + 40, b.top + b.height - 30]; })()`);
+  for (const type of ['mousePressed', 'mouseReleased']) await send('Input.dispatchMouseEvent', { type, x: r[0], y: r[1], button: 'right', clickCount: 1 });
+  await sleep(wait);
+};
 // Rectangle of an element in game pixels, relative to the screen: [left, top, right, bottom].
 const rectIn = (sel) => ev(`(() => { const s = document.getElementById('screen').getBoundingClientRect(), b = document.querySelector('${sel}').getBoundingClientRect(), k = s.width / 240; return [b.left - s.left, b.top - s.top, b.right - s.left, b.bottom - s.top].map((v) => Math.round(v / k)); })()`);
 
@@ -145,7 +151,7 @@ assert.match((await msg()) ?? '', /obras/);
 await closeMsg();
 ok('escada: sala de minijogos em obras');
 
-await key('Enter');
+await key('Escape');
 assert.ok(await has('.menu .win'), 'START não abriu o menu');
 assert.equal(await ev(`document.querySelector('.hint').hidden`), true, 'a dica não sumiu depois de usar o menu');
 assert.equal(await focused(), 'PROJETOS');
@@ -160,15 +166,15 @@ assert.match(await ev(`document.querySelector('.menu .help').textContent`), /pro
 const before = await me();
 await hold('ArrowLeft', 300);
 assert.deepEqual(await me(), before, 'o Red andou com o menu aberto');
-await key('z');
+await key('Enter');
 assert.match((await msg()) ?? '', /breve/);
 await closeMsg();
 assert.ok(await has('.menu .win'), 'o menu fechou junto com a mensagem');
-await key('Enter');
-assert.ok(!(await has('.menu')), 'START não fechou o menu');
+await rightClick();
+assert.ok(!(await has('.menu')), 'o botão direito (B) não fechou o menu');
 ok('menu START: posição do jogo, cursor dá a volta, ajuda, "em breve", o Red não anda, fecha');
 
-await key('Enter');
+await key('Escape');
 await menuTo('OPÇÕES');
 await key('z', 500);
 assert.ok(await has('.options'), 'OPÇÕES não abriu');
@@ -193,11 +199,11 @@ assert.equal(await ev('document.documentElement.lang'), 'pt-BR');
 await key('x');
 assert.ok(!(await has('.options')) && (await has('.menu .win')), 'B não voltou de OPÇÕES para o menu');
 assert.equal(await focused(), 'OPÇÕES');
-await key('Enter');
+await key('Escape');
 ok('OPÇÕES: posições do jogo; velocidade, moldura e idioma salvos; B volta ao menu');
 
 await ev(`window.__opened = []; window.open = (u) => { window.__opened.push(u); return null; }`);
-await key('Enter');
+await key('Escape');
 await menuTo('CONTATO');
 await key('z', 400);
 assert.ok(await has('.contact .win'), 'CONTATO não abriu');

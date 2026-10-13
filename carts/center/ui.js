@@ -102,7 +102,7 @@ export function createStack(root, { onChange, outside }) {
   const list = [];
   const top = () => list[list.length - 1] ?? null;
   layer.addEventListener('pointerdown', (e) => {
-    if (e.target !== layer || !list.length) return;
+    if (e.button !== 0 || e.target !== layer || !list.length) return;   // the right button is B, handled by the console
     e.stopPropagation();   // not a click on the room
     outside();
   });

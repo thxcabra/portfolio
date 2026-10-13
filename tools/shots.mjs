@@ -43,7 +43,7 @@ ws.addEventListener('message', (m) => {
   if (msg.id && pending.has(msg.id)) { pending.get(msg.id)(msg); pending.delete(msg.id); }
 });
 const send = (method, params = {}) => new Promise((r) => { const i = ++id; pending.set(i, r); ws.send(JSON.stringify({ id: i, method, params })); });
-const KEYS = { Enter: ['Enter', 13], ArrowUp: ['ArrowUp', 38], z: ['KeyZ', 90], x: ['KeyX', 88] };
+const KEYS = { Enter: ['Enter', 13], Escape: ['Escape', 27], ArrowUp: ['ArrowUp', 38], z: ['KeyZ', 90], x: ['KeyX', 88] };
 const key = async (k, wait = 400) => {
   for (const type of ['keyDown', 'keyUp']) await send('Input.dispatchKeyEvent', { type, key: k, code: KEYS[k][0], windowsVirtualKeyCode: KEYS[k][1] });
   await sleep(wait);
@@ -66,7 +66,7 @@ for (const [n, size] of sizes.entries()) {
   await shot('title');
   await key('Enter', 1500);
   await shot('room');
-  await key('Enter', 600);
+  await key('Escape', 600);
   await shot('menu');
   await key('ArrowUp');
   await key('ArrowUp');

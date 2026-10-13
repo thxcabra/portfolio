@@ -75,6 +75,7 @@ function makeHint(root) {
   const el = win(8, 8, w, 16, 'hint');
   el.append(text(label, Math.floor((w - textWidth(label, widths)) / 2), 1));
   el.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
     e.stopPropagation();   // not a click on the room
     useMenu();
   });
