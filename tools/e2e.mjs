@@ -12,7 +12,7 @@ const EDGE = process.env.EDGE || 'C:/Program Files (x86)/Microsoft/Edge/Applicat
 const SITE = 8124, CDP = 9335;
 const BASE = `http://127.0.0.1:${SITE}/`;
 const ROOT = new URL('..', import.meta.url);
-const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.gif': 'image/gif', '.wav': 'audio/wav', '.woff': 'font/woff', '.json': 'application/json' };
+const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.gif': 'image/gif', '.wav': 'audio/wav', '.woff': 'font/woff', '.json': 'application/json' };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const server = createServer(async (req, res) => {

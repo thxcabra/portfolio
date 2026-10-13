@@ -13,7 +13,7 @@ const sizes = args.length ? args : ['1920x1080', '1366x650', '390x844@3', '844x3
 const EDGE = process.env.EDGE || 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
 const SITE = 8125, CDP = 9336, BASE = `http://127.0.0.1:${SITE}/`;
 const ROOT = new URL('..', import.meta.url);
-const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.woff': 'font/woff', '.json': 'application/json', '.wav': 'audio/wav' };
+const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.woff': 'font/woff', '.json': 'application/json', '.wav': 'audio/wav' };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const server = createServer(async (req, res) => {

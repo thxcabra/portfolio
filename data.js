@@ -99,7 +99,7 @@ export const DATA = {
       },
       stack: ['CLOUDFLARE', 'SEO', 'CRM'],
       links: { live: 'https://www.moicdigital.com' },
-      shots: [],
+      shots: ['assets/projects/moic/home.jpg', 'assets/projects/moic/home-2.jpg'],
     },
     {
       name: 'PORTFOLIO', dex: 6, pokemon: 'CHARIZARD', types: ['fire', 'flying'], year: 2026,
