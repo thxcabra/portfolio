@@ -89,6 +89,7 @@ export function createCard({ api, widths, data, say, close }) {
   return {
     el,
     path: 'sobre',
+    keys: () => (back ? { a: 'act_read', b: 'act_flip' } : { a: 'act_flip', b: 'act_back' }),
     button(name, down) {
       if (!down || busy) return;
       if (name === 'a') return back ? about() : flip();

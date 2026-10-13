@@ -13,7 +13,7 @@ A playable portfolio: a Pokémon Center from **Pokémon FireRed**, running insid
 - **Music made from the game's own data:** the GAME FREAK theme, the title, the Pokémon Center and the healing jingle are synthesized in the browser from the decompilation's MIDI files and instrument bank, played the way the GBA's m4a engine plays them (sample and GB channels, envelopes, vibrato, loop points). Off until you turn the sound on.
 - **A simple view for reading:** the SIMPLE button on the console (or the `#/simples` link) turns the whole portfolio into a regular page to scroll, still in the game's font, frames and sprites, in Portuguese or English.
 - **A living Kanto behind the console:** Route 1, Pallet Town and the sea from the game's own maps, with animated water and flowers, the town's people walking around and a slow camera.
-- **A console around the game:** a geometric GBA on desktop and an opened GBA SP on phones held upright, both clickable, at integer pixel scales so every pixel stays sharp.
+- **A console around the game:** a geometric GBA on desktop and an opened GBA SP on phones held upright, both clickable, at integer pixel scales so every pixel stays sharp, with a word next to A and B that says what each button does right now (TALK, RUN, CHOOSE, BACK...).
 
 ## Faithful to the game
 

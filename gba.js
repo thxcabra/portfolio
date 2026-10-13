@@ -2,7 +2,7 @@
 // mouse, touch), the sound switch and the page background. Games are cartridges: they get the
 // screen and the buttons and know nothing about scaling or input devices.
 import { DATA } from './data.js';
-import { fitScale, centerBox, discPath, rrectPath, corner, TEXT_SPEEDS } from './logic.js';
+import { fitScale, centerBox, discPath, rrectPath, corner, TEXT_SPEEDS, ACT_W } from './logic.js';
 import { setVolume, sfx, cry, music, fadeOutMusic, fanfare } from './sound.js';
 import cart from './carts/center/index.js';
 import { startKanto } from './kanto.js';
@@ -51,7 +51,24 @@ const api = {
   music: (name) => music(name),            // the game's songs (music.js): the one that plays now
   fadeOutMusic: (seconds) => fadeOutMusic(seconds),
   fanfare: (name) => fanfare(name),        // a jingle over the paused song; resolves when it ends
+  // What A and B do right now ({ a, b }: keys in DATA.ui, null for nothing), shown next to the buttons.
+  keys(k) {
+    const a = k?.a ?? null, b = k?.b ?? null;
+    if (a === acts.a && b === acts.b) return;
+    acts = { a, b };
+    showActs();
+  },
 };
+let acts = { a: null, b: null };
+function showActs() {
+  const now = show.up ? { a: null, b: 'act_close' } : acts;   // the picture viewer has the buttons
+  for (const name of ['a', 'b']) {
+    const el = $gba.querySelector(`[data-btn="${name}"] .act`);
+    if (!el) continue;
+    el.textContent = now[name] ? t(now[name]) : '';
+    el.hidden = !now[name];
+  }
+}
 
 // ---------- full-size pictures, over the whole page (api.show) ----------
 // media = [{ src, alt }]. While it is up the buttons are its own: ←/→ switch, B or START close; a
@@ -77,6 +94,7 @@ const show = (() => {
   const close = () => {
     el.hidden = true;
     sfx('select');
+    showActs();
   };
   const step = (d) => {
     cur = (cur + d + list.length) % list.length;
@@ -103,6 +121,7 @@ const show = (() => {
       draw();
       el.hidden = false;
       el.scrollTop = 0;
+      showActs();
     },
     button(name) {
       const d = name === 'left' ? -1 : name === 'right' ? 1 : 0;
@@ -142,6 +161,9 @@ const btn = (name, x, y, w, h, text = '', cls = 'hw') =>
   `<button type="button" class="${cls}" data-btn="${name}" tabindex="-1" aria-label="${name}" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px">${text}</button>`;
 // Labels use a 14px line box: the small font's capitals then sit on rows top+4..top+10.
 const label = (text, x, y, w, align = 'center') => `<p class="label" style="left:${x}px;top:${y}px;width:${w}px;text-align:${align}">${text}</p>`;
+// The word saying what A or B does right now (api.keys), placed from its button's corner. It is part of
+// the button, so a click on it presses the button. check.mjs keeps every word within ACT_W.
+const act = (x, y, align = 'center') => `<span class="label act" style="left:${x}px;top:${y}px;width:${ACT_W}px;text-align:${align}" hidden></span>`;
 
 const SHELLS = {
   gba: {
@@ -166,7 +188,7 @@ const SHELLS = {
     controls: [
       btn('up', 32, 50, 20, 18), btn('down', 32, 80, 20, 18), btn('left', 18, 64, 18, 20), btn('right', 48, 64, 18, 20),
       btn('start', 12, 118, 58, 18), btn('select', 12, 136, 58, 18),
-      btn('a', 391, 57, 26, 26, 'A', 'hw round'), btn('b', 365, 71, 26, 26, 'B', 'hw round'),
+      btn('a', 391, 57, 26, 26, `A${act(-11, -12)}`, 'hw round'), btn('b', 365, 71, 26, 26, `B${act(-11, 23)}`, 'hw round'),   // the words above A, below B
       btn('l', 0, 0, 88, 16), btn('r', 344, 0, 88, 16),
       btn('sound', 356, 110, 66, 72), btn('simple', 8, 154, 62, 18),
     ],
@@ -189,7 +211,7 @@ const SHELLS = {
     labels: () => label(DATA.trainer.name, 8, 174, 240) + label('SELECT', 90, 297, 40) + label('START', 126, 297, 40) + label(t('simple_label'), 186, 297, 48) + label(t('opt_sound'), 22, 302, 30, 'left'),
     controls: [
       btn('up', 40, 220, 28, 26), btn('down', 40, 258, 28, 26), btn('left', 20, 240, 26, 28), btn('right', 62, 240, 26, 28),
-      btn('a', 200, 222, 36, 36, 'A', 'hw round'), btn('b', 166, 240, 36, 36, 'B', 'hw round'),
+      btn('a', 200, 222, 36, 36, `A${act(-16, -10, 'right')}`, 'hw round'), btn('b', 166, 240, 36, 36, `B${act(-48, 11, 'right')}`, 'hw round'),   // above A, left of B
       btn('select', 92, 280, 36, 34), btn('start', 128, 280, 36, 34), btn('simple', 186, 278, 48, 34),
       btn('sound', 10, 274, 54, 44),
     ],
@@ -288,6 +310,7 @@ function mount(force = false) {
   $gba.style.margin = `${b.top}px ${b.right}px ${b.bottom}px ${b.left}px`;   // zoomed with the GBA
   $gba.insertAdjacentHTML('afterbegin', `<svg class="body" viewBox="0 0 ${shell.W} ${shell.H}" width="${shell.W}" height="${shell.H}" aria-hidden="true">${shell.svg}</svg>`);
   $gba.insertAdjacentHTML('beforeend', shell.labels() + shell.controls.join(''));
+  showActs();
 }
 function fit() {
   mount();

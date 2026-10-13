@@ -132,6 +132,9 @@ export function fitScale(w, h, W, H, dpr) {
   return Math.max(1, Math.floor(Math.min((W * dpr) / w, (H * dpr) / h))) / dpr;
 }
 
+// Room (game px) for the word next to A or B on the console that says what the button does now.
+export const ACT_W = 48;
+
 // Margins (game px) that put the centre of the 240x160 screen at (sx, sy) in the middle of a W×H body,
 // and the size of the body with them: centring that box centres the game screen.
 export function centerBox(W, H, sx, sy) {

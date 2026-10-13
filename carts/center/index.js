@@ -102,6 +102,23 @@ function sync() {
   hint.hidden = stack.size > 0 || dialog.open || api.store.get('menuUsed', false);
 }
 
+// What A and B do right now, for the words next to them on the console (api.keys): the top screen
+// says it for itself, the default is a list's.
+function keys() {
+  if (mode === 'intro' || (mode === 'title' && titleScreen.entering)) return { a: 'act_skip', b: 'act_skip' };
+  if (mode === 'title') return { a: 'act_start', b: null };
+  if (mode !== 'world' || healing) return null;
+  if (dialog.open) return { a: 'act_next', b: 'act_next' };
+  if (stack.size) return stack.top.keys?.() ?? { a: 'act_choose', b: 'act_back' };
+  return { a: 'act_talk', b: 'act_run' };
+}
+// Asked every frame: the screens change what A and B do on their own too (a flip ends, the hand arrives).
+let raf = 0;
+const watchKeys = () => {
+  api.keys(keys());
+  raf = requestAnimationFrame(watchKeys);
+};
+
 function say(pages, done, voice = '') {
   dialog.say(pages, () => {
     sync();
@@ -168,6 +185,9 @@ function openProject(i) {
 const FRAME = 1000 / 59.7275;
 const wait = (frames) => new Promise((r) => setTimeout(r, api.reduced() ? 0 : frames * FRAME));
 const BALL_AT = [[0, 0], [6, 0], [0, 4], [6, 4], [0, 8], [6, 8]];   // sPokeballCoordOffsets, from (93, 36)
+// FldEff_PokecenterHeal's (93, 36) and (128, 24) are screen spots with the camera on the player at the
+// counter, and field_camera.c scrolls the map 8px further down than our fixed room: 8px up here.
+const CAMERA_Y = 8;
 async function healMachine(n) {
   const fx = document.createElement('div');
   fx.className = 'heal';
@@ -176,7 +196,7 @@ async function healMachine(n) {
   for (let k = 0; k < n; k++) {
     if (k) await wait(25);
     const b = Object.assign(document.createElement('i'), { className: 'heal-ball' });
-    Object.assign(b.style, { left: `${89 + BALL_AT[k][0]}px`, top: `${32 + BALL_AT[k][1]}px` });
+    Object.assign(b.style, { left: `${89 + BALL_AT[k][0]}px`, top: `${32 - CAMERA_Y + BALL_AT[k][1]}px` });
     fx.append(b);
     balls.push(b);
     api.sfx('ball');
@@ -316,8 +336,11 @@ export default {
     api = a;
     setFrame(api.store.get('frame', 1));
     title();
+    watchKeys();
   },
   stop() {
+    cancelAnimationFrame(raf);
+    api.keys(null);
     intro?.stop();
     titleScreen?.stop();
     world?.stop();

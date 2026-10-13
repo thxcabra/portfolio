@@ -66,6 +66,7 @@ export function createOptions({ api, setFrame, close }) {
   return {
     el,
     focus,
+    keys: () => ({ a: 'act_back', b: 'act_back' }),
     button(name, down) {
       if (!down) return;
       if (name === 'up') pick(row - 1);

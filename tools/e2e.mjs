@@ -79,11 +79,23 @@ const me = () => ev(`(() => { const p = document.querySelector('.person[data-me]
 const msg = () => ev(`(() => { const m = document.querySelector('.msg.dialog'); return m && !m.hidden ? m.textContent : null; })()`);
 const hold = async (k, ms) => { await keyDown(k); await sleep(ms); await send('Input.dispatchKeyEvent', { type: 'keyUp', key: k, ...KEYS[k], text: undefined }); await sleep(150); };
 const closeMsg = async () => { for (let i = 0; i < 40 && (await msg()) !== null; i++) await key('z', 250); assert.equal(await msg(), null, 'caixa de diálogo não fechou'); };
-const clickTile = async (tx, ty) => {
+// A click on a game pixel of the screen.
+const tap = async (gx, gy) => {
   const r = await ev(`(() => { const b = document.getElementById('screen').getBoundingClientRect(); return [b.left, b.top, b.width / 240]; })()`);
-  const x = r[0] + (tx * 16 + 8) * r[2], y = r[1] + (ty * 16 + 8) * r[2];
+  const x = r[0] + (gx + 0.5) * r[2], y = r[1] + (gy + 0.5) * r[2];
   for (const type of ['mouseMoved', 'mousePressed', 'mouseReleased']) await send('Input.dispatchMouseEvent', { type, x, y, button: 'left', clickCount: 1 });
 };
+const clickTile = (tx, ty) => tap(tx * 16 + 8, ty * 16 + 8);
+// Waits (up to ms) for an expression to come true in the page.
+const until = async (expr, what, ms = 5000) => {
+  for (let t = 0; t < ms && !(await ev(expr)); t += 100) await sleep(100);
+  assert.ok(await ev(expr), what);
+};
+// The word next to A or B on the console ('' when it is hidden).
+const act = (b) => ev(`document.querySelector('[data-btn="${b}"] .act').textContent`);
+// The Box: the hand's spot (the centre of its sprite) and the team panel's top.
+const handIs = (x, y) => `(document.querySelector('.box-hand').style.left === '${x - 16}px' && document.querySelector('.box-hand').style.top === '${y - 16}px')`;
+const panelIs = (top) => `(document.querySelector('.box-party').style.top === '${top}px')`;
 const menuTo = async (label) => {
   for (let i = 0; i < 8 && (await focused()) !== label; i++) await key('ArrowDown', 120);
   assert.equal(await focused(), label);
@@ -172,22 +184,60 @@ await key('x', 600);
 assert.ok(!(await has('.card')), 'B na frente não fechou o cartão');
 ok('Enfermeira: cumprimenta, pergunta e abre o cartão de treinador; A vira, SOBRE MIM, B volta');
 
+assert.deepEqual([await act('a'), await act('b')], ['FALAR', 'CORRER'], 'na sala o console diz que A fala e B corre');
 await clickTile(11, 1);
 await sleep(8 * 266 + 900);
 assert.deepEqual(await me(), [11, 2, 'up']);
 assert.match((await msg()) ?? '', /PC/);
+assert.equal(await act('a'), 'CONTINUAR', 'com uma mensagem na tela o A continua');
 await closeMsg();
-await sleep(400);
 assert.ok(await has('.box'), 'o PC não abriu a Box');
+await key('ArrowRight', 0);   // at once: the Box takes buttons as soon as it is up
+await until(handIs(124, 32), 'a Box perdeu um botão logo ao abrir', 500);
+await key('ArrowLeft', 0);
+await until(handIs(100, 32), 'a mão não voltou para o primeiro projeto', 500);
+assert.deepEqual([await act('a'), await act('b')], ['ESCOLHER', 'VOLTAR'], 'na Box o console diz que A escolhe e B volta');
 assert.equal(await ev(`document.querySelectorAll('.box-icons .box-icon').length`), 7, 'a Box deveria ter os 7 projetos');
 await key('z', 300);
 assert.ok(await has('.box .win'), 'A num projeto da Box não abriu as opções');
-await key('z', 1500);
-assert.equal(await ev(`localStorage.getItem('team')`), '[0]', 'LEVAR não pôs o projeto na equipe');
-assert.equal(await ev(`document.querySelectorAll('.box-icons .box-icon').length`), 6, 'o projeto levado deveria sair da Box');
+await key('z', 300);
+assert.equal(await ev(`document.querySelectorAll('.box-icons .box-icon').length`), 6, 'a mão deveria tirar o projeto da Box');
+await until(`localStorage.getItem('team') === '[0]'`, 'LEVAR não pôs o projeto na equipe');
+await until(`${panelIs(-160)} && ${handIs(100, 32)}`, 'depois de LEVAR o painel sobe e a mão volta para onde estava');
+assert.equal(await act('a'), '', 'numa casa vazia o A não faz nada e o console não mostra nada');
+await tap(124, 44);   // the second project's icon
+await until(handIs(124, 32), 'um clique num projeto leva a mão até ele');
+assert.ok(!(await has('.box .win')), 'o primeiro clique só move a mão');
+await tap(124, 44);
+assert.ok(await has('.box .win'), 'um clique no projeto apontado abre as opções');
+await key('x', 300);
+assert.ok(!(await has('.box .win')), 'B não fechou as opções');
+await tap(110, 8);   // PARTY POKéMON
+await until(`${panelIs(0)} && ${handIs(104, 52)}`, 'PARTY POKéMON não desceu o painel com a mão na equipe');
+await key('z', 300);
+assert.match(await ev(`document.querySelector('.box > .win').textContent`), /DEVOLVER/, 'A na equipe não ofereceu DEVOLVER');
+await key('z', 300);
+await until(`localStorage.getItem('team') === '[]'`, 'DEVOLVER não tirou o projeto da equipe');
+await until(`document.querySelectorAll('.box-icons .box-icon').length === 7 && ${panelIs(0)} && ${handIs(104, 52)}`, 'DEVOLVER: o projeto volta para a casa dele e a mão volta para a equipe');
+assert.ok(await ev(`!!document.querySelector('.box-icons [data-i="0"]')`), 'o projeto devolvido deveria estar na casa 1');
+await key('x', 300);
+await until(`${panelIs(-160)} && ${handIs(100, 32)}`, 'B na equipe não subiu o painel');
 await key('x', 600);
 assert.ok(!(await has('.box')), 'B não fechou a Box');
-ok('clique no PC: anda até ele, liga e abre a Box; LEVAR põe o projeto na equipe');
+await ev(`localStorage.setItem('team', '[0,1,2,3,4,5]')`);
+await key('z', 400);   // the PC again, with a full team
+await closeMsg();
+await key('ArrowDown', 300);   // the seventh project, the one left in the Box
+await key('z', 300);
+await key('z', 300);
+assert.match(await ev(`document.querySelector('.box-msg').textContent`), /cheia/, 'com 6 na equipe LEVAR deveria avisar que está cheia');
+assert.equal(await act('a'), 'CONTINUAR');
+await key('x', 300);
+assert.equal(await ev(`document.querySelector('.box-msg').textContent`), '', 'B não fechou o aviso');
+await click('[data-btn="b"] .act', 600);   // the word is part of the button
+assert.ok(!(await has('.box')), 'um clique na palavra do B não apertou o B');
+await ev(`localStorage.setItem('team', '[0]')`);
+ok('clique no PC: abre a Box; LEVAR e DEVOLVER levam o projeto na mão; clique move a mão; equipe cheia avisa; A/B no console mudam');
 
 await clickTile(7, 2);
 await sleep(4500);

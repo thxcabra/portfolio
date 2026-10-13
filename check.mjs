@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { DATA } from './data.js';
 import {
   route, textWidth, fitsLines, centerBox, fade8, grey8, brighten8, alpha8, blendLevels, nextSeed, starPos, gfWindow, titleEntrance, TEXT_SPEEDS, multiTiles, monPath, wrapText, toPages, listMove, nextIndex, fitScale, cycle, splitShown, pingPong,
-  discPath, rrectPath, corner, TYPES, SHAPES, DIRS, around, pathToAny, pageFits, esc,
+  discPath, rrectPath, corner, TYPES, SHAPES, DIRS, around, pathToAny, pageFits, esc, ACT_W,
 } from './logic.js';
 import { MENU } from './carts/center/screens/menu.js';
 import { VOLUMES } from './sound.js';
@@ -307,6 +307,14 @@ for (const l of ['pt', 'en']) {
   for (const k of ['slow', 'mid', 'fast', 'vol_0', 'vol_1', 'vol_2', 'vol_3', 'lang_pt', 'lang_en']) assert.ok(textWidth(u[k], widthsOf) <= 70, `ui.${l}.${k} largo demais (o jogo limpa 70px)`);
   assert.ok(textWidth(`${u.frame_type}10`, widthsOf) <= 70, `ui.${l}.frame_type largo demais`);
   for (const k of ['bag_work', 'bag_school', 'tm_title']) assert.ok(textWidth(u[k], widthsOf) <= 72, `ui.${l}.${k} largo demais para a barra do título (72px)`);
+}
+
+// the console's words for what A and B do now (small font) fit next to the buttons on both shells
+const smallOf = JSON.parse(readFileSync(here0('assets/font/widths-small.json'), 'utf8'));
+for (const l of ['pt', 'en']) {
+  const acts = Object.keys(ui[l]).filter((k) => k.startsWith('act_'));
+  assert.ok(acts.length >= 10, `ui.${l}: faltam as palavras de A/B`);
+  for (const k of acts) assert.ok(textWidth(ui[l][k], smallOf) <= ACT_W, `ui.${l}.${k} largo demais ao lado do botão (${ACT_W}px)`);
 }
 
 const contactLabels = [...contact.map((c) => c.label), ui.pt.menu_sair, ui.en.menu_sair];

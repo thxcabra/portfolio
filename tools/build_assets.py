@@ -345,6 +345,7 @@ def build_fonts():
     (font / 'widths.json').write_text(json.dumps(adv, ensure_ascii=False), encoding='utf-8')
     small, small_adv = collect_glyphs('small')
     save_font(small, small_adv, 'Gen3 Small', font / 'gen3-small.woff')
+    (font / 'widths-small.json').write_text(json.dumps(small_adv, ensure_ascii=False), encoding='utf-8')
     return glyphs, small
 
 
@@ -356,7 +357,7 @@ def check_fonts(glyphs, small):
     assert not missing, f'font is missing {missing}'
     assert all(c in small for c in 'ÃÉÍÓABCDEFGHIJKLMNOPQRSTUVWXYZ<>'), 'small font is missing labels'
     assert any(glyphs['ã'][y][x] for y in range(6) for x in range(6)), 'ã has no tilde'
-    for name in ('gen3.woff', 'gen3-small.woff', 'charset.json'):
+    for name in ('gen3.woff', 'gen3-small.woff', 'charset.json', 'widths-small.json'):
         assert (OUT / 'font' / name).exists(), name
     print(f'fonts ok ({len(glyphs)} glyphs, small {len(small)})')
 
@@ -898,7 +899,9 @@ def build_heal(out):
             colors = [tint(pal[i], phase[i]) if i in phase else tuple(pal[i]) for i in range(16)]
             rows += pngio.to_rgba(ball, colors)
     pngio.write(out / 'heal-balls.png', rows)
-    rgba_png(E / 'pokemoncenter_monitor.png', out / 'monitor.png')
+    # The monitor shares the balls' palette (paletteTag 4103): in it frame 0 is the wall monitor itself.
+    _, _, monitor, _ = pngio.read(E / 'pokemoncenter_monitor.png')
+    pngio.write(out / 'monitor.png', pngio.to_rgba(monitor, pal))
 
 
 MUSIC = ['mus_game_freak', 'mus_title', 'mus_poke_center', 'mus_heal']

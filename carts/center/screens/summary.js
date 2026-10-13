@@ -200,6 +200,11 @@ export function createSummary({ api, widths, data, index, say, onIndex, close })
     el,
     get path() { return `projetos/${i + 1}`; },
     focus() { sub?.list.focus(); },
+    keys() {
+      if (sub) return { a: 'act_choose', b: 'act_back' };
+      const opens = PAGES[page] === 'info' || (PAGES[page] === 'shots' && P().shots.length);
+      return { a: opens ? 'act_open' : null, b: 'act_back' };
+    },
     button(name, down) {
       if (down) press(name);
     },

@@ -278,6 +278,9 @@ export const DATA = {
       simple_label: 'SIMPLES', simple_back: 'VOLTAR AO GBA', simple_lang: 'ENGLISH', sp_power: 'PODER',
       tm_title: 'ESTOJO TM', tm_years: '{n} ANOS DE USO', tm_close: 'O ESTOJO TM será guardado.',
       card_name: 'NOME: ', card_projects: 'PROJETOS', card_badges: 'INSÍGNIAS', card_time: 'TEMPO', card_years: '{n} ANOS', card_about: 'A: SOBRE MIM',
+      // what A and B do right now, next to the buttons on the console
+      act_skip: 'PULAR', act_start: 'COMEÇAR', act_talk: 'FALAR', act_run: 'CORRER', act_next: 'CONTINUAR', act_choose: 'ESCOLHER',
+      act_back: 'VOLTAR', act_close: 'FECHAR', act_flip: 'VIRAR', act_open: 'ABRIR', act_read: 'LER',
     },
     en: {
       menu_projetos: 'PROJECTS', menu_sobre: 'ABOUT', menu_experiencia: 'EXPERIENCE', menu_habilidades: 'SKILLS',
@@ -305,6 +308,8 @@ export const DATA = {
       simple_label: 'SIMPLE', simple_back: 'BACK TO THE GBA', simple_lang: 'PORTUGUÊS', sp_power: 'POWER',
       tm_title: 'TM CASE', tm_years: '{n} YEARS OF USE', tm_close: 'The TM CASE will be put away.',
       card_name: 'NAME: ', card_projects: 'PROJECTS', card_badges: 'BADGES', card_time: 'TIME', card_years: '{n} YEARS', card_about: 'A: ABOUT ME',
+      act_skip: 'SKIP', act_start: 'START', act_talk: 'TALK', act_run: 'RUN', act_next: 'NEXT', act_choose: 'CHOOSE',
+      act_back: 'BACK', act_close: 'CLOSE', act_flip: 'FLIP', act_open: 'OPEN', act_read: 'READ',
     },
   },
 };

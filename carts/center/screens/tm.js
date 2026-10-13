@@ -129,6 +129,7 @@ export function createTm({ api, widths, data, say, close }) {
     el,
     path: 'habilidades',
     focus: () => $('.tm-list').querySelectorAll('.tm-row')[pos.row]?.focus({ preventScroll: true }),
+    keys: () => ({ a: items[index()].move ? 'act_read' : 'act_back', b: 'act_back' }),
     button(name, down) {
       if (!down || busy) return;
       if (name === 'up' || name === 'down') move(name === 'down');

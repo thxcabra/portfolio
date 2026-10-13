@@ -157,6 +157,10 @@ export function createBag({ api, widths, data, say, close }) {
     el,
     path: 'experiencia',
     focus: () => $('.bag-rows').querySelectorAll('.bag-row')[cur().pos.row]?.focus({ preventScroll: true }),
+    keys() {
+      const it = cur().items[index()];
+      return { a: it.text ? 'act_read' : it.cancel ? 'act_back' : null, b: 'act_back' };
+    },
     button(name, down) {
       if (!down || busy) return;
       if (name === 'up' || name === 'down') move(name === 'down');

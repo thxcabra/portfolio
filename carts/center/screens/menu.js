@@ -34,6 +34,7 @@ export function createMenu({ api, widths, start = last, choose, close }) {
     el,
     focus: () => list.focus(),
     refresh: render,   // the language may have changed in OPÇÕES
+    keys: () => ({ a: 'act_choose', b: 'act_close' }),
     button(name, down) {
       if (!down) return;
       if (name === 'b' || name === 'start') return close();
