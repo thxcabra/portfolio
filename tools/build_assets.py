@@ -767,6 +767,37 @@ def check_bag():
     print('bag ok')
 
 
+def build_tm(out):
+    """FireRed's TM Case (tm_case.c): BG2 (menu.bin, the screen) and BG1 (tm_case.bin, the case, drawn
+    above the disc), both on tm_case.png with menu_male.pal, and the TM disc (disc.png, grayscale, first frame) in
+    each type's palette (disc_types_1/2.pal, sTMSpritePaletteOffsetByType), one row per type in the
+    order of TYPES in logic.js, which is the same order."""
+    out.mkdir(parents=True, exist_ok=True)
+    T = GFX / 'tm_case'
+    _, _, tiles, _ = pngio.read(T / 'tm_case.png')
+    pal = pngio.read_jasc(T / 'menu_male.pal')
+    slot = lambda e: pal[(e >> 12) * 16:(e >> 12) * 16 + 16]
+    for name, tilemap, back in (('menu', 'menu.bin', tuple(pal[0]) + (255,)), ('case', 'tm_case.bin', (0, 0, 0, 0))):
+        img = [[None] * 240 for _ in range(160)]
+        draw_bg(img, tiles, 8, T / tilemap, slot)
+        pngio.write(out / f'{name}.png', [[tuple(p[1][p[0]]) + (255,) if p else back for p in row] for row in img])
+    _, _, gray, _ = pngio.read(T / 'disc.png')
+    disc = [[15 - g for g in row] for row in gray]   # grayscale PNG: gbagfx inverts it
+    colors = pngio.read_jasc(T / 'disc_types_1.pal') + pngio.read_jasc(T / 'disc_types_2.pal')
+    sheet = []
+    for t in range(17):
+        sheet += pngio.to_rgba(disc[:32], colors[t * 16:t * 16 + 16])
+    pngio.write(out / 'discs.png', sheet)
+
+
+def check_tm():
+    assert pngio.read(OUT / 'tm/menu.png')[:2] == (240, 160) and pngio.read(OUT / 'tm/case.png')[:2] == (240, 160)
+    w, h, discs, _ = pngio.read(OUT / 'tm/discs.png')
+    assert (w, h) == (32, 32 * 17), (w, h)
+    assert discs[:32] != discs[32:64], 'NORMAL and FIRE discs must differ'
+    print('tm ok')
+
+
 def check_intro():
     for name, size in (('gf-text', (144, 16)), ('gf-logo', (32, 64)), ('star', (16, 16)),
                        ('sparkles-small', (16, 16)), ('sparkles-big', (32, 128))):
@@ -793,6 +824,8 @@ def main():
     check_card()
     build_bag(OUT / 'bag')
     check_bag()
+    build_tm(OUT / 'tm')
+    check_tm()
     check_fonts(*build_fonts())
     check_audio(build_audio())
     check_world(*build_world())

@@ -170,6 +170,23 @@ img.bag-icon { left: 12px; top: 128px; }
 .bag-arrow.down { top: 96px; transform: scaleY(-1); }
 @keyframes bounce-x { 0% { translate: 0 0; } 9.375% { translate: 1px 0; } 25% { translate: 2px 0; } 28.125% { translate: 1px 0; } 43.75% { translate: 0 0; } 59.375% { translate: -1px 0; } 75% { translate: -2px 0; } 78.125% { translate: -1px 0; } 93.75% { translate: 0 0; } }
 @keyframes bounce-y { 0% { translate: 0 0; } 9.375% { translate: 0 1px; } 25% { translate: 0 2px; } 28.125% { translate: 0 1px; } 43.75% { translate: 0 0; } 59.375% { translate: 0 -1px; } 75% { translate: 0 -2px; } 78.125% { translate: 0 -1px; } 93.75% { translate: 0 0; } }
+/* HABILIDADES (tm_case.c): the disc sits between the screen (BG2) and the case (BG1). */
+.tm { background: #000; animation: from-black .15s steps(8); }
+.tm.to-black { animation: to-black .15s steps(8) forwards; }
+.tm-disc { position: absolute; width: 32px; height: 32px; background: url(assets/tm/discs.png); }
+.tm-title, .tm-desc { color: #fff; --sh: #626262; }
+.tm-desc .line { height: 14px; letter-spacing: 1px; }
+.tm-list { position: absolute; left: 80px; top: 8px; width: 152px; height: 80px; }
+.tm-row { position: absolute; left: 8px; width: 140px; height: 16px; text-align: left; }
+.tm-row:focus { outline: none; }
+.tm-row > * { position: absolute; top: 0; }
+.tm-row .small { font-family: 'Gen3 Small'; line-height: 14px; }
+.tm-row .num { left: 9px; }
+.tm-row .name { left: 24px; }
+.tm-label { position: absolute; left: 8px; width: 40px; height: 12px; background: url(assets/ui/types.png); }
+.tm-info { color: #414141; --sh: #dedec5; }
+.bag-arrow.tm-up { left: 152px; top: 0; }
+.bag-arrow.tm-down { left: 152px; top: 80px; }
 .help { position: absolute; left: 0; top: 120px; width: 240px; height: 40px; background: url(assets/ui/help.png); color: #fff; --sh: #626262; }
 
 /* ---------- full-size pictures (api.show), over the whole page ---------- */

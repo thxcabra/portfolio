@@ -14,6 +14,7 @@ import { createSummary } from './screens/summary.js';
 import { createCard } from './screens/card.js';
 import { createAsk } from './screens/ask.js';
 import { createBag } from './screens/bag.js';
+import { createTm } from './screens/tm.js';
 import { DATA } from '../../data.js';
 
 const VOICE = { nurse: 'female', gentleman: 'male', boy: 'male', youngster: 'male' };   // by the game's gender table
@@ -22,6 +23,7 @@ const SCREENS = {   // menu id -> (n) => screen; the ones not built yet say "com
   opcoes: () => createOptions({ api, setFrame, close: () => stack.pop() }),
   sobre: () => createCard({ api, widths, data: DATA, say, close: () => stack.pop() }),
   experiencia: () => createBag({ api, widths, data: DATA, say, close: () => stack.pop() }),
+  habilidades: () => createTm({ api, widths, data: DATA, say, close: () => stack.pop() }),
   contato: () => createContact({ api, widths, contact: DATA.contact, say, close: () => stack.pop() }),
 };
 
@@ -180,6 +182,7 @@ function interact(target) {
   api.sfx('select');   // A on someone or something (field_control_avatar.c)
   if (key === 'nurse') return nurse();
   if (key === 'board') return say(api.talk('board'), () => openScreen('experiencia'));
+  if (key === 'gentleman') return say(api.talk('gentleman'), () => openScreen('habilidades'), VOICE.gentleman);
   say(api.talk(key), null, VOICE[key]);
 }
 

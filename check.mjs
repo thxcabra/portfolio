@@ -241,6 +241,11 @@ for (const l of ['pt', 'en']) {
 }
 for (const x of [...badges, ...DATA.education]) assert.ok(fw(x.name) <= 135, `bolsa: nome ${x.name} largo demais para a lista`);
 
+// HABILIDADES: each description fits the TM Case's 4 lines (140px, 1px between letters)
+const wide1 = Object.fromEntries(Object.entries(widthsOfData).map(([ch, w]) => [ch, w + 1]));
+for (const l of ['pt', 'en']) for (const m of moves) assert.ok(wrapText(m.text[l], wide1, 140).length <= 4, `estojo: texto de ${m.name} longo demais (${l})`);
+assert.ok(moves.length <= 50, 'no máximo 50 TMs');
+
 const { education } = DATA;
 assert.ok(Array.isArray(education) && education.length >= 1, 'education precisa ser uma lista');
 education.forEach((e, i) => {
@@ -300,6 +305,7 @@ for (const l of ['pt', 'en']) {
   for (const k of ['opt_text', 'opt_sound', 'opt_frame', 'opt_lang', 'opt_exit']) assert.ok(textWidth(u[k], widthsOf) <= 120, `ui.${l}.${k} largo demais para OPÇÕES`);
   for (const k of ['slow', 'mid', 'fast', 'vol_0', 'vol_1', 'vol_2', 'vol_3', 'lang_pt', 'lang_en']) assert.ok(textWidth(u[k], widthsOf) <= 70, `ui.${l}.${k} largo demais (o jogo limpa 70px)`);
   assert.ok(textWidth(`${u.frame_type}10`, widthsOf) <= 70, `ui.${l}.frame_type largo demais`);
+  for (const k of ['bag_work', 'bag_school', 'tm_title']) assert.ok(textWidth(u[k], widthsOf) <= 72, `ui.${l}.${k} largo demais para a barra do título (72px)`);
 }
 
 const contactLabels = [...contact.map((c) => c.label), ui.pt.menu_sair, ui.en.menu_sair];
