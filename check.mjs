@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { DATA } from './data.js';
 import {
-  route, textWidth, fitsLines, centerBox, TEXT_SPEEDS, multiTiles, spritePath, nextIndex, fitScale, coverScale, cycle, splitShown, pickNext,
+  route, textWidth, fitsLines, centerBox, fade8, grey8, brighten8, alpha8, blendLevels, nextSeed, starPos, gfWindow, titleEntrance, TEXT_SPEEDS, multiTiles, spritePath, nextIndex, fitScale, coverScale, cycle, splitShown, pickNext,
   discPath, rrectPath, corner, TYPES, SHAPES, DIRS, around, pathToAny, pageFits, esc,
 } from './logic.js';
 import { MENU } from './carts/center/screens/menu.js';
@@ -37,6 +37,58 @@ assert.deepEqual(centerBox(432, 202, 96, 18), { top: 6, right: 0, bottom: 0, lef
 assert.deepEqual(centerBox(256, 320, 8, 12), { top: 136, right: 0, bottom: 0, left: 0, w: 256, h: 456 });
 // screen centre at (120, 120) of a 300x200 body: the box needs room on the left and at the bottom
 assert.deepEqual(centerBox(300, 200, 0, 40), { top: 0, right: 0, bottom: 40, left: 60, w: 360, h: 240 });
+
+// GBA colour maths on 8-bit palette values (5-bit channels inside)
+assert.equal(fade8(248, 0, 16), 0);
+assert.equal(fade8(248, 0, 0), 248, 'level 0 keeps the colour as it is');
+assert.equal(fade8(0, 31, 16), 255);
+assert.equal(fade8(0, 30, 8), 123);
+assert.equal(grey8(248, 248, 248), 255);
+assert.equal(grey8(0, 0, 0), 0);
+assert.equal(grey8(128, 64, 0), 41, 'luma 9 snaps to the grey step 5');
+assert.equal(brighten8(0, 15), 239);   // (31·15) >> 4 = 29 → 239
+assert.equal(alpha8(248, 74, 16, 0), 255);
+assert.equal(alpha8(248, 74, 0, 16), 74);
+// StartBlendTask
+for (let k = 1; k < 32; k++) assert.deepEqual(blendLevels(0, 16, 16, 0, 16, k), [Math.ceil(k / 2), 16 - Math.floor(k / 2)]);
+assert.deepEqual(blendLevels(0, 16, 16, 0, 16, 32), [16, 0]);
+assert.deepEqual(blendLevels(0, 16, 16, 0, 48, 7), [1, 15]);
+assert.deepEqual(blendLevels(16, 0, 0, 16, 20, 40), [0, 16]);
+// the star's trail uses the game's generator: first sparkles' x offsets (seed 354128453)
+let sd = 354128453;
+const xMods = [];
+for (let n = 1; n <= 9; n++) if (n % 8) { sd = nextSeed(sd); xMods.push(((sd >>> 16) & 7) + 2); }
+assert.deepEqual(xMods, [6, 6, 5, 5, 6, 9, 6, 6]);
+const sine = JSON.parse(readFileSync(new URL('assets/intro/intro.json', import.meta.url), 'utf8')).sine;
+assert.deepEqual(starPos(1, sine), { x: 242, y: 56, y2: sine[67] >> 5 });
+assert.equal(starPos(42, sine).x, -4);
+assert.deepEqual(gfWindow(-7), [80, 80]);
+assert.deepEqual(gfWindow(-6), [72, 88]);
+assert.deepEqual(gfWindow(-1), [32, 128]);
+assert.deepEqual(gfWindow(300), [32, 128]);
+// the title's entrance
+const E = titleEntrance;
+assert.deepEqual(E(0).charizard, { src: 'color', to: 'black', y: 16 });
+assert.equal(E(2).band, 128);
+assert.equal(E(35).band, null);
+assert.deepEqual(E(48).charizard, { src: 'grey', to: 'black', y: 16 });
+assert.equal(E(58).charizard.y, 14);
+assert.equal(E(135).charizard.y, 0);
+assert.deepEqual(E(182).charizard, { src: 'grey', to: 'white', y: 15 });
+assert.equal(E(231).charizard.y, 16);
+assert.deepEqual(E(232).charizard, { src: 'color', to: 'white', y: 15 });
+assert.equal(E(262).charizard.y, 0);
+assert.equal(E(180).border, 0);
+assert.equal(E(185).border, 120);
+assert.equal(E(195).border, 240);
+assert.equal(E(200).bars, 'black');
+assert.equal(E(201).bars, 'hidden');
+assert.equal(E(202).bars, 216);
+assert.equal(E(212).bars, 0);
+assert.equal(E(230).logo, null);
+assert.equal(E(232).logo, 16);
+assert.equal(E(233).logo, 14);
+assert.equal(E(254).logo, 0);
 
 // volume levels: off, low, mid (40% of the old fixed volume), high
 assert.deepEqual(VOLUMES.length, 4);

@@ -27,6 +27,57 @@ export function fitsLines(text, widths, max, lines) {
 // FireRed prints one letter, then waits 8 / 4 / 1 frames (sTextSpeedFrameDelays): letters per second.
 export const TEXT_SPEEDS = { slow: 59.7275 / 9, mid: 59.7275 / 5, fast: 59.7275 / 2 };
 
+// ---------- GBA colour maths: palettes keep their 8-bit values, the hardware works in 5 bits ----------
+const to5 = (v) => v >> 3;
+const to8 = (c) => (c << 3) | (c >> 2);
+// Palette fade (BlendPalette): c + ((target − c)·y >> 4), y 0–16. Level 0 leaves the colour untouched.
+export const fade8 = (v, t5, y) => (y ? to8(to5(v) + (((t5 - to5(v)) * y) >> 4)) : v);
+// TintPalette_GrayScale2: luma of the 5-bit colour, snapped to the game's 7 grey steps.
+const GREY_STEPS = [0, 0, 0, 0, 0, 5, 5, 5, 5, 5, 11, 11, 11, 11, 11, 16, 16, 16, 16, 16, 21, 21, 21, 21, 21, 27, 27, 27, 27, 27, 31, 31];
+export const grey8 = (r, g, b) => to8(GREY_STEPS[(76 * to5(r) + 151 * to5(g) + 29 * to5(b)) >> 8]);
+// BLDY brighten and BLDALPHA blend, per 5-bit channel.
+export const brighten8 = (v, evy) => to8(to5(v) + (((31 - to5(v)) * evy) >> 4));
+export const alpha8 = (top, below, eva, evb) => to8(Math.min(31, (eva * to5(top) + evb * to5(below)) >> 4));
+
+// StartBlendTask (menu2.c): over 2n frames, A moves on odd frames and B on even ones by trunc(Δ·256/n);
+// EVA = A >> 8, EVB = B >> 8, and the last frame lands on (a1, b1). r = frames since it started.
+export function blendLevels(a0, b0, a1, b1, n, r) {
+  if (r >= 2 * n) return [a1, b1];
+  const dA = Math.trunc(((a1 - a0) * 256) / n), dB = Math.trunc(((b1 - b0) * 256) / n);
+  return [(a0 * 256 + dA * Math.ceil(r / 2)) >> 8, (b0 * 256 + dB * Math.floor(r / 2)) >> 8];
+}
+
+// The game's linear congruential generator (ISO_RANDOMIZE1).
+export const nextSeed = (s) => (Math.imul(s, 1103515245) + 24691) >>> 0;
+
+// GAME FREAK scene: the star on its n-th frame (SpriteCB_Star), and the window around the band.
+export const starPos = (n, sine) => ({ x: (248 * 16 - 96 * n) >> 4, y: (55 * 16 + 16 * n) >> 4, y2: sine[((48 * n) >> 4) + 64] >> 5 });
+export const gfWindow = (T) => (T <= -7 ? [80, 80] : T < 0 ? [80 - 8 * (T + 7), 80 + 8 * (T + 7)] : [32, 128]);
+
+// What the title screen shows on frame M of its entrance (title_screen.c, INIT..FADEIN; RUN at 263):
+// band = centre of the brighten band over Charizard; charizard = palette source and fade; border = BG3
+// shown from x 0 to this; bars = 'black', 'hidden' or how far BG2 still is to the right; logo = fade
+// level from white, or null while hidden.
+const FLASH = [1, 6, 11, 15, 10, 5, 0];
+export function titleEntrance(M) {
+  let charizard;
+  if (M < 48) charizard = { src: 'color', to: 'black', y: 16 };
+  else if (M < 179) charizard = { src: 'grey', to: 'black', y: Math.max(0, 16 - 2 * Math.floor((M - 47) / 11)) };
+  else if (M < 186) charizard = { src: 'grey', to: 'white', y: FLASH[M - 179] };
+  else if (M < 203) charizard = { src: 'grey', to: 'white', y: 0 };
+  else if (M < 210) charizard = { src: 'grey', to: 'white', y: FLASH[M - 203] };
+  else if (M < 227) charizard = { src: 'grey', to: 'white', y: 0 };
+  else if (M < 232) charizard = { src: 'grey', to: 'white', y: 4 * (M - 227) };
+  else charizard = { src: 'color', to: 'white', y: Math.max(0, 15 - ((M - 232) >> 1)) };
+  return {
+    band: M >= 2 && M <= 34 ? 128 - 4 * (M - 2) : null,
+    charizard,
+    border: M <= 180 ? 0 : Math.min(240, 24 * (M - 180)),
+    bars: M <= 200 ? 'black' : M === 201 ? 'hidden' : Math.max(0, 216 - 24 * (M - 202)),
+    logo: M < 231 ? null : Math.max(0, 16 - 2 * Math.floor((M - 230) / 3)),
+  };
+}
+
 // Script multichoice window (script_menu.c): width from the longest item, height by item count.
 const MULTI_HEIGHT = [0, 2, 4, 6, 7, 9, 11, 13, 14];
 export const multiTiles = (maxWidth, count) => ({ w: Math.floor((maxWidth + 9) / 8) + 1, h: MULTI_HEIGHT[count] });
