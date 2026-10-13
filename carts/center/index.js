@@ -93,14 +93,16 @@ function openScreen(id) {
   stack.push(SCREENS[id]());
 }
 
+const THINGS = { [BEHAVIOR.REGION_MAP]: 'board', [BEHAVIOR.BOOKSHELF]: 'shelf' };
 function interact(target) {
-  if (target.person) return say(api.talk(target.person), null, VOICE[target.person]);
   if (target.behavior === BEHAVIOR.PC) {
-    api.sfx('pc_on');
+    api.sfx('pc_on');   // the PC plays its own sound instead of SE_SELECT
     return say(api.talk('pc'));
   }
-  if (target.behavior === BEHAVIOR.REGION_MAP) return say(api.talk('board'));
-  if (target.behavior === BEHAVIOR.BOOKSHELF) return say(api.talk('shelf'));
+  const key = target.person ?? THINGS[target.behavior];
+  if (!key) return;   // nothing there: no sound, like the game
+  api.sfx('select');   // A on someone or something (field_control_avatar.c)
+  say(api.talk(key), null, VOICE[key]);
 }
 
 // The stairs and the way out are hooks for later: the minigames room and the town.
@@ -116,12 +118,16 @@ function blocked(to, dir, from) {
   return false;
 }
 
-async function enter({ welcome = true } = {}) {
+async function enter({ fromTitle = true } = {}) {
   if (mode !== 'title') return;
   mode = 'loading';
-  api.sfx('select');
+  const loaded = Promise.all([map ?? json('assets/world/center.json'), widths ?? json('assets/font/widths.json')]);
+  if (fromTitle) {
+    api.cry(6);   // the title's Charizard
+    await titleScreen.leave();
+  }
   titleScreen.stop();
-  [map, widths] = await Promise.all([map ?? json('assets/world/center.json'), widths ?? json('assets/font/widths.json')]);
+  [map, widths] = await loaded;
   screen.innerHTML = '<div class="world"></div>';
   const root = screen.firstElementChild;
   world = createWorld(root, map, { interact, blocked, bump: () => api.sfx('bump') });
@@ -130,7 +136,7 @@ async function enter({ welcome = true } = {}) {
   hint = makeHint(root);
   mode = 'world';
   sync();
-  if (welcome && !api.store.get('welcomed', false)) {
+  if (fromTitle && !api.store.get('welcomed', false)) {
     setTimeout(() => {
       if (mode === 'world' && !dialog.open && !stack.size) say(api.talk('nurse_welcome'), () => {
         api.store.set('welcomed', true);
@@ -180,7 +186,7 @@ export default {
   // A link (#/contato) opens its screen straight away: no title, no welcome, B goes to the room.
   async open(path) {
     const r = route(path, DATA.projects.length);
-    if (mode === 'title') await enter({ welcome: false });
+    if (mode === 'title') await enter({ fromTitle: false });
     if (mode !== 'world') return;
     stack.clear();
     if (r) openScreen(r.screen);

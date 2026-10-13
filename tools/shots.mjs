@@ -64,7 +64,7 @@ for (const [n, size] of sizes.entries()) {
   await send('Page.navigate', { url: `${BASE}?s=${n}b` });
   await sleep(2000);
   await shot('title');
-  await key('Enter', 1500);
+  await key('Enter', 2600);
   await shot('room');
   await key('Escape', 600);
   await shot('menu');

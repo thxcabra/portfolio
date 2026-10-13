@@ -14,7 +14,7 @@ export function createTitle(root, { reduced }) {
     <canvas class="layer lit" width="240" height="160"></canvas>
     <img class="layer press" src="assets/title/press.png" alt="PRESS START">
   </div>`;
-  if (reduced) return { stop() {} };
+  if (reduced) return { stop() {}, leave: () => Promise.resolve() };
   const [flameCtx, litCtx] = [...root.querySelectorAll('canvas')].map((c) => c.getContext('2d'));
   const press = root.querySelector('.press');
   const art = { flames: load('assets/title/flames.png'), lit: load('assets/title/lit.png'), slash: load('assets/title/slash.png') };
@@ -93,5 +93,13 @@ export function createTitle(root, { reduced }) {
     raf = requestAnimationFrame(tick);
   }
   raf = requestAnimationFrame(tick);
-  return { stop: () => cancelAnimationFrame(raf) };
+  // START on the title (scene CRY): the cry plays, 90 frames go by, then everything fades to white
+  // (0 to 16 in steps of 2, about 9 frames).
+  const leave = () => new Promise((resolve) => {
+    setTimeout(() => {
+      root.querySelector('.title').classList.add('to-white');
+      setTimeout(resolve, 9000 / FPS);
+    }, 90000 / FPS);
+  });
+  return { stop: () => cancelAnimationFrame(raf), leave };
 }

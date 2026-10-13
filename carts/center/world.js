@@ -80,7 +80,7 @@ export function createWorld(root, map, hooks) {
       return false;
     }
     if (!free(to.x, to.y)) {
-      if (now - lastBump > 400) { lastBump = now; hooks.bump(); }
+      if (now - lastBump > 533) { lastBump = now; hooks.bump(); }   // SE_WALL_HIT every 32 frames while held
       return false;
     }
     startStep(player, dir, running ? RUN_STEP : STEP, now);

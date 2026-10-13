@@ -109,7 +109,9 @@ await sleep(1200);
 assert.ok(await ev(`(() => { const c = document.querySelector('.title .flames'); return c.getContext('2d').getImageData(0, 60, 240, 52).data.some((v, i) => i % 4 === 3 && v); })()`), 'as chamas não sobem');
 ok('tela de título do FireRed, com as chamas');
 
-await key('Enter', 900);
+await key('Enter', 700);
+assert.ok(await has('.title'), 'o título deveria esperar o grito do Charizard (90 quadros) antes de sair');
+await sleep(1700);
 assert.deepEqual(await me(), [7, 8, 'up']);
 ok('START entra no Centro Pokémon, Red na porta');
 assert.equal(await ev(`getComputedStyle(document.querySelector('.person[data-me]')).imageRendering`), 'pixelated', 'personagens borrados: imagem de fundo sem pixelated');
@@ -242,6 +244,13 @@ await sleep(200);
 assert.ok(await ev(`document.body.classList.contains('sound-on')`));
 assert.equal(await ev(`localStorage.getItem('volume')`), '1', 'o botão SOM volta ao último nível escolhido (BAIXO, escolhido em OPÇÕES)');
 ok('direcional afunda com o teclado; botão de som liga');
+await ev(`window.__played = 0; const start = AudioBufferSourceNode.prototype.start; AudioBufferSourceNode.prototype.start = function (...a) { window.__played++; return start.apply(this, a); }`);
+await clickTile(4, 7);   // the boy: walk there and talk
+await sleep(3500);
+assert.match((await msg()) ?? '', /correr|run/i);
+assert.ok(await ev('window.__played') >= 1, 'A numa pessoa deveria tocar SE_SELECT');
+await closeMsg();
+ok('falar com alguém toca o som de seleção, como no jogo');
 
 await ev('localStorage.clear()');
 await send('Page.navigate', { url: `${BASE}?link=1#/contato` });   // a query change forces a full load
