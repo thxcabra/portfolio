@@ -195,15 +195,26 @@ both(trainer.languages, 'trainer.languages');
 assert.ok(trainer.location?.trim(), 'trainer.location vazio');
 
 assert.ok(projects.length >= 1, 'precisa de pelo menos 1 projeto');
+const widthsOfData = JSON.parse(readFileSync(here('assets/font/widths.json'), 'utf8'));
+const fw = (s) => textWidth(s, widthsOfData);
 projects.forEach((p, i) => {
   const w = `projects[${i}] ${p.name}`;
   dex(p.dex, w);
+  if (p.form) assert.ok(existsSync(here(monPath(p.dex, { form: p.form }))), `${w}: forma ${p.form} não existe`);
   assert.ok(p.pokemon && p.name && p.year, `${w}: falta pokemon, name ou year`);
+  assert.ok(fw(p.name) + p.name.length <= 64, `${w}: name largo demais para a lista (1px entre letras, 64px)`);
   assert.ok(p.types.length >= 1 && p.types.length <= 2 && p.types.every((x) => TYPES.includes(x)), `${w}: types inválidos (${p.types})`);
-  assert.ok(Array.isArray(p.stack), `${w}: stack precisa ser lista`);
+  assert.ok(Array.isArray(p.stack) && p.stack.length >= 1 && p.stack.length <= 4, `${w}: stack precisa ter de 1 a 4 itens`);
+  p.stack.forEach((t) => assert.ok(fw(t) <= 72, `${w}: "${t}" largo demais para TECNOLOGIAS`));
+  for (const l of ['pt', 'en']) {
+    assert.ok(fw(p.kind[l]) <= 69, `${w}: kind.${l} largo demais para ITEM (69px)`);
+    assert.ok(wrapText(p.pitch[l], widthsOfData, 224).length <= 2, `${w}: pitch.${l} não cabe em 2 linhas do TRAINER MEMO`);
+  }
   both(p.text, w);
   Object.values(p.links || {}).forEach((u) => url(u, w));
+  p.shots.forEach((s) => assert.ok(existsSync(here(s)), `${w}: imagem não existe (${s})`));
 });
+Object.entries(DATA.tech).forEach(([t, type]) => assert.ok(TYPES.includes(type), `tech.${t}: tipo inválido (${type})`));
 
 assert.ok(badges.length <= 8, 'máximo de 8 insígnias');
 badges.forEach((b, i) => {

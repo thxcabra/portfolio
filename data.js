@@ -8,11 +8,6 @@
 // Formatos de insígnia (máx. 8): boulder cascade thunder rainbow soul marsh volcano earth
 // dex: número do Pokémon (1–386). Sprites e gritos saem do número. Todo texto precisa existir na fonte do jogo (node check.mjs avisa).
 
-const lorem = {
-  pt: 'Texto de exemplo. Aqui entra a descrição do projeto: qual problema ele resolve, o que você construiu, as decisões técnicas mais interessantes e o resultado que ele trouxe. Duas ou três frases curtas costumam bastar.',
-  en: 'Placeholder text. This is where the project description goes: the problem it solves, what you built, the most interesting technical decisions and the outcome. Two or three short sentences are usually enough.',
-};
-
 export const DATA = {
   trainer: {
     name: 'JOÃO CABRAL',
@@ -28,16 +23,105 @@ export const DATA = {
     },
   },
 
+  // Projetos, na ordem da lista (o nº 001, 002… é o link #/projetos/1). Cada um é um Pokémon:
+  // dex + pokemon (nome da espécie) + types (os tipos de verdade dele); form só para o Unown (letra).
+  // name: até 10 letras. kind: bem curto (aparece em ITEM). pitch: cabe em 2 linhas do TRAINER MEMO.
+  // text: o LER MAIS, em páginas. stack: até 4 (o tipo vem de `moves` ou de `tech`; senão NORMAL).
+  // shots: imagens em assets/ (a primeira vira a miniatura).
   projects: [
-    { dex: 6, pokemon: 'CHARIZARD', name: 'Projeto Exemplo 01', types: ['fire', 'flying'], year: 2025, stack: ['TypeScript', 'React', 'Node'], text: lorem, links: { repo: 'https://github.com/', live: 'https://example.com/' } },
-    { dex: 25, pokemon: 'PIKACHU', name: 'Projeto Exemplo 02', types: ['electric'], year: 2025, stack: ['JavaScript', 'Chrome Extension'], text: lorem, links: { repo: 'https://github.com/' } },
-    { dex: 94, pokemon: 'GENGAR', name: 'Projeto Exemplo 03', types: ['ghost', 'poison'], year: 2024, stack: ['Python', 'Playwright'], text: lorem, links: { repo: 'https://github.com/' } },
-    { dex: 131, pokemon: 'LAPRAS', name: 'Projeto Exemplo 04', types: ['water', 'ice'], year: 2024, stack: ['PostgreSQL', 'Supabase'], text: lorem, links: {} },
-    { dex: 149, pokemon: 'DRAGONITE', name: 'Projeto Exemplo 05', types: ['dragon', 'flying'], year: 2024, stack: ['Python', 'LLM APIs'], text: lorem, links: { live: 'https://example.com/' } },
-    { dex: 254, pokemon: 'SCEPTILE', name: 'Projeto Exemplo 06', types: ['grass'], year: 2023, stack: ['Next.js', 'Tailwind'], text: lorem, links: { repo: 'https://github.com/', live: 'https://example.com/' } },
-    { dex: 282, pokemon: 'GARDEVOIR', name: 'Projeto Exemplo 07', types: ['psychic'], year: 2023, stack: ['Figma', 'CSS'], text: lorem, links: {} },
-    { dex: 384, pokemon: 'RAYQUAZA', name: 'Projeto Exemplo 08', types: ['dragon', 'flying'], year: 2022, stack: ['Docker', 'Cloudflare'], text: lorem, links: { repo: 'https://github.com/' } },
+    {
+      name: 'MAGNIFYER', dex: 164, pokemon: 'NOCTOWL', types: ['normal', 'flying'], year: 2026,
+      kind: { pt: 'APP WEB', en: 'WEB APP' },
+      pitch: { pt: 'Jogos ao vivo, tabela e história da NBA, em português.', en: 'Live NBA scores, standings and history, Portuguese-first.' },
+      text: {
+        pt: 'Um app de NBA para todo mundo, feito primeiro em português. Tem jogos ao vivo, classificação, chave dos playoffs, times, jogadores, drafts e prêmios. Cada jogador ganha um arquétipo tático.',
+        en: 'An NBA app for everyone, built Portuguese-first. Live games, standings, the playoff bracket, teams, players, drafts and awards. Every player is classified into a tactical archetype.',
+      },
+      stack: ['NEXT.JS', 'PYTHON', 'FASTAPI', 'SUPABASE'],
+      links: { repo: 'https://github.com/thxcabra/Magnifyer-Glass' },
+      shots: [],
+    },
+    {
+      name: 'REPLAI', dex: 279, pokemon: 'PELIPPER', types: ['water', 'flying'], year: 2026,
+      kind: { pt: 'EXTENSÃO', en: 'EXTENSION' },
+      pitch: { pt: 'Acha posts que valem resposta e escreve o rascunho.', en: 'Finds posts worth replying to and drafts the reply.' },
+      text: {
+        pt: 'O time de social media da MOIC Digital perdia muito tempo rolando feeds. A Replai filtra e ranqueia posts do X e do LinkedIn e sugere respostas na voz da marca. Quem posta é sempre o analista.',
+        en: "The MOIC Digital social media team spent most of its time scrolling feeds. Replai filters and ranks X and LinkedIn posts, then drafts replies in the brand's voice. The analyst always does the posting.",
+      },
+      stack: ['TYPESCRIPT', 'CHROME MV3', 'SUPABASE', 'ANTHROPIC'],
+      links: { repo: 'https://github.com/thxcabra/replai' },
+      shots: [],
+    },
+    {
+      name: 'PITCHIQ', dex: 65, pokemon: 'ALAKAZAM', types: ['psychic'], year: 2026,
+      kind: { pt: 'APP DE IA', en: 'AI APP' },
+      pitch: { pt: 'Futebol europeu para buscar, comparar ou perguntar.', en: 'European football stats to search, compare or ask.' },
+      text: {
+        pt: 'Dados de futebol chegam como tabelas cruas. O PitchIQ busca, perfila e compara jogadores da temporada 2025-26, ou responde perguntas no chat. A IA lê a pergunta; os números vêm dos dados.',
+        en: 'Football data arrives as raw tables. PitchIQ searches, profiles and compares 2025-26 players, or answers questions in a chat. The model reads the question; every number comes from the data.',
+      },
+      stack: ['PYTHON', 'FASTAPI', 'REACT', 'GEMINI'],
+      links: { repo: 'https://github.com/thxcabra/PitchIQ' },
+      shots: ['search', 'profile', 'chat', 'team', 'competition'].map((n) => `assets/projects/pitchiq/${n}.png`),
+    },
+    {
+      name: 'FURIOSO', dex: 53, pokemon: 'PERSIAN', types: ['normal'], year: 2025,
+      kind: { pt: 'CHATBOT', en: 'CHATBOT' },
+      pitch: { pt: 'Bot de Telegram que fala como torcedor da FURIA.', en: 'A Telegram bot that talks like a die-hard FURIA fan.' },
+      text: {
+        pt: 'Feito para um desafio técnico da FURIA Esports. Responde no tom de torcedor sobre CS2, Valorant, LoL e R6. Perguntas sobre fatos passam por uma busca na web antes da resposta.',
+        en: "Built for a FURIA Esports technical challenge. It answers in a fan's voice about CS2, Valorant, LoL and R6. Questions about facts go through a web search before it replies.",
+      },
+      stack: ['PYTHON', 'TELEGRAM', 'OPENROUTER', 'TAVILY'],
+      links: { repo: 'https://github.com/thxcabra/Furioso-Bot' },
+      shots: [],
+    },
+    {
+      name: 'CALLSYNC', dex: 201, form: 'c', pokemon: 'UNOWN', types: ['psychic'], year: 2026,
+      kind: { pt: 'APP DE IA', en: 'AI APP' },
+      pitch: { pt: 'Da gravação da call para notas e tarefas no Notion.', en: 'From call recording to notes and tasks in Notion.' },
+      text: {
+        pt: 'Depois de cada call, alguém precisa escrever resumo e tarefas. O CallSync transcreve o áudio com o Gemini, analisa com o histórico do projeto e envia tudo ao Notion, com Kanban e calendário.',
+        en: "After every client call, someone has to write the summary and tasks. CallSync transcribes the audio with Gemini, analyzes it with the project's history and syncs it all to Notion.",
+      },
+      stack: ['REACT', 'EXPRESS', 'GEMINI', 'NOTION API'],
+      links: { repo: 'https://github.com/thxcabra/CallSync' },
+      shots: [],
+    },
+    {
+      name: 'MOIC SITE', dex: 233, pokemon: 'PORYGON2', types: ['normal'], year: 2026,
+      kind: { pt: 'SITE', en: 'WEBSITE' },
+      pitch: { pt: 'Site da agência, com cases, blog e leads no CRM.', en: 'Agency site with cases, blog and leads into the CRM.' },
+      text: {
+        pt: 'Site da agência MOIC Digital, com páginas de conteúdo, cases e blog, pensado para SEO. Os formulários levam os leads direto ao CRM. Roda no edge da Cloudflare, com staging antes da produção.',
+        en: "Website for the MOIC Digital agency, with content pages, cases and a blog, built for SEO. Lead forms go straight into the CRM. It runs on Cloudflare's edge, with staging before production.",
+      },
+      stack: ['CLOUDFLARE', 'SEO', 'CRM'],
+      links: { live: 'https://www.moicdigital.com' },
+      shots: [],
+    },
+    {
+      name: 'PORTFOLIO', dex: 6, pokemon: 'CHARIZARD', types: ['fire', 'flying'], year: 2026,
+      kind: { pt: 'PORTFÓLIO', en: 'PORTFOLIO' },
+      pitch: { pt: 'Um Centro Pokémon do FireRed jogável no navegador.', en: 'A playable FireRed Pokémon Center in the browser.' },
+      text: {
+        pt: 'Este site: o Centro Pokémon do FireRed dentro de um GBA no navegador. Ande, converse ou aperte START. Os números vêm da decompilação do jogo, e o site não usa framework.',
+        en: 'This site: the FireRed Pokémon Center inside a GBA in the browser. Walk around, talk or press START. The numbers come from the game\'s decompilation, and there is no framework.',
+      },
+      stack: ['JAVASCRIPT', 'HTML', 'CSS', 'PYTHON'],
+      links: { repo: 'https://github.com/thxcabra/portfolio', live: 'https://thxcabra.github.io/portfolio/' },
+      shots: ['assets/og.png'],
+    },
   ],
+
+  // Tipo das tecnologias do stack que não estão em `moves` (sem tipo = NORMAL).
+  tech: {
+    'NEXT.JS': 'water', FASTAPI: 'psychic', SUPABASE: 'rock', 'CHROME MV3': 'electric', ANTHROPIC: 'dragon',
+    GEMINI: 'dragon', OPENROUTER: 'dragon', TAVILY: 'dragon', TELEGRAM: 'flying', EXPRESS: 'electric',
+    'NOTION API': 'normal', CLOUDFLARE: 'steel', SEO: 'grass', CRM: 'normal', JAVASCRIPT: 'electric',
+    HTML: 'grass', CSS: 'grass',
+  },
 
   // Experiência: cada emprego é uma insígnia (máx. 8), do mais recente ao mais antigo.
   badges: [
@@ -129,6 +213,8 @@ export const DATA = {
       soon: ['Essa parte do Centro chega\nem breve!'],
       contact_ask: ['Por onde você quer falar\ncom o JOÃO CABRAL?'],
       copied: ['Endereço copiado!'],
+      shots: ['Imagem {i} de {n}.\nA: ver em tamanho real.'],
+      no_shots: ['Ainda não há imagens\ndeste projeto.'],
     },
     en: {
       nurse_welcome: [
@@ -150,6 +236,8 @@ export const DATA = {
       soon: ['This part of the Center is\ncoming soon!'],
       contact_ask: ['How would you like to\nreach JOÃO CABRAL?'],
       copied: ['Address copied!'],
+      shots: ['Picture {i} of {n}.\nA: see it full size.'],
+      no_shots: ['No pictures of this\nproject yet.'],
     },
   },
 
@@ -170,6 +258,9 @@ export const DATA = {
       lang_pt: 'PORTUGUÊS', lang_en: 'ENGLISH',
       keys_pick: 'ESCOLHER', keys_switch: 'MUDAR', keys_exit: 'SAIR',
       contact_write: 'ESCREVER', contact_copy: 'COPIAR',
+      keys_ok: 'OK', keys_page: 'PÁGINA', keys_back: 'VOLTAR',
+      sum_info: 'INFO DO PROJETO', sum_shots: 'IMAGENS', sum_stack: 'TECNOLOGIAS', sum_more: 'A: LER MAIS E LINKS',
+      sum_read: 'LER MAIS', sum_site: 'VER SITE', sum_code: 'CÓDIGO', sum_back: 'VOLTAR', show_close: 'B: FECHAR',
     },
     en: {
       menu_projetos: 'PROJECTS', menu_sobre: 'ABOUT', menu_experiencia: 'EXPERIENCE', menu_habilidades: 'SKILLS',
@@ -187,6 +278,9 @@ export const DATA = {
       lang_pt: 'PORTUGUÊS', lang_en: 'ENGLISH',
       keys_pick: 'PICK', keys_switch: 'SWITCH', keys_exit: 'CANCEL',
       contact_write: 'WRITE', contact_copy: 'COPY',
+      keys_ok: 'OK', keys_page: 'PAGE', keys_back: 'BACK',
+      sum_info: 'PROJECT INFO', sum_shots: 'PICTURES', sum_stack: 'TECH STACK', sum_more: 'A: READ MORE AND LINKS',
+      sum_read: 'READ MORE', sum_site: 'VISIT SITE', sum_code: 'CODE', sum_back: 'BACK', show_close: 'B: CLOSE',
     },
   },
 };
