@@ -137,6 +137,9 @@ const { trainer, projects, badges, moves, contact, ui } = DATA;
 both(trainer.about, 'trainer.about');
 dex(trainer.partner, 'trainer.partner');
 assert.ok(Number.isInteger(trainer.since), 'trainer.since precisa ser um ano');
+both(trainer.role, 'trainer.role');
+both(trainer.languages, 'trainer.languages');
+assert.ok(trainer.location?.trim(), 'trainer.location vazio');
 
 assert.ok(projects.length >= 1, 'precisa de pelo menos 1 projeto');
 projects.forEach((p, i) => {
@@ -154,18 +157,29 @@ badges.forEach((b, i) => {
   const w = `badges[${i}] ${b.name}`;
   assert.ok(SHAPES.includes(b.shape), `${w}: shape inválido (${b.shape})`);
   both(b.role, w);
+  both(b.period, w);
   both(b.text, w);
+});
+
+const { education } = DATA;
+assert.ok(Array.isArray(education) && education.length >= 1, 'education precisa ser uma lista');
+education.forEach((e, i) => {
+  const w = `education[${i}] ${e.name}`;
+  assert.ok(e.name?.trim(), `${w}: falta name`);
+  both(e.course, w);
+  both(e.period, w);
 });
 
 moves.forEach((m, i) => {
   const w = `moves[${i}] ${m.name}`;
   assert.ok(TYPES.includes(m.type), `${w}: type inválido (${m.type})`);
-  assert.ok(Number.isInteger(m.power) && Number.isInteger(m.pp), `${w}: power e pp precisam ser inteiros`);
+  assert.ok(Number.isInteger(m.power) && m.power >= 0 && m.power <= 100 && Number.isInteger(m.years), `${w}: power (0–100) e years precisam ser inteiros`);
   both(m.text, w);
 });
 
 contact.forEach((c, i) => {
   const w = `contact[${i}] ${c.label}`;
+  assert.ok(!/^tel:/i.test(c.url) && !/\d{4}-?\d{4}/.test(c.url), `${w}: telefone não vai para o site`);
   if (c.url.startsWith('assets/')) assert.ok(existsSync(here(c.url)), `${w}: arquivo não existe (${c.url})`);
   else url(c.url, w);
 });

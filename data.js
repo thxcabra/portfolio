@@ -17,11 +17,14 @@ export const DATA = {
   trainer: {
     name: 'JOÃO CABRAL',
     id: '04201',
-    since: 2019,
+    since: 2022,   // TEMPO conta daqui (início em Ciência da Computação na UFSC)
     partner: 25,
+    role: { pt: 'Engenheiro de Software · IA e Automação de Dados · Game Dev', en: 'Software Engineer · AI & Data Automation · Game Dev' },
+    location: 'Palhoça, SC',
+    languages: { pt: 'Português (nativo) · Inglês (fluente)', en: 'Portuguese (native) · English (full professional)' },
     about: {
-      pt: 'Texto de exemplo sobre mim. Quem eu sou, com o que trabalho, o que me interessa e o tipo de problema que eu gosto de resolver.',
-      en: 'Placeholder text about me. Who I am, what I work with, what I care about and the kind of problem I like to solve.',
+      pt: 'Sou engenheiro de software e game dev independente e adoro construir produtos digitais do zero. Vou além do “só funcionar”: quero algo estável, bonito e nas mãos das pessoas, para usar ou jogar. Meu trabalho fica entre código, design, sentimento e significado: engenharia de software, desenvolvimento de jogos, IA e automação de dados e estratégia de produto. Gosto de fazer coisas que funcionam bem e são divertidas de usar, seja um jogo, um pipeline de dados, um site ou um chatbot. Sempre aberto a conversar com times e pessoas fazendo coisas interessantes.',
+      en: 'I am a software engineer and independent game dev who loves to build digital products from scratch. Always looking beyond the basics and the “just work” mantra, I aim to build something stable, make it look good and get it in front of people to use or play. My work sits at the intersection of code, design, feelings and meaning: software engineering, game development, AI & data automation and product strategy. I like building things that work well and are fun to use, whether that is a new game, a data pipeline, a website or a chatbot. Always open to talking with teams and people who are making interesting things.',
     },
   },
 
@@ -36,26 +39,72 @@ export const DATA = {
     { dex: 384, pokemon: 'RAYQUAZA', name: 'Projeto Exemplo 08', types: ['dragon', 'flying'], year: 2022, stack: ['Docker', 'Cloudflare'], text: lorem, links: { repo: 'https://github.com/' } },
   ],
 
+  // Experiência: cada emprego é uma insígnia (máx. 8), do mais recente ao mais antigo.
   badges: [
-    { name: 'EMPRESA EXEMPLO A', shape: 'boulder', period: '2024–hoje', role: { pt: 'Cargo de exemplo', en: 'Example role' }, text: lorem },
-    { name: 'EMPRESA EXEMPLO B', shape: 'cascade', period: '2022–2024', role: { pt: 'Cargo de exemplo', en: 'Example role' }, text: lorem },
-    { name: 'EMPRESA EXEMPLO C', shape: 'thunder', period: '2019–2022', role: { pt: 'Cargo de exemplo', en: 'Example role' }, text: lorem },
+    {
+      name: 'MOIC DIGITAL', shape: 'boulder',
+      role: { pt: 'Intelligence Engineer', en: 'Intelligence Engineer' },
+      period: { pt: 'set 2026 – hoje', en: 'Sep 2026 – now' },
+      text: {
+        pt: 'IA como ferramenta central para criar automações, produtos e soluções que fazem o negócio andar. Uma das principais referências de tecnologia da empresa, de ponta a ponta: da identificação do problema até a produção. Automações que tiram trabalho manual dos times, produtos internos e para clientes, e a ponte entre negócio e tecnologia.',
+        en: "AI as a core tool to build automations, products and solutions that drive the business forward. One of the company's main technology reference points, working end to end from problem identification to production: automations that cut manual work, internal and customer-facing products, and the bridge between business and technology.",
+      },
+    },
+    {
+      name: 'MOIC DIGITAL', shape: 'cascade',
+      role: { pt: 'Social Media Manager', en: 'Social Media Manager' },
+      period: { pt: 'out 2024 – hoje', en: 'Oct 2024 – now' },
+      text: { pt: 'Gestão de redes sociais na MOIC Digital.', en: 'Social media management at MOIC Digital.' },
+    },
+    {
+      name: 'CAPYFI', shape: 'thunder',
+      role: { pt: 'Social Media Manager', en: 'Social Media Manager' },
+      period: { pt: 'mai – set 2026', en: 'May – Sep 2026' },
+      text: { pt: 'Gestão das redes sociais da CapyFi.', en: "Managed CapyFi's social media." },
+    },
+    {
+      name: 'FOGO', shape: 'rainbow',
+      role: { pt: 'Social Media Manager', en: 'Social Media Manager' },
+      period: { pt: 'mar – jul 2026', en: 'Mar – Jul 2026' },
+      text: { pt: 'Gestão das redes sociais da Fogo.', en: "Managed Fogo's social media." },
+    },
+    {
+      name: 'KAIA DLT FOUNDATION', shape: 'soul',
+      role: { pt: 'Social Media Manager', en: 'Social Media Manager' },
+      period: { pt: 'abr 2025 – abr 2026', en: 'Apr 2025 – Apr 2026' },
+      text: { pt: 'Gestão das redes sociais da Kaia DLT Foundation.', en: "Managed Kaia DLT Foundation's social media." },
+    },
+    {
+      name: 'HAUST LABS', shape: 'marsh',
+      role: { pt: 'Social Media Manager', en: 'Social Media Manager' },
+      period: { pt: 'nov 2024 – fev 2026', en: 'Nov 2024 – Feb 2026' },
+      text: { pt: 'Gestão das redes sociais da Haust Labs.', en: "Managed Haust Labs' social media." },
+    },
   ],
 
+  education: [
+    { name: 'UFSC', course: { pt: 'Bacharelado em Ciência da Computação', en: "Bachelor's in Computer Science" }, period: { pt: '2022 – 2025', en: '2022 – 2025' } },
+    { name: 'UNIASSELVI', course: { pt: 'Bacharelado em Sistemas de Informação', en: "Bachelor's in Information Systems" }, period: { pt: 'fev 2026', en: 'Feb 2026' } },
+    { name: 'WIZARD BY PEARSON', course: { pt: 'Inglês avançado', en: 'Advanced English' }, period: { pt: '2015 – 2021', en: '2015 – 2021' } },
+  ],
+
+  // PODER (0–100) e ANOS começam como estimativa: ajuste aqui.
   moves: [
-    { name: 'TYPESCRIPT', type: 'electric', power: 90, pp: 20, text: { pt: 'Exemplo: o que você faz com essa habilidade.', en: 'Example: what you do with this skill.' } },
-    { name: 'PYTHON', type: 'psychic', power: 90, pp: 20, text: { pt: 'Exemplo: o que você faz com essa habilidade.', en: 'Example: what you do with this skill.' } },
-    { name: 'REACT', type: 'water', power: 80, pp: 15, text: { pt: 'Exemplo: o que você faz com essa habilidade.', en: 'Example: what you do with this skill.' } },
-    { name: 'SQL', type: 'rock', power: 75, pp: 15, text: { pt: 'Exemplo: o que você faz com essa habilidade.', en: 'Example: what you do with this skill.' } },
-    { name: 'AUTOMAÇÃO', type: 'dragon', power: 100, pp: 10, text: { pt: 'Exemplo: o que você faz com essa habilidade.', en: 'Example: what you do with this skill.' } },
-    { name: 'DOCKER', type: 'steel', power: 60, pp: 25, text: { pt: 'Exemplo: o que você faz com essa habilidade.', en: 'Example: what you do with this skill.' } },
+    { name: 'PYTHON', type: 'psychic', power: 90, years: 4, text: { pt: 'Automações, APIs (FastAPI), bots e pipelines de dados.', en: 'Automations, APIs (FastAPI), bots and data pipelines.' } },
+    { name: 'TYPESCRIPT', type: 'electric', power: 85, years: 3, text: { pt: 'Front-end e ferramentas web com JavaScript e TypeScript.', en: 'Front-end and web tools with JavaScript and TypeScript.' } },
+    { name: 'REACT', type: 'water', power: 80, years: 3, text: { pt: 'Interfaces web com React, Vite e Tailwind.', en: 'Web interfaces with React, Vite and Tailwind.' } },
+    { name: 'LLMS', type: 'dragon', power: 90, years: 2, text: { pt: 'IA aplicada: agentes, chatbots e automações com modelos de linguagem.', en: 'Applied AI: agents, chatbots and automations with language models.' } },
+    { name: 'GCP', type: 'steel', power: 75, years: 2, text: { pt: 'Dados e infraestrutura no Google Cloud, com BigQuery.', en: 'Data and infrastructure on Google Cloud, with BigQuery.' } },
+    { name: 'DADOS', type: 'rock', power: 80, years: 2, text: { pt: 'Pipelines de dados: coleta, limpeza e análise.', en: 'Data pipelines: collecting, cleaning and analysis.' } },
+    { name: 'UNITY', type: 'fire', power: 75, years: 3, text: { pt: 'Jogos independentes na Unity, com C#.', en: 'Independent games in Unity, with C#.' } },
+    { name: 'DESIGN', type: 'grass', power: 75, years: 4, text: { pt: 'Figma, Aseprite e Blender: interfaces, pixel art e 3D.', en: 'Figma, Aseprite and Blender: interfaces, pixel art and 3D.' } },
   ],
 
-  // Cada contato: { label, url }. url = https://..., mailto:... ou um arquivo em assets/ (ex.: 'assets/curriculo.pdf').
+  // Cada contato: { label, url }. url = https://..., mailto:... ou um arquivo em assets/ (ex.: 'assets/curriculo.pdf'). Sem telefone.
   contact: [
-    { label: 'GITHUB', url: 'https://github.com/' },
-    { label: 'LINKEDIN', url: 'https://www.linkedin.com/' },
-    { label: 'E-MAIL', url: 'mailto:voce@exemplo.com' },
+    { label: 'E-MAIL', url: 'mailto:joaovcabralm@hotmail.com' },
+    { label: 'LINKEDIN', url: 'https://www.linkedin.com/in/joao-cabral-machado/' },
+    { label: 'GITHUB', url: 'https://github.com/thxcabra' },
   ],
 
   // Message box pages: up to 2 lines each (\n), short enough to fit (node check.mjs checks).
