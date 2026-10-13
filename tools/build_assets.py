@@ -362,7 +362,7 @@ def check_fonts(glyphs, small):
 
 
 SFX = {'select': 0x05, 'win_open': 0x06, 'pc_on': 0x04, 'dex_scroll': 0x65, 'dex_page': 0x66, 'success': 0x19, 'shiny': 0x5F, 'bump': 0x07,
-       'card_flip': 0xF2, 'card_flipping': 0xF3, 'card_open': 0xF4}
+       'card_flip': 0xF2, 'card_flipping': 0xF3, 'card_open': 0xF4, 'bag_cursor': 0xF5, 'bag_pocket': 0xF6}
 
 
 def downmix(src, dst):
@@ -722,6 +722,51 @@ def check_card():
     print('card ok')
 
 
+def build_bag(out):
+    """FireRed's Bag (item_menu.c): the screen (bg.bin) and the item list's panel (list.bin, 18x12
+    tiles drawn at tile 11,1), both from bg.png (index & 15, palette slot from the tilemap), plus the
+    list area blanked with tile 0x2D (how a pocket switch starts), the boy's bag (4 frames: closed,
+    POKé BALLS, ITEMS, KEY ITEMS), the red arrows (left/right, up/down) and the CANCEL icon."""
+    out.mkdir(parents=True, exist_ok=True)
+    M = GFX / 'item_menu'
+    _, _, tiles, pal = pngio.read(M / 'bg.png')
+    tiles = [[v & 15 for v in row] for row in tiles]
+    slot = lambda e: pal[(e >> 12) * 16:(e >> 12) * 16 + 16]
+    rgba = lambda img: [[tuple(p[1][p[0]]) + (255,) if p else (0, 0, 0, 0) for p in row] for row in img]
+    img = [[None] * 240 for _ in range(160)]
+    draw_bg(img, tiles, 12, M / 'bg.bin', slot)
+    pngio.write(out / 'bg.png', [[px if px[3] else tuple(pal[0]) + (255,) for px in row] for row in rgba(img)])
+    lst = [[None] * 240 for _ in range(160)]
+    raw = (M / 'list.bin').read_bytes()
+    entries = struct.unpack(f'<{len(raw) // 2}H', raw)
+    def put(img, e, x0, y0):
+        t, hf, vf = e & 0x3FF, e >> 10 & 1, e >> 11 & 1
+        for y in range(8):
+            for x in range(8):
+                v = tiles[(t // 12) * 8 + (7 - y if vf else y)][(t % 12) * 8 + (7 - x if hf else x)]
+                if v:
+                    img[y0 + y][x0 + x] = (v, slot(e))
+    for i, e in enumerate(entries):
+        put(lst, e, (i % 18) * 8, (i // 18) * 8)
+    pngio.write(out / 'list.png', [row[:144] for row in rgba(lst)[:96]])
+    blank = [[None] * 240 for _ in range(160)]
+    for i in range(18 * 12):
+        put(blank, 0x2D, (i % 18) * 8, (i // 18) * 8)
+    pngio.write(out / 'blank.png', [row[:144] for row in rgba(blank)[:96]])
+    rgba_png(GFX / 'interface/bag_male.png', out / 'bag.png', GFX / 'interface/bag.pal')
+    rgba_png(GFX / 'interface/red_arrow_other.png', out / 'arrow.png', GFX / 'interface/red_arrow.pal')
+    rgba_png(GFX / 'items/icons/return_to_field_arrow.png', out / 'cancel.png', GFX / 'items/icon_palettes/return_to_field_arrow.pal')
+    rgba_png(GFX / 'items/icons/teachy_tv.png', out / 'school.png', GFX / 'items/icon_palettes/teachy_tv.pal')   # FORMAÇÃO's icon
+
+
+def check_bag():
+    for name, size in (('bg', (240, 160)), ('list', (144, 96)), ('blank', (144, 96)), ('bag', (64, 256)), ('arrow', (16, 32)), ('cancel', (24, 24)), ('school', (24, 24))):
+        assert pngio.read(OUT / f'bag/{name}.png')[:2] == size, f'bag/{name}.png'
+    _, _, bg, _ = pngio.read(OUT / 'bag/bg.png')
+    assert all(p[3] == 255 for row in bg for p in row), 'the Bag screen covers everything'
+    print('bag ok')
+
+
 def check_intro():
     for name, size in (('gf-text', (144, 16)), ('gf-logo', (32, 64)), ('star', (16, 16)),
                        ('sparkles-small', (16, 16)), ('sparkles-big', (32, 128))):
@@ -746,6 +791,8 @@ def main():
     check_kanto(build_kanto(OUT / 'kanto'))
     build_card(OUT / 'card')
     check_card()
+    build_bag(OUT / 'bag')
+    check_bag()
     check_fonts(*build_fonts())
     check_audio(build_audio())
     check_world(*build_world())

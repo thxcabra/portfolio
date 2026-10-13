@@ -105,6 +105,21 @@ export function wrapText(str, widths, max) {
 // Message box pages, 2 lines each.
 export const toPages = (lines) => Array.from({ length: Math.ceil(lines.length / 2) }, (_, i) => lines.slice(2 * i, 2 * i + 2).join('\n'));
 
+// A scrolling list (list_menu.c, ListMenuUpdateSelectedRowIndexAndScrollOffset): going down the
+// cursor walks to row ceil(max/2), then the list scrolls; going up it stops at row max − ceil(max/2) − 1.
+// At either end the cursor walks the rest of the way. Returns the new { scroll, row }.
+export function listMove({ scroll, row }, down, total, max) {
+  const half = Math.ceil(max / 2);
+  if (down) {
+    if (row < half && scroll + row < total - 1) return { scroll, row: row + 1 };
+    if (scroll < total - max) return { scroll: scroll + 1, row };
+    return { scroll, row: Math.min(row + 1, max - 1, total - 1) };
+  }
+  if (row > max - half - 1) return { scroll, row: row - 1 };
+  if (scroll > 0) return { scroll: scroll - 1, row };
+  return { scroll, row: Math.max(0, row - 1) };
+}
+
 // Cursor movement in a list (cols = 1) or grid. Out of range = stay put.
 export function nextIndex(cur, len, cols, dx, dy) {
   if (cur < 0) return 0;

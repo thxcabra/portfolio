@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { DATA } from './data.js';
 import {
-  route, textWidth, fitsLines, centerBox, fade8, grey8, brighten8, alpha8, blendLevels, nextSeed, starPos, gfWindow, titleEntrance, TEXT_SPEEDS, multiTiles, monPath, wrapText, toPages, nextIndex, fitScale, cycle, splitShown, pingPong,
+  route, textWidth, fitsLines, centerBox, fade8, grey8, brighten8, alpha8, blendLevels, nextSeed, starPos, gfWindow, titleEntrance, TEXT_SPEEDS, multiTiles, monPath, wrapText, toPages, listMove, nextIndex, fitScale, cycle, splitShown, pingPong,
   discPath, rrectPath, corner, TYPES, SHAPES, DIRS, around, pathToAny, pageFits, esc,
 } from './logic.js';
 import { MENU } from './carts/center/screens/menu.js';
@@ -100,6 +100,16 @@ assert.ok(VOLUMES.every((v, i) => i === 0 || v > VOLUMES[i - 1]), 'volume levels
 assert.equal(monPath(6), 'assets/mon/front/6.png');
 assert.equal(monPath(6, { shiny: true }), 'assets/mon/shiny/6.png');
 assert.equal(monPath(201, { form: 'c' }), 'assets/mon/front/201-c.png');
+
+// scrolling lists, as list_menu.c moves them (7 items, 6 rows)
+let ls = { scroll: 0, row: 0 };
+const downs = [];
+for (let i = 0; i < 7; i++) downs.push(JSON.stringify(ls = listMove(ls, true, 7, 6)));
+assert.deepEqual(downs.map((d) => JSON.parse(d)).map(({ scroll, row }) => [scroll, row]), [[0, 1], [0, 2], [0, 3], [1, 3], [1, 4], [1, 5], [1, 5]]);
+const ups = [];
+for (let i = 0; i < 7; i++) { ls = listMove(ls, false, 7, 6); ups.push([ls.scroll, ls.row]); }
+assert.deepEqual(ups, [[1, 4], [1, 3], [1, 2], [0, 2], [0, 1], [0, 0], [0, 0]]);
+assert.deepEqual(listMove({ scroll: 0, row: 2 }, true, 3, 6), { scroll: 0, row: 2 }, 'short list: stops on the last item');
 
 // cursor
 assert.equal(nextIndex(-1, 5, 1, 0, 1), 0);
@@ -222,6 +232,14 @@ for (const l of ['pt', 'en']) {
   for (const s of [role, more.join(' · '), trainer.location, trainer.languages[l]]) assert.ok(fw(s) <= 212, `cartão: "${s}" não cabe no verso`);
   assert.ok(fw(ui[l].card_name + trainer.name) <= 112, `cartão: nome não cabe na frente (${l})`);
 }
+
+// EXPERIÊNCIA: names fit the Bag's list (x 97 to 232); descriptions fit 3 lines of 200px with 2px between letters
+const wide = Object.fromEntries(Object.entries(widthsOfData).map(([ch, w]) => [ch, w + 2]));
+for (const l of ['pt', 'en']) {
+  for (const b of badges) assert.ok(wrapText(b.role[l], wide, 200).length + 2 <= 3, `bolsa: cargo de ${b.name} longo demais (${l})`);
+  for (const e of DATA.education) assert.ok(wrapText(e.course[l], wide, 200).length + 1 <= 3, `bolsa: curso de ${e.name} longo demais (${l})`);
+}
+for (const x of [...badges, ...DATA.education]) assert.ok(fw(x.name) <= 135, `bolsa: nome ${x.name} largo demais para a lista`);
 
 const { education } = DATA;
 assert.ok(Array.isArray(education) && education.length >= 1, 'education precisa ser uma lista');

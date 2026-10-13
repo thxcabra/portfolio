@@ -148,6 +148,28 @@ body:not(.ready) .gba { opacity: 0; }   /* not visibility: hidden, which would b
 .badge { position: absolute; top: 128px; width: 16px; height: 16px; background: url(assets/ui/badges.png); }
 .card-red { position: absolute; left: 165px; top: 44px; }
 .card .stat { color: #e60808; --sh: #ffbd73; }
+/* EXPERIÊNCIA (item_menu.c): the Bag. The red arrows bounce 2px on a sine, one cycle every 32 frames. */
+.bag { background: #000; animation: from-black .15s steps(8); }
+.bag.to-black { animation: to-black .15s steps(8) forwards; }
+.bag-list { position: absolute; left: 88px; top: 8px; width: 144px; height: 96px; }
+.bag-panel, .bag-rows { position: absolute; left: 0; top: 0; }
+.bag-rows { inset: 0; }
+.bag-row { position: absolute; left: 9px; width: 130px; height: 16px; text-align: left; }
+.bag-row:focus { outline: none; }
+.bag-pocket { top: 9px; color: #fff; --sh: #626262; }
+.bag-sack { position: absolute; left: 8px; top: 36px; width: 64px; height: 64px; background: url(assets/bag/bag.png); }
+.bag-desc { color: #fff; --sh: #626262; }
+.bag-desc .line { height: 14px; letter-spacing: 2px; }
+.bag-icon { position: absolute; }
+.badge.bag-icon { left: 16px; top: 132px; }
+img.bag-icon { left: 12px; top: 128px; }
+.bag-arrow { position: absolute; width: 16px; height: 16px; background: url(assets/bag/arrow.png); animation: bounce-x .536s step-end infinite; }
+.bag-arrow.left { left: 0; top: 64px; cursor: pointer; }
+.bag-arrow.right { left: 64px; top: 64px; transform: scaleX(-1); animation-direction: reverse; cursor: pointer; }
+.bag-arrow.up, .bag-arrow.down { left: 152px; top: 0; background-position: 0 -16px; animation-name: bounce-y; }
+.bag-arrow.down { top: 96px; transform: scaleY(-1); }
+@keyframes bounce-x { 0% { translate: 0 0; } 9.375% { translate: 1px 0; } 25% { translate: 2px 0; } 28.125% { translate: 1px 0; } 43.75% { translate: 0 0; } 59.375% { translate: -1px 0; } 75% { translate: -2px 0; } 78.125% { translate: -1px 0; } 93.75% { translate: 0 0; } }
+@keyframes bounce-y { 0% { translate: 0 0; } 9.375% { translate: 0 1px; } 25% { translate: 0 2px; } 28.125% { translate: 0 1px; } 43.75% { translate: 0 0; } 59.375% { translate: 0 -1px; } 75% { translate: 0 -2px; } 78.125% { translate: 0 -1px; } 93.75% { translate: 0 0; } }
 .help { position: absolute; left: 0; top: 120px; width: 240px; height: 40px; background: url(assets/ui/help.png); color: #fff; --sh: #626262; }
 
 /* ---------- full-size pictures (api.show), over the whole page ---------- */
