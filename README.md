@@ -10,6 +10,7 @@ A playable portfolio: a Pokémon Center from **Pokémon FireRed**, running insid
 - **A START menu for the fast path:** PROJETOS, SOBRE, EXPERIÊNCIA, HABILIDADES, CONTATO and OPÇÕES, each drawn like the matching FireRed screen, with a help bar that explains every item in plain language. Direct links (`#/contato`, `#/projetos/3`) open a screen straight away.
 - **Projects as Pokémon:** PROJETOS is the Pokédex list, and each project opens as a Pokémon summary with three pages (info, pictures, tech stack), the Pokémon's cry and a 1 in 16 chance of a shiny. Screenshots open full size over the page.
 - **The room opens the same screens:** the Nurse asks what you need (about João, contact), the PC shows the projects, the Kanto map opens the experience Bag and the Move Tutor the skills TM Case. SOBRE is the trainer card (it flips like the game's), EXPERIÊNCIA the Bag with WORK and EDUCATION pockets, HABILIDADES the TM Case with a disc per skill in its type's colour.
+- **A simple view for reading:** the SIMPLE button on the console (or the `#/simples` link) turns the whole portfolio into a regular page to scroll, still in the game's font, frames and sprites, in Portuguese or English.
 - **A living Kanto behind the console:** Route 1, Pallet Town and the sea from the game's own maps, with animated water and flowers, the town's people walking around and a slow camera.
 - **A console around the game:** a geometric GBA on desktop and an opened GBA SP on phones held upright, both clickable, at integer pixel scales so every pixel stays sharp.
 
