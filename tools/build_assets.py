@@ -185,13 +185,13 @@ def build_ui():
     for n in range(1, 11):
         rgba_png(GFX / f'text_window/type{n}.png', ui / f'frame-{n}.png')
     rgba_png(GFX / 'trainer_card/badges.png', ui / 'badges.png')
-    rgba_png(GFX / 'interface/menu_info.png', ui / 'menu_info.png')
+    build_dex(ui)
     rgba_png(GFX / 'items/icons/poke_ball.png', ui / 'ball.png', GFX / 'items/icon_palettes/poke_ball.pal')
     rgba_png(GFX / 'battle_anims/sprites/gold_stars.png', ui / 'sparkle.png')
 
 
 def check_ui():
-    names = [f'frame-{n}.png' for n in range(1, 11)] + ['badges.png', 'menu_info.png', 'ball.png', 'sparkle.png', 'dialog.png', 'arrow.png', 'help.png', 'frame-std.png', 'keys.png']
+    names = [f'frame-{n}.png' for n in range(1, 11)] + ['badges.png', 'types.png', 'caught.png', 'dex-bg.png', 'ball.png', 'sparkle.png', 'dialog.png', 'arrow.png', 'help.png', 'frame-std.png', 'keys.png']
     for name in names:
         assert (OUT / 'ui' / name).exists(), f'missing assets/ui/{name}'
     w, h, px, _ = pngio.read(OUT / 'ui/badges.png')
@@ -509,6 +509,109 @@ def check_world(walls, behavior, people):
     print(f'world ok ({len(people)} people)')
 
 
+def build_mons(out):
+    """Front pictures for national dex 1-386 (graphics/pokemon/<name>/front.png, top 64x64) in normal.pal
+    and shiny.pal, index 0 transparent: front/<n>.png and shiny/<n>.png. Unown has one picture per
+    letter, saved as 201-<letter>.png (201.png is A)."""
+    for kind in ('front', 'shiny'):
+        (out / kind).mkdir(parents=True, exist_ok=True)
+
+    def save(pic, pals, name):
+        _, _, px, _ = pngio.read(pic)
+        for kind in ('front', 'shiny'):
+            pngio.write(out / kind / f'{name}.png', pngio.to_rgba([row[:64] for row in px[:64]], pngio.read_jasc(pals / f'{"normal" if kind == "front" else "shiny"}.pal')))
+
+    for number, name in enumerate(dex_names(), 1):
+        mon = GFX / 'pokemon' / name.lower()
+        if name == 'UNOWN':
+            for letter in sorted(p.name for p in mon.iterdir() if p.is_dir()):
+                save(mon / letter / 'front.png', mon, f'201-{letter}')
+            save(mon / 'a/front.png', mon, '201')
+        else:
+            mon = mon if (mon / 'front.png').exists() else mon / 'normal'   # Castform: its normal form
+            save(mon / 'front.png', mon, number)
+
+
+def build_dex(ui):
+    """The Pokedex list's pieces (pokedex_screen.c): BG3's fill tile (kanto_dex_bgtiles.png tile 0x0E in
+    palette 0), the type labels from menu_info.png in pokemon_types.pal (gMenuInfoElements2_Pal) and the
+    caught Poke Ball (12x12 at 0,0) in dex_caught_pokeball.pal. menu_info.png is 8bpp: index & 15."""
+    _, _, tiles, _ = pngio.read(GFX / 'pokedex/kanto_dex_bgtiles.png')
+    pal = pngio.read_jasc(GFX / 'pokedex/kanto_dex_bgpals.pal')
+    pngio.write(ui / 'dex-bg.png', [[tuple(pal[v]) + (255,) for v in tiles[0x0E * 8 + y]] for y in range(8)])
+    _, _, info, _ = pngio.read(GFX / 'interface/menu_info.png')
+    info = [[v & 15 for v in row] for row in info]
+    pngio.write(ui / 'types.png', pngio.to_rgba(info, pngio.read_jasc(GFX / 'interface/pokemon_types.pal')))
+    pngio.write(ui / 'caught.png', pngio.to_rgba([row[:12] for row in info[:12]], pngio.read_jasc(GFX / 'interface/dex_caught_pokeball.pal')))
+
+
+# The summary screen's page tabs (PokeSum_DrawPageProgressTiles): BG3 tiles 345+n at columns 13-18, rows 0-1.
+SUMMARY_TABS = {
+    'info': ([17, 16, 18, 20, 18, 21], [33, 32, 34, 36, 34, 37]),
+    'skills': ([49, 1, 17, 16, 18, 21], [65, 19, 33, 32, 34, 37]),
+    'moves': ([49, 1, 49, 1, 17, 48], [65, 19, 65, 19, 33, 64]),
+}
+
+
+def build_summary(out):
+    """The summary screen's backgrounds (pokemon_summary_screen.c) from bg.png (8bpp: index & 15, palette
+    slot from the tilemap). base-<tab>.png = BG3 (moves_info_page.bin) with the tabs showing <tab>;
+    info.png and moves.png = the page layers (page_info.bin, page_moves.bin), transparent where BG3 shows.
+    The -shiny versions load bg.png's palette 6 into slot 0 and 5 into slot 1, as the game does for a
+    shiny. Plus the Poke Ball (ball/poke.png, first frame) and the shiny star (lower tile)."""
+    out.mkdir(parents=True, exist_ok=True)
+    S = GFX / 'summary_screen'
+    _, _, tiles, pal = pngio.read(S / 'bg.png')
+    tiles = [[v & 15 for v in row] for row in tiles]
+    for shiny in (False, True):
+        slots = [pal[i * 16:i * 16 + 16] for i in range(7)]
+        if shiny:
+            slots[0], slots[1] = slots[6], slots[5]
+        tag = '-shiny' if shiny else ''
+        rgba = lambda img, back: [[tuple(p[1][p[0]]) + (255,) if p else back for p in row] for row in img]
+        for tab, (top, bottom) in SUMMARY_TABS.items():
+            img = [[None] * 240 for _ in range(160)]
+            draw_bg(img, tiles, 16, S / 'moves_info_page.bin', lambda e: slots[e >> 12])
+            for i, pair in enumerate(zip(top, bottom)):
+                for row, t in enumerate(pair):
+                    t += 345
+                    for y in range(8):
+                        for x in range(8):
+                            v = tiles[(t // 16) * 8 + y][(t % 16) * 8 + x]
+                            if v:
+                                img[row * 8 + y][(13 + i) * 8 + x] = (v, slots[0])
+            pngio.write(out / f'base-{tab}{tag}.png', rgba(img, tuple(slots[0][0]) + (255,)))
+        for page in ('info', 'moves'):
+            img = [[None] * 240 for _ in range(160)]
+            draw_bg(img, tiles, 16, S / f'page_{page}.bin', lambda e: slots[e >> 12])
+            pngio.write(out / f'{page}{tag}.png', rgba(img, (0, 0, 0, 0)))
+    _, _, ball, ball_pal = pngio.read(GFX / 'interface/ball/poke.png')
+    pngio.write(out / 'ball.png', pngio.to_rgba(ball[:16], ball_pal))
+    _, _, star, star_pal = pngio.read(S / 'shiny_star.png')
+    pngio.write(out / 'star.png', pngio.to_rgba(star[8:], star_pal))
+
+
+def check_mons_dex_summary():
+    for n in (1, 6, 201, 386):
+        for kind in ('front', 'shiny'):
+            w, h, px, _ = pngio.read(OUT / f'mon/{kind}/{n}.png')
+            assert (w, h) == (64, 64) and px[0][0][3] == 0, f'mon/{kind}/{n}.png'
+    assert (OUT / 'mon/front/201-c.png').exists(), 'Unown C'
+    a, b = (pngio.read(OUT / f'mon/{k}/6.png')[2] for k in ('front', 'shiny'))
+    assert a != b, 'shiny Charizard must differ'
+    w, h, bg, _ = pngio.read(OUT / 'ui/dex-bg.png')
+    assert (w, h) == (8, 8) and {p[:3] for row in bg for p in row} <= {(246, 246, 238), (255, 255, 255), (255, 246, 238)}
+    assert pngio.read(OUT / 'ui/caught.png')[:2] == (12, 12)
+    for tab in SUMMARY_TABS:
+        for tag in ('', '-shiny'):
+            w, h, px, _ = pngio.read(OUT / f'summary/base-{tab}{tag}.png')
+            assert (w, h) == (240, 160) and all(p[3] == 255 for row in px for p in row), f'base-{tab}{tag}'
+    _, _, info, _ = pngio.read(OUT / 'summary/info.png')
+    assert info[0][0][3] == 0 and info[150][100][3] == 255, 'INFO layer: clear on top, memo box below'
+    assert pngio.read(OUT / 'summary/ball.png')[:2] == (16, 16) and pngio.read(OUT / 'summary/star.png')[:2] == (8, 8)
+    print('mons, dex, summary ok')
+
+
 def check_intro():
     for name, size in (('gf-text', (144, 16)), ('gf-logo', (32, 64)), ('star', (16, 16)),
                        ('sparkles-small', (16, 16)), ('sparkles-big', (32, 128))):
@@ -527,6 +630,9 @@ def main():
     check_title()
     build_intro(OUT / 'intro')
     check_intro()
+    build_mons(OUT / 'mon')
+    build_summary(OUT / 'summary')
+    check_mons_dex_summary()
     check_fonts(*build_fonts())
     check_audio(build_audio(), build_video())
     check_world(*build_world())

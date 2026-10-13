@@ -1,6 +1,6 @@
 // Pure logic shared by the app and check.mjs (no DOM).
 
-// Same order as the type labels in assets/ui/menu_info.png (4 per row, 32x12, from y=16).
+// Same order as the type labels in assets/ui/types.png (4 per row, 32x12, from y=16).
 export const TYPES = ['normal', 'fire', 'water', 'grass', 'electric', 'rock', 'ground', 'ice', 'flying', 'fighting', 'ghost', 'bug', 'poison', 'psychic', 'steel', 'dark', 'dragon'];
 // Same order as the badges in assets/ui/badges.png (16x16 each).
 export const SHAPES = ['boulder', 'cascade', 'thunder', 'rainbow', 'soul', 'marsh', 'volcano', 'earth'];
@@ -82,11 +82,28 @@ export function titleEntrance(M) {
 const MULTI_HEIGHT = [0, 2, 4, 6, 7, 9, 11, 13, 14];
 export const multiTiles = (maxWidth, count) => ({ w: Math.floor((maxWidth + 9) / 8) + 1, h: MULTI_HEIGHT[count] });
 
-export function spritePath(dex, { shiny = false, animated = false, frame2 = false } = {}) {
-  const s = shiny ? 'shiny/' : '';
-  if (animated) return `assets/sprites/emerald/animated/${s}${dex}.gif`;
-  return `assets/sprites/emerald/${s}${frame2 ? 'frame2/' : ''}${dex}.png`;
+// Front picture as FireRed's summary shows it (tools/build_assets.py, build_mons). form: Unown's letter.
+export const monPath = (dex, { shiny = false, form = '' } = {}) => `assets/mon/${shiny ? 'shiny' : 'front'}/${dex}${form ? `-${form}` : ''}.png`;
+
+// Word wrap in the game font: lines of at most `max` px; a line break in the text starts a new line.
+export function wrapText(str, widths, max) {
+  const lines = [];
+  for (const para of str.split('\n')) {
+    let line = '';
+    for (const word of para.split(' ')) {
+      const next = line ? `${line} ${word}` : word;
+      if (line && textWidth(next, widths) > max) {
+        lines.push(line);
+        line = word;
+      } else line = next;
+    }
+    lines.push(line);
+  }
+  return lines;
 }
+
+// Message box pages, 2 lines each.
+export const toPages = (lines) => Array.from({ length: Math.ceil(lines.length / 2) }, (_, i) => lines.slice(2 * i, 2 * i + 2).join('\n'));
 
 // Cursor movement in a list (cols = 1) or grid. Out of range = stay put.
 export function nextIndex(cur, len, cols, dx, dy) {

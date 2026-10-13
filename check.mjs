@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { DATA } from './data.js';
 import {
-  route, textWidth, fitsLines, centerBox, fade8, grey8, brighten8, alpha8, blendLevels, nextSeed, starPos, gfWindow, titleEntrance, TEXT_SPEEDS, multiTiles, spritePath, nextIndex, fitScale, coverScale, cycle, splitShown, pickNext,
+  route, textWidth, fitsLines, centerBox, fade8, grey8, brighten8, alpha8, blendLevels, nextSeed, starPos, gfWindow, titleEntrance, TEXT_SPEEDS, multiTiles, monPath, wrapText, toPages, nextIndex, fitScale, coverScale, cycle, splitShown, pickNext,
   discPath, rrectPath, corner, TYPES, SHAPES, DIRS, around, pathToAny, pageFits, esc,
 } from './logic.js';
 import { MENU } from './carts/center/screens/menu.js';
@@ -96,13 +96,10 @@ assert.equal(VOLUMES[0], 0);
 assert.equal(VOLUMES[2], 0.4);
 assert.ok(VOLUMES.every((v, i) => i === 0 || v > VOLUMES[i - 1]), 'volume levels must grow');
 
-// sprites: always Emerald art
-assert.equal(spritePath(6), 'assets/sprites/emerald/6.png');
-assert.equal(spritePath(6, { shiny: true }), 'assets/sprites/emerald/shiny/6.png');
-assert.equal(spritePath(250, { frame2: true }), 'assets/sprites/emerald/frame2/250.png');
-assert.equal(spritePath(250, { shiny: true, frame2: true }), 'assets/sprites/emerald/shiny/frame2/250.png');
-assert.equal(spritePath(6, { animated: true }), 'assets/sprites/emerald/animated/6.gif');
-assert.equal(spritePath(250, { shiny: true, animated: true }), 'assets/sprites/emerald/animated/shiny/250.gif');
+// Pokémon pictures: FireRed's, built by tools/build_assets.py
+assert.equal(monPath(6), 'assets/mon/front/6.png');
+assert.equal(monPath(6, { shiny: true }), 'assets/mon/shiny/6.png');
+assert.equal(monPath(201, { form: 'c' }), 'assets/mon/front/201-c.png');
 
 // cursor
 assert.equal(nextIndex(-1, 5, 1, 0, 1), 0);
@@ -173,6 +170,11 @@ assert.ok(pageFits('Olá!\nTudo bem?', widthsOf));
 assert.ok(!pageFits('a\nb\nc', widthsOf));
 assert.ok(!pageFits('x'.repeat(60), widthsOf));
 assert.equal(esc('<a&"\n'), '&lt;a&amp;&quot;\n');
+const wrapped = wrapText('Um app de NBA para todo mundo, feito primeiro em português.', widthsOf, 100);
+assert.ok(wrapped.length > 1 && wrapped.every((l) => textWidth(l, widthsOf) <= 100), 'wrapText: every line fits');
+assert.equal(wrapped.join(' '), 'Um app de NBA para todo mundo, feito primeiro em português.', 'wrapText keeps every word');
+assert.deepEqual(wrapText('a b\nc', widthsOf, 200), ['a b', 'c']);
+assert.deepEqual(toPages(['1', '2', '3']), ['1\n2', '3']);
 
 // --- content (data.js)
 const here = (path) => new URL(path, import.meta.url);
@@ -180,8 +182,7 @@ const both = (o, w) => assert.ok(o?.pt?.trim() && o?.en?.trim(), `${w}: falta te
 const url = (u, w) => assert.match(u, /^(https:\/\/|mailto:)/, `${w}: link precisa começar com https:// ou mailto: (${u})`);
 const dex = (n, w) => {
   assert.ok(Number.isInteger(n) && n >= 1 && n <= 386, `${w}: dex ${n} fora de 1–386`);
-  const variants = [{}, { shiny: true }, { frame2: true }, { shiny: true, frame2: true }, { animated: true }, { shiny: true, animated: true }];
-  for (const o of variants) assert.ok(existsSync(here(spritePath(n, o))), `${w}: sprite não existe (${spritePath(n, o)})`);
+  for (const shiny of [false, true]) assert.ok(existsSync(here(monPath(n, { shiny }))), `${w}: sprite não existe (${monPath(n, { shiny })})`);
   assert.ok(existsSync(here(`assets/cries/${n}.wav`)), `${w}: grito não existe (assets/cries/${n}.wav) — rode python tools/build_assets.py`);
 };
 const { trainer, projects, badges, moves, contact, ui } = DATA;
