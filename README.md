@@ -7,7 +7,8 @@ A playable portfolio: a Pokémon Center from **Pokémon FireRed**, running insid
 ## What it is
 
 - **A room you can walk around:** the real FireRed Pokémon Center, with the Nurse, the people and the objects. Arrow keys/WASD, a click or a tap to walk there, A or a click to talk.
-- **A START menu for the fast path:** PROJETOS, SOBRE, EXPERIÊNCIA, HABILIDADES, CONTATO and OPÇÕES, each drawn like the matching FireRed screen, with a help bar that explains every item in plain language. Direct links (`#/contato`) open a screen straight away.
+- **A START menu for the fast path:** PROJETOS, SOBRE, EXPERIÊNCIA, HABILIDADES, CONTATO and OPÇÕES, each drawn like the matching FireRed screen, with a help bar that explains every item in plain language. Direct links (`#/contato`, `#/projetos/3`) open a screen straight away.
+- **Projects as Pokémon:** PROJETOS is the Pokédex list, and each project opens as a Pokémon summary with three pages (info, pictures, tech stack), the Pokémon's cry and a 1 in 16 chance of a shiny. Screenshots open full size over the page.
 - **A console around the game:** a geometric GBA on desktop and an opened GBA SP on phones held upright, both clickable, at integer pixel scales so every pixel stays sharp.
 
 ## Faithful to the game
@@ -16,6 +17,7 @@ The goal is that it feels like the actual game, so the numbers come from the com
 
 - the message box frame, text position (16, 121), 15 px line spacing, text colours per speaker and the bouncing arrow;
 - the START menu, help bar, OPTION screen and multichoice windows (window templates, cursor, wrapping, which sounds play and which don't);
+- the Pokédex list (row layout, type labels, white fades) and the Pokémon summary (backgrounds and tabs from the tilemaps, the shiny palettes, the sprite bounce, the page slide);
 - the title screen layers, the flame sprites (same random generator, seed and sprite limit), the shine on the logo and the PRESS START blink;
 - text speeds, wall-bump timing and the cry and white fade when you press START on the title.
 
