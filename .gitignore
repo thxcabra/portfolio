@@ -1,4 +1,4 @@
-pokedex/*.tar.gz
+pokedex/
 node_modules/
 new assets/
 __pycache__/
