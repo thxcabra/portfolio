@@ -1,26 +1,103 @@
-// FireRed's title screen as title_screen.c runs it once the intro is over: the flame sprites
-// (same RNG, seed, waves and 62 free sprite slots), the shine sweeping the logo every 574 frames
-// and PRESS START blinking 60 frames on, 30 off. Stepped at the GBA's frame rate.
+// FireRed's title screen as title_screen.c runs it. The entrance (INIT..FADEIN, 263 frames): a light
+// band sweeps Charizard's silhouette, Charizard fades in grey, the border wipes in, the bars slide in
+// from the right, three flashes, then the logo and Charizard fade from white into colour. Then the
+// steady screen: the flame sprites (same RNG, seed, waves and 62 free sprite slots), the shine
+// sweeping the logo every 574 frames and PRESS START blinking 60 frames on, 30 off. Everything is
+// stepped at the GBA's frame rate.
+import { nextSeed, titleEntrance, fade8, grey8, brighten8 } from '../../logic.js';
+
 const FPS = 59.7275;
 const FLAME_X = [4, 16, 26, 32, 48, 200, 216, 224, 232, 60, 76, 92, 108, 128, 144];
 const MAX_FLAMES = 62;   // 64 sprites minus the blank sprite and the slash
+const ENTRANCE = 263;    // RUN starts on this frame
 const load = (src) => Object.assign(new Image(), { src });
+const sheet = (...imgs) => {
+  const c = Object.assign(document.createElement('canvas'), { width: 240, height: 160 });
+  imgs.forEach((i) => c.getContext('2d').drawImage(i, 0, 0));
+  return c;
+};
+const pixels = (c) => c.getContext('2d').getImageData(0, 0, 240, 160);
 
-export function createTitle(root, { reduced }) {
+// The entrance's drawing: layers as pixels, recoloured per frame like the game's palette effects.
+function entranceDrawer(canvas, [back, bars, press, charizard, logo]) {
+  const ctx = canvas.getContext('2d');
+  const cache = new Map();
+  const variant = (key, base, fn) => {
+    if (!cache.has(key)) {
+      const img = new ImageData(new Uint8ClampedArray(base.data), 240, 160);
+      const d = img.data;
+      for (let i = 0; i < d.length; i += 4) if (d[i + 3]) [d[i], d[i + 1], d[i + 2]] = fn(d[i], d[i + 1], d[i + 2]);
+      const c = sheet();
+      c.getContext('2d').putImageData(img, 0, 0);
+      cache.set(key, c);
+    }
+    return cache.get(key);
+  };
+  const barsSheet = sheet(bars, press);   // BG2: the bars and PRESS START
+  const barsPx = pixels(barsSheet), cz = pixels(sheet(charizard)), lg = pixels(sheet(logo));
+  const toWhite = (y) => (r, g, b) => [fade8(r, 30, y), fade8(g, 30, y), fade8(b, 31, y)];   // RGB(30,30,31)
+  const toBlack = (y) => (r, g, b) => [fade8(r, 0, y), fade8(g, 0, y), fade8(b, 0, y)];
+  const grey = (to) => (r, g, b) => { const v = grey8(r, g, b); return to(v, v, v); };
+  const bandSheet = sheet();
+  const band = new ImageData(240, 160);
+
+  return (M) => {
+    const s = titleEntrance(M);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, 240, 160);
+    if (s.border) ctx.drawImage(back, 0, 0, s.border, 160, 0, 0, s.border, 160);
+    if (s.bars === 'black') ctx.drawImage(variant('bars-black', barsPx, () => [0, 0, 0]), 0, 0);
+    else if (s.bars !== 'hidden') ctx.drawImage(barsSheet, 0, 0, 240 - s.bars, 160, s.bars, 0, 240 - s.bars, 160);
+    const c = s.charizard;
+    const fade = c.to === 'white' ? toWhite(c.y) : toBlack(c.y);
+    ctx.drawImage(variant(`cz-${c.src}-${c.to}-${c.y}`, cz, c.src === 'grey' ? grey(fade) : fade), 0, 0);
+    if (s.band !== null) {   // BLDY over the black Charizard: EVY 15 on the centre line, one less per line away
+      band.data.fill(0);
+      for (let y = Math.max(0, s.band - 15); y <= Math.min(159, s.band + 15); y++) {
+        const v = brighten8(0, 15 - Math.abs(y - s.band));
+        for (let x = 0; x < 240; x++) {
+          const i = (y * 240 + x) * 4;
+          if (cz.data[i + 3]) band.data.set([v, v, v, 255], i);
+        }
+      }
+      bandSheet.getContext('2d').putImageData(band, 0, 0);
+      ctx.drawImage(bandSheet, 0, 0);
+    }
+    if (s.logo !== null) ctx.drawImage(variant(`logo-${s.logo}`, lg, toWhite(s.logo)), 0, 0);
+  };
+}
+
+export function createTitle(root, { reduced, entrance = false }) {
   root.innerHTML = `<div class="title">
     <img class="layer" src="assets/title/back.png" alt="">
     <canvas class="layer flames" width="240" height="160"></canvas>
-    <img class="layer" src="assets/title/front.png" alt="Pokémon FireRed Version">
-    <canvas class="layer lit" width="240" height="160"></canvas>
+    <img class="layer" src="assets/title/bars.png" alt="">
     <img class="layer press" src="assets/title/press.png" alt="PRESS START">
+    <img class="layer" src="assets/title/charizard.png" alt="">
+    <img class="layer" src="assets/title/logo.png" alt="Pokémon FireRed Version">
+    <canvas class="layer lit" width="240" height="160"></canvas>
   </div>`;
-  if (reduced) return { stop() {}, leave: () => Promise.resolve() };
-  const [flameCtx, litCtx] = [...root.querySelectorAll('canvas')].map((c) => c.getContext('2d'));
-  const press = root.querySelector('.press');
+  const title = root.querySelector('.title');
+  if (reduced) return { stop() {}, leave: () => Promise.resolve(), skip() {}, entering: false };
+  const [flameCtx, litCtx] = [...title.querySelectorAll('canvas')].map((c) => c.getContext('2d'));
+  const press = title.querySelector('.press');
   const art = { flames: load('assets/title/flames.png'), lit: load('assets/title/lit.png'), slash: load('assets/title/slash.png') };
 
+  let entering = entrance, M = 0, drawEntrance = null, cover = null;
+  if (entering) {
+    cover = Object.assign(document.createElement('canvas'), { width: 240, height: 160, className: 'layer entrance' });
+    cover.getContext('2d').fillRect(0, 0, 240, 160);   // black until the layers are decoded
+    title.append(cover);
+    const imgs = [...title.querySelectorAll('img')];   // back, bars, press, charizard, logo
+    Promise.all(imgs.map((i) => i.decode().catch(() => {}))).then(() => { drawEntrance = entranceDrawer(cover, imgs); });
+  }
+  function finishEntrance() {   // RUN: the steady layers under the cover take over
+    entering = false;
+    cover?.remove();
+  }
+
   let seed = 30840;
-  const rand = () => (seed = (Math.imul(seed, 1103515245) + 24691) >>> 0) >>> 16;
+  const rand = () => (seed = nextSeed(seed)) >>> 16;
   let frame = 0, timer = 0, delay = 0, off = 0;
   let flames = [];
   const slash = { x: -32, y: 27, timer: 540, on: false };
@@ -86,10 +163,14 @@ export function createTitle(root, { reduced }) {
     last = now;
     let stepped = false;
     for (; acc >= 1000 / FPS; acc -= 1000 / FPS) {
-      step();
       stepped = true;
+      if (!entering) step();
+      else if (drawEntrance && ++M >= ENTRANCE) finishEntrance();
     }
-    if (stepped && art.flames.complete) draw();
+    if (stepped) {
+      if (entering) drawEntrance?.(M);
+      else if (art.flames.complete) draw();
+    }
     raf = requestAnimationFrame(tick);
   }
   raf = requestAnimationFrame(tick);
@@ -97,9 +178,14 @@ export function createTitle(root, { reduced }) {
   // (0 to 16 in steps of 2, about 9 frames).
   const leave = () => new Promise((resolve) => {
     setTimeout(() => {
-      root.querySelector('.title').classList.add('to-white');
+      title.classList.add('to-white');
       setTimeout(resolve, 9000 / FPS);
     }, 90000 / FPS);
   });
-  return { stop: () => cancelAnimationFrame(raf), leave };
+  return {
+    stop: () => cancelAnimationFrame(raf),
+    leave,
+    skip: () => entering && finishEntrance(),   // a button during the entrance: straight to RUN, as in the game
+    get entering() { return entering; },
+  };
 }
