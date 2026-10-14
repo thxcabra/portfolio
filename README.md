@@ -12,6 +12,7 @@ A playable portfolio: a Pokémon Center from **Pokémon FireRed**, running insid
 - **The room opens the same screens:** the Nurse asks what you need (heal, about João, contact), the PC opens the Box where you put projects in your team (up to 6) and the Nurse heals them on the machine, the Kanto map opens the experience Bag and the Move Tutor the skills TM Case. SOBRE is the trainer card (it flips like the game's), EXPERIÊNCIA the Bag with WORK and EDUCATION pockets, HABILIDADES the TM Case with a disc per skill in its type's colour.
 - **Music made from the game's own data:** the GAME FREAK theme, the title, the Pokémon Center and the healing jingle are synthesized in the browser from the decompilation's MIDI files and instrument bank, played the way the GBA's m4a engine plays them (sample and GB channels, envelopes, vibrato, loop points). Off until you turn the sound on.
 - **A simple view for reading:** the SIMPLE button on the console (or the `#/simples` link) turns the whole portfolio into a regular page to scroll, still in the game's font, frames and sprites, in Portuguese or English.
+- **A landing page for a quick read** (`lp.html`, in progress): a vertical page in its own collage style (orange, purple, green and black; paper and tape, shapes with eyes that follow the pointer, a low poly 3D piece, pixel stickers and real data from the repos), with every project, the experience, the skills and the contact, and the GBA one click away. It reads the same `data.js`.
 - **A living Kanto behind the console:** Route 1, Pallet Town and the sea from the game's own maps, with animated water and flowers, the town's people walking around and a slow camera.
 - **A console around the game:** a geometric GBA on desktop and an opened GBA SP on phones held upright, both clickable, at integer pixel scales so every pixel stays sharp, with a word next to A and B that says what each button does right now (TALK, RUN, CHOOSE, BACK...).
 
@@ -69,9 +70,10 @@ carts/center/                         the cartridge: title, room, dialogue, menu
 data.js                               all the content (projects, experience, skills, texts)
 logic.js  sound.js  typewriter.js     shared logic, sounds, typing effect
 music.js                              the music synthesizer
+lp.html  site/                       the landing page: sections, the cast of shapes, the 3D piece
 kanto.js  simple.js                   the page background, the simple view
 assets/                               generated from the game's data by tools/build_assets.py
-tools/                                asset build, end-to-end tests, screenshots
+tools/                                asset build, repo numbers (github_stats.mjs), tests, screenshots
 docs/                                 design specs and implementation plans
 ```
 

@@ -516,6 +516,7 @@ await send('Page.navigate', { url: `${BASE}lp.html?lp=1` });
 await sleep(2500);
 assert.deepEqual(await ev(`[...document.querySelectorAll('main > section')].map((s) => s.id)`), ['topo', 'projetos', 'sobre', 'experiencia', 'habilidades', 'contato'], 'seções da landing page');
 assert.equal(await ev(`document.querySelectorAll('.project').length`), 7);
+assert.ok(await ev('document.documentElement.scrollWidth <= innerWidth'), 'a landing page está mais larga que a tela');
 assert.equal(await ev(`document.querySelectorAll('[data-cast=hero] .char .pupil').length`), 6, 'o elenco da abertura: três formas com dois olhos');
 assert.equal(await ev(`document.querySelector('.top .play').getAttribute('href')`), './', 'o Jogar leva ao GBA');
 await click('.top .lang', 600);

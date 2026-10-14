@@ -2,7 +2,7 @@
 // are HTML strings; after each render the code card types, the project pieces lean, and the cast
 // (cast.js) and the 3D piece (scene3d.js) are mounted again.
 import { DATA } from '../data.js';
-import { siteAnchor, repoOf, esc } from '../logic.js';
+import { siteAnchor, repoOf, esc, SHAPES } from '../logic.js';
 import { typewrite } from '../typewriter.js';
 import { mountCast, defs } from './cast.js';
 import { mount3d } from './scene3d.js';
@@ -46,9 +46,16 @@ const ICONS = {
 };
 const icon = (name) => `<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name]}</svg>`;
 
-const underline = () => '<svg class="stroke under" viewBox="0 0 300 20" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M4 14 C 60 4, 120 18, 180 9 S 270 6, 296 12"/></svg>';
-const heading = (title, lead = '') => `<header class="sec-head">
-  <h2 class="display">${esc(title)}</h2>${underline()}
+// Hand-drawn strokes (drawn in as they scroll in): a different underline under each heading.
+const UNDERLINES = [
+  'M4 14 C 60 4, 120 18, 180 9 S 270 6, 296 12',
+  'M6 8 C 70 16, 150 2, 220 12 L 294 6',
+  'M4 12 Q 40 2, 80 12 T 160 12 T 240 12 T 296 10',
+  'M8 6 C 90 18, 200 18, 292 4 M 40 16 C 120 12, 200 14, 260 12',
+];
+const underline = (k) => `<svg class="stroke under" viewBox="0 0 300 20" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="${UNDERLINES[k % UNDERLINES.length]}"/></svg>`;
+const heading = (k, title, lead = '') => `<header class="sec-head">
+  <h2 class="display">${esc(title)}</h2>${underline(k)}
   ${lead ? `<p class="lead">${esc(lead)}</p>` : ''}</header>`;
 const drawings = (a, b) => SITE.media.drawings.slice(a, b).map((src) => `<img class="drawing" src="${esc(src)}" alt="" aria-hidden="true">`).join('');
 const photo = (cls) => (SITE.media.photo ? `<img class="photo ${cls}" src="${esc(SITE.media.photo)}" alt="${esc(DATA.trainer.name)}">` : '');
@@ -99,6 +106,7 @@ function hero() {
       <div class="obj3d" data-3d aria-hidden="true"></div>
       <figure class="paper code-card tape" aria-hidden="true"><pre><code>${codeCard()}</code></pre></figure>
       <img class="sticker partner" src="assets/mon/front/${t.partner}.png" alt="" width="64" height="64">
+      <svg class="stroke hero-arrow" viewBox="0 0 700 340" aria-hidden="true"><path pathLength="1" d="M20 40 C 160 330, 470 340, 660 150 M 610 150 L 662 148 L 652 200"/></svg>
       <a class="gba-shot tape tape-o" href="${PLAY_URL}"><img src="assets/og.png" alt="${esc(T('play_long'))}" width="1200" height="630"><span class="pixel" aria-hidden="true">${esc(T('play').toUpperCase())}</span></a>
       ${photo('cutout')}${drawings(0, 2)}
     </div>
@@ -133,13 +141,13 @@ function project(p, i) {
   const g = gh[repoOf(p.links.repo)];
   const iconUrl = `assets/mon/icon/${p.dex}${p.form ? `-${p.form}` : ''}.png`;
   const links = [p.links.repo && [p.links.repo, T('code')], p.links.live && [p.links.live, T('live')]].filter(Boolean);
-  return `<article class="project m-${MATERIALS[i % MATERIALS.length]}" id="projeto-${i + 1}" style="--r:${tilt(i)}deg">
+  return `<article class="project m-${MATERIALS[i % MATERIALS.length]}" id="projeto-${i + 1}" style="--r:${tilt(i)}deg;--i:${i}">
     <button class="shot tape${i % 2 ? ' tape-o' : ''}" type="button" data-project="${i}" aria-label="${esc(T('shots', { name: p.name }))}">
       <img src="${esc(p.shots[0])}" alt="" loading="lazy">${p.shots.length > 1 ? `<span class="shot-count mono">+${p.shots.length - 1}</span>` : ''}
     </button>
     <i class="mon" style="background-image:url(${iconUrl})" aria-hidden="true"></i>
-    <p class="meta mono">${esc(L(p.kind))} · ${p.year}</p>
     <h3 class="display">${esc(p.name)}</h3>
+    <p class="meta mono">${esc(L(p.kind))} · ${p.year}</p>
     <p class="pitch">${esc(L(p.pitch))}</p>
     <p class="text">${esc(L(p.text))}</p>
     <ul class="chips">${p.stack.map((s) => `<li class="chip c-${techColor(s)}">${esc(s)}</li>`).join('')}</ul>
@@ -149,7 +157,7 @@ function project(p, i) {
 }
 
 const projects = () => `<section class="projects" id="projetos">
-  ${heading(T('projects'), T('projects_lead'))}
+  ${heading(0, T('projects'), T('projects_lead'))}
   <div class="project-grid">${DATA.projects.map(project).join('')}</div>
 </section>`;
 
@@ -157,7 +165,7 @@ function about() {
   const t = DATA.trainer;
   const line = (cmd, out) => `<p><span class="prompt">$</span> ${esc(cmd)}</p><p class="out">${esc(out)}</p>`;
   return `<section class="about" id="sobre">
-    ${heading(T('about'))}
+    ${heading(1, T('about'))}
     <div class="about-grid">
       <p class="about-text">${esc(L(t.about))}</p>
       <div class="side">
@@ -166,6 +174,7 @@ function about() {
           <p class="term-bar" aria-hidden="true"><i></i><i></i><i></i></p>
           ${line('whoami', t.name.toLowerCase())}${line(`cat ${T('f_role')}`, L(t.role))}${line(`cat ${T('f_where')}`, t.location)}${line(`cat ${T('f_langs')}`, L(t.languages))}
           <p><span class="prompt">$</span> <span class="caret" aria-hidden="true"></span></p>
+          <div class="cast cameo" data-cast="about" aria-hidden="true"></div>
         </div>
         ${drawings(2, 4)}
       </div>
@@ -174,13 +183,14 @@ function about() {
 }
 
 function work() {
-  const stub = (period, title, sub, text, i) => `<li class="stub" style="--r:${tilt(i) / 2}deg">
-    <p class="period mono">${esc(period)}</p><h3 class="display">${esc(title)}</h3>${sub ? `<p class="role">${esc(sub)}</p>` : ''}${text ? `<p>${esc(text)}</p>` : ''}</li>`;
+  const stub = (period, title, sub, text, i, shape) => `<li class="stub" style="--r:${tilt(i) / 2}deg">
+    ${shape ? `<i class="badge-sticker" style="--slot:${SHAPES.indexOf(shape)}" aria-hidden="true"></i>` : ''}
+    <h3 class="display">${esc(title)}</h3>${sub ? `<p class="role">${esc(sub)}</p>` : ''}<p class="period mono">${esc(period)}</p>${text ? `<p>${esc(text)}</p>` : ''}</li>`;
   return `<section class="work" id="experiencia">
-    ${heading(T('work'))}
+    ${heading(2, T('work'))}
     <div class="timeline">
       <svg class="stroke line" viewBox="0 0 10 100" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M5 0 V100"/></svg>
-      <ol class="jobs">${DATA.badges.map((b, i) => stub(L(b.period), b.name, L(b.role), L(b.text), i + 2)).join('')}</ol>
+      <ol class="jobs">${DATA.badges.map((b, i) => stub(L(b.period), b.name, L(b.role), L(b.text), i + 2, b.shape)).join('')}</ol>
     </div>
     <h3 class="sub display">${T('school')}</h3>
     <ol class="school">${DATA.education.map((e, i) => stub(L(e.period), e.name, L(e.course), '', i + 4)).join('')}</ol>
@@ -190,15 +200,15 @@ function work() {
 function skills() {
   const techs = [...new Set(DATA.projects.flatMap((p) => p.stack))];
   return `<section class="skills" id="habilidades">
-    ${heading(T('skills'), T('skills_lead'))}
+    ${heading(3, T('skills'), T('skills_lead'))}
     <div class="skills-grid">
-      <div class="panel">${DATA.moves.map((m) => `<div class="move" style="--c:var(--${TYPE_COLOR[m.type] ?? 'paper'})">
+      <div class="panel"><div class="cast cameo" data-cast="skills" aria-hidden="true"></div>${DATA.moves.map((m, i) => `<div class="move" style="--c:var(--${TYPE_COLOR[m.type] ?? 'paper'})">
         <p class="move-name mono">${esc(m.name)}</p>
         <p class="bar" role="img" aria-label="${T('power')}: ${m.power}/100"><i style="--p:${m.power}%"></i></p>
-        <p class="years mono">${T('years', { n: m.years })}</p>
+        <p class="years mono">${T('years', { n: m.years })}${i ? '' : '<svg class="stroke ring" viewBox="0 0 120 60" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M70 6 C 20 2, 4 22, 10 38 C 18 58, 96 60, 112 36 C 124 16, 90 4, 54 8"/></svg>'}</p>
         <p class="move-text">${esc(L(m.text))}</p>
       </div>`).join('')}</div>
-      <ul class="cloud" aria-label="Stack">${techs.map((s, i) => `<li class="chip c-${techColor(s)}" style="--r:${tilt(i) * 2}deg">${esc(s)}</li>`).join('')}</ul>
+      <ul class="cloud" aria-label="Stack">${techs.map((s, i) => `<li class="chip c-${techColor(s)}" style="--r:${tilt(i) * 2.5}deg;--y:${tilt(i + 3) * 2}px">${esc(s)}</li>`).join('')}</ul>
     </div>
   </section>`;
 }
@@ -209,7 +219,7 @@ function games() {
     : /\.(mp4|webm)$/i.test(src) ? `<video src="${esc(src)}" muted loop playsinline autoplay></video>`
       : `<img src="${esc(src)}" alt="" loading="lazy">`);
   return `<section class="games" id="jogos">
-    ${heading(T('games'))}
+    ${heading(0, T('games'))}
     <div class="game-grid">${SITE.games.map((g, i) => `<article class="game paper" style="--r:${tilt(i)}deg">
       ${media(g.media)}<h3 class="display">${esc(g.name)}</h3><p>${esc(L(g.text))}</p>
       ${g.link ? `<p class="links"><a href="${esc(g.link)}"${ext(g.link)}>${T('live')}${icon('out')}</a></p>` : ''}
@@ -283,7 +293,7 @@ function render() {
   cleanup = [];
   document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
   document.body.innerHTML = defs() + top() + `<main>${hero()}${ticker()}${projects()}${about()}${work()}${skills()}${games()}${contact()}</main>` + footer() + viewer();
-  const casts = { hero: ['blob', 'star', 'circle'], contact: ['squiggle', 'circle', 'star', 'blob'], mark: ['circle'] };
+  const casts = { hero: ['blob', 'star', 'circle'], contact: ['squiggle', 'circle', 'star', 'blob'], mark: ['circle'], about: ['blob'], skills: ['star'] };
   document.querySelectorAll('[data-cast]').forEach((el) => cleanup.push(mountCast(el, casts[el.dataset.cast], { reduced: reduced() })));
   document.querySelectorAll('[data-3d]').forEach((el) => cleanup.push(mount3d(el, { reduced: reduced(), model: el.dataset['3d'] })));
   tiltCards();
