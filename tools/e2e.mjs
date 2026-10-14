@@ -510,6 +510,49 @@ await sleep(400);
 assert.equal(await ev(`document.getElementById('gba').style.width`), '432px', 'deitado não voltou ao GBA');
 ok('celular em pé vira GBA SP e volta');
 
+// ---------- the landing page (lp.html) ----------
+await ev('localStorage.clear()');
+await send('Page.navigate', { url: `${BASE}lp.html?lp=1` });
+await sleep(2500);
+assert.deepEqual(await ev(`[...document.querySelectorAll('main > section')].map((s) => s.id)`), ['topo', 'projetos', 'sobre', 'experiencia', 'habilidades', 'contato'], 'seções da landing page');
+assert.equal(await ev(`document.querySelectorAll('.project').length`), 7);
+assert.equal(await ev(`document.querySelectorAll('[data-cast=hero] .char .pupil').length`), 6, 'o elenco da abertura: três formas com dois olhos');
+assert.equal(await ev(`document.querySelector('.top .play').getAttribute('href')`), './', 'o Jogar leva ao GBA');
+await click('.top .lang', 600);
+assert.equal(await ev('document.documentElement.lang'), 'en');
+assert.equal(await ev(`document.querySelector('#projetos h2').textContent`), 'Projects');
+assert.equal(await ev(`localStorage.getItem('lang')`), '"en"', 'o idioma da landing page fica salvo (o mesmo do GBA)');
+await click('.top .lang', 600);
+assert.equal(await ev(`document.querySelector('#projetos h2').textContent`), 'Projetos');
+await ev(`document.querySelector('#projeto-1 .shot').scrollIntoView({ block: 'center', behavior: 'instant' })`);
+await sleep(400);
+await click('#projeto-1 .shot', 400);
+assert.ok(await ev(`document.querySelector('dialog.viewer').open`), 'o print não abriu');
+assert.match(await ev(`document.querySelector('.viewer img').getAttribute('src')`), /magnifyer/);
+await click('.v-next', 300);
+assert.match(await ev(`document.querySelector('.v-count').textContent`), /2 de 2/);
+await key('Escape', 300);
+assert.ok(!(await ev(`document.querySelector('dialog.viewer').open`)), 'Esc não fechou os prints');
+ok('landing page: seções, 7 projetos, Jogar, PT/EN salvo, prints abrem, passam e fecham');
+
+await send('Page.navigate', { url: `${BASE}lp.html?old=1#/projetos/3` });
+await sleep(2500);
+assert.equal(await hash(), '#projeto-3', 'o link antigo vira a âncora nova');
+assert.ok(await ev(`(() => { const t = document.getElementById('projeto-3').getBoundingClientRect().top; return t >= 0 && t < innerHeight / 2; })()`), 'não rolou até o projeto 3');
+ok('landing page: link antigo #/projetos/3 rola até o projeto');
+
+await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
+await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 3, mobile: true });
+await send('Page.navigate', { url: `${BASE}lp.html?small=1` });
+await sleep(2500);
+assert.ok(await ev('document.documentElement.scrollWidth <= innerWidth'), 'rolagem horizontal no celular');
+assert.equal(await ev(`getComputedStyle(document.querySelector('.code-card')).animationName`), 'none', 'com movimento reduzido nada se move');
+await click('.menu-btn', 300);
+assert.ok(await ev(`getComputedStyle(document.querySelector('#nav-links')).display !== 'none'`), 'o menu do celular não abriu');
+await send('Emulation.clearDeviceMetricsOverride');
+await send('Emulation.setEmulatedMedia', { features: [] });
+ok('landing page: celular sem rolagem horizontal e com menu; movimento reduzido para tudo');
+
 assert.deepEqual(errors, [], 'erros no console: ' + errors.join('\n'));
 ok('nenhum erro no console');
 

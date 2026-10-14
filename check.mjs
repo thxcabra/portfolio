@@ -356,6 +356,19 @@ assert.deepEqual(Object.keys(site.ui.en).sort(), Object.keys(site.ui.pt).sort(),
 for (const f of [site.media.photo, ...site.media.drawings, ...site.games.map((g) => g.media)].filter(Boolean)) assert.ok(existsSync(here0(f)), `falta ${f}`);
 for (const g of site.games) assert.ok(g.name && g.text?.pt && g.text?.en && g.media, `jogo incompleto: ${g.name}`);
 
+// the landing page's colours (site/site.css): text pairs keep WCAG AA contrast
+const siteCss = readFileSync(here0('site/site.css'), 'utf8');
+const tok = (n) => siteCss.match(new RegExp(`--${n}:\\s*(#[0-9a-fA-F]{6})`))[1];
+const lum = (hex) => {
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+const contrast = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };
+for (const [fg, bg] of [['paper', 'ink'], ['ink', 'paper'], ['ink', 'orange'], ['ink', 'green'], ['paper', 'purple'], ['orange', 'ink'], ['green', 'ink'], ['orange-deep', 'paper'], ['green-deep', 'paper'], ['purple', 'paper'], ['paper', 'ink-2']]) {
+  const c = contrast(tok(fg), tok(bg));
+  assert.ok(c >= 4.5, `contraste ${fg} sobre ${bg}: ${c.toFixed(2)}`);
+}
+
 // assets/site/github.json (tools/github_stats.mjs): one entry per project repo, with its languages
 const ghFile = here0('assets/site/github.json');
 if (existsSync(ghFile)) {
