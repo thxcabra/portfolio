@@ -191,6 +191,53 @@ export const DATA = {
     { label: 'GITHUB', url: 'https://github.com/thxcabra' },
   ],
 
+  // A landing page (lp.html). Estes textos não passam pela fonte do jogo. media e games são o material do
+  // João: foto recortada (PNG transparente), desenhos (PNG transparente) e jogos ({ name, text: { pt, en },
+  // media: 'assets/site/…' (png, gif, webp, mp4 ou glb), link }). Só aparece o que estiver preenchido.
+  // Nada de imagem gerada por IA.
+  site: {
+    tagline: {
+      pt: 'Construo produtos digitais do zero: software, IA, dados e jogos. Estáveis, bonitos e divertidos de usar.',
+      en: 'I build digital products from scratch: software, AI, data and games. Stable, good-looking and fun to use.',
+    },
+    media: { photo: null, drawings: [] },
+    games: [],
+    ui: {
+      pt: {
+        skip: 'Pular para o conteúdo', nav: 'Seções', menu: 'Menu', lang: 'EN', lang_name: 'Mudar para inglês',
+        play: 'Jogar', play_long: 'Jogar meu portfólio', play_note: 'Este portfólio também é um jogo: um Centro Pokémon dentro de um GBA.',
+        talk: 'Fale comigo',
+        projects: 'Projetos', about: 'Sobre', work: 'Experiência', skills: 'Habilidades', games: 'Jogos', contact: 'Contato',
+        projects_lead: 'Coisas que eu construí, do problema até as mãos de quem usa.',
+        code: 'Código', live: 'Ver ao vivo', shots: 'Ver as imagens de {name}', shot_of: '{i} de {n}',
+        close: 'Fechar', prev: 'Anterior', next: 'Próxima', commits: '{n} commits',
+        school: 'Formação', years: '{n} anos', power: 'Poder', skills_lead: 'O que eu uso no dia a dia, e há quanto tempo.',
+        contact_title: 'Vaga ou projeto? Bora conversar.',
+        contact_lead: 'Se você tem um time fazendo coisas interessantes, ou um projeto que precisa sair do papel, me chama.',
+        footer: 'Feito à mão em HTML, CSS e JS, sem framework.', source: 'Código do site',
+        t_projects: 'projetos', t_since: 'em tecnologia desde',
+        f_role: 'cargo.txt', f_where: 'onde.txt', f_langs: 'idiomas.txt',
+        code_keys: { city: 'cidade', speaks: 'idiomas', since: 'desde', likes: 'gosta' }, likes: ['jogos', 'dados', 'design'],
+      },
+      en: {
+        skip: 'Skip to content', nav: 'Sections', menu: 'Menu', lang: 'PT', lang_name: 'Mudar para português',
+        play: 'Play', play_long: 'Play my portfolio', play_note: 'This portfolio is also a game: a Pokémon Center inside a GBA.',
+        talk: 'Talk to me',
+        projects: 'Projects', about: 'About', work: 'Experience', skills: 'Skills', games: 'Games', contact: 'Contact',
+        projects_lead: 'Things I built, from the problem to the hands of the people who use them.',
+        code: 'Code', live: 'See it live', shots: 'See the pictures of {name}', shot_of: '{i} of {n}',
+        close: 'Close', prev: 'Previous', next: 'Next', commits: '{n} commits',
+        school: 'Education', years: '{n} years', power: 'Power', skills_lead: 'What I use day to day, and for how long.',
+        contact_title: "A role or a project? Let's talk.",
+        contact_lead: 'If your team is making interesting things, or you have a project that needs to get off the ground, reach out.',
+        footer: 'Handmade in HTML, CSS and JS, no framework.', source: 'Site source',
+        t_projects: 'projects', t_since: 'in tech since',
+        f_role: 'role.txt', f_where: 'where.txt', f_langs: 'languages.txt',
+        code_keys: { city: 'city', speaks: 'speaks', since: 'since', likes: 'likes' }, likes: ['games', 'data', 'design'],
+      },
+    },
+  },
+
   // Message box pages: up to 2 lines each (\n), short enough to fit (node check.mjs checks).
   talk: {
     pt: {

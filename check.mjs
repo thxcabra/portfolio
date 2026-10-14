@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { DATA } from './data.js';
 import {
   route, textWidth, fitsLines, centerBox, fade8, grey8, brighten8, alpha8, blendLevels, nextSeed, starPos, gfWindow, titleEntrance, TEXT_SPEEDS, multiTiles, monPath, wrapText, toPages, listMove, nextIndex, fitScale, cycle, splitShown, pingPong,
-  discPath, rrectPath, corner, TYPES, SHAPES, DIRS, around, pathToAny, pageFits, esc, ACT_W,
+  discPath, rrectPath, corner, TYPES, SHAPES, DIRS, around, pathToAny, pageFits, esc, ACT_W, siteAnchor, repoOf,
 } from './logic.js';
 import { MENU } from './carts/center/screens/menu.js';
 import { VOLUMES } from './sound.js';
@@ -280,7 +280,7 @@ const strings = [];
 (function walk(v) {
   if (typeof v === 'string') strings.push(v);
   else if (v && typeof v === 'object') Object.values(v).forEach(walk);
-})(DATA);
+})({ ...DATA, site: null });   // the landing page's texts are not drawn in the game font
 for (const s of strings) {
   const shown = s.replace(/\{\w+\}/g, '');   // {name}-style placeholders are filled in before display
   for (const ch of shown) if (ch !== '\n') assert.ok(charset.has(ch), `caractere "${ch}" não existe na fonte do jogo (em "${s.slice(0, 40)}")`);
@@ -333,5 +333,27 @@ for (const r of [heal, center]) {
   for (const v of r.left) { assert.ok(!Number.isNaN(v), 'música com NaN'); peak = Math.max(peak, Math.abs(v)); }
   assert.ok(peak > 0.05 && peak <= 1, `música com nível estranho (${peak})`);
 }
+
+// the landing page: links old (the GBA's #/projetos/3) and new (#projeto-3) land on the right section
+assert.equal(siteAnchor('#/projetos/3', 7), 'projeto-3');
+assert.equal(siteAnchor('#projeto-3', 7), 'projeto-3');
+assert.equal(siteAnchor('#/projetos', 7), 'projetos');
+assert.equal(siteAnchor('#projetos', 7), 'projetos');
+for (const s of ['sobre', 'experiencia', 'habilidades', 'contato', 'jogos']) {
+  assert.equal(siteAnchor(`#/${s}`, 7), s);
+  assert.equal(siteAnchor(`#${s}`, 7), s);
+}
+for (const bad of ['#/projetos/8', '#/projetos/0', '#projeto-x', '#/simples', '#/opcoes', '#topo', '', null]) assert.equal(siteAnchor(bad, 7), null, `siteAnchor(${bad})`);
+assert.equal(repoOf('https://github.com/thxcabra/PitchIQ'), 'thxcabra/PitchIQ');
+assert.equal(repoOf('https://github.com/thxcabra/replai/'), 'thxcabra/replai');
+assert.equal(repoOf('https://www.moicdigital.com'), null);
+assert.equal(repoOf(undefined), null);
+
+// the landing page's texts: same keys in both languages; its media exist
+const site = DATA.site;
+assert.ok(site.tagline.pt && site.tagline.en, 'site.tagline');
+assert.deepEqual(Object.keys(site.ui.en).sort(), Object.keys(site.ui.pt).sort(), 'site.ui: chaves diferentes em pt e en');
+for (const f of [site.media.photo, ...site.media.drawings, ...site.games.map((g) => g.media)].filter(Boolean)) assert.ok(existsSync(here0(f)), `falta ${f}`);
+for (const g of site.games) assert.ok(g.name && g.text?.pt && g.text?.en && g.media, `jogo incompleto: ${g.name}`);
 
 console.log('check ok');

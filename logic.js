@@ -228,3 +228,16 @@ export function pageFits(page, widths, max = 208, tail = 0) {
 }
 
 export const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+
+// The landing page's section for a link: the GBA's (#/projetos/3, #/sobre) or its own (#projeto-3,
+// #sobre). null is the top of the page.
+const SITE_IDS = ['projetos', 'sobre', 'experiencia', 'habilidades', 'jogos', 'contato'];
+export function siteAnchor(hash, projects) {
+  const h = String(hash ?? '').replace(/^#\/?/, '');
+  const m = h.match(/^(?:projetos\/|projeto-)(\d+)$/);
+  if (m) return Number(m[1]) >= 1 && Number(m[1]) <= projects ? `projeto-${Number(m[1])}` : null;
+  return SITE_IDS.includes(h) ? h : null;
+}
+
+// "owner/repo" of a GitHub link, or null.
+export const repoOf = (url) => String(url ?? '').match(/^https:\/\/github\.com\/([^/]+\/[^/#?]+?)\/?$/)?.[1] ?? null;
