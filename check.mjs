@@ -356,4 +356,14 @@ assert.deepEqual(Object.keys(site.ui.en).sort(), Object.keys(site.ui.pt).sort(),
 for (const f of [site.media.photo, ...site.media.drawings, ...site.games.map((g) => g.media)].filter(Boolean)) assert.ok(existsSync(here0(f)), `falta ${f}`);
 for (const g of site.games) assert.ok(g.name && g.text?.pt && g.text?.en && g.media, `jogo incompleto: ${g.name}`);
 
+// assets/site/github.json (tools/github_stats.mjs): one entry per project repo, with its languages
+const ghFile = here0('assets/site/github.json');
+if (existsSync(ghFile)) {
+  const gh = JSON.parse(readFileSync(ghFile, 'utf8'));
+  for (const p of DATA.projects) {
+    const repo = repoOf(p.links.repo);
+    if (repo) assert.ok(Object.keys(gh[repo]?.languages ?? {}).length > 0, `github.json sem ${repo}`);
+  }
+}
+
 console.log('check ok');
