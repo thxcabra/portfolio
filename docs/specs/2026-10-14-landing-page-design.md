@@ -66,7 +66,7 @@ O que está em `media` ou em `games` só aparece quando existe. Nada de placehol
      - o stack em etiquetas coloridas;
      - o ícone do Pokémon do projeto como adesivo pixelado (liga com o GBA);
      - os links "Código" e "Ver ao vivo".
-   - Por cima, dados reais do repositório: barra de linguagens e número de commits (seção 5).
+   - Por cima, dados reais do repositório: a barra de linguagens (seção 5).
    - Grade organizada com rotações e sobreposições leves; as peças alternam o material dominante.
 4. **Sobre:**
    - O texto `trainer.about` em letra grande.
@@ -128,10 +128,10 @@ O que está em `media` ou em `games` só aparece quando existe. Nada de placehol
 
 ## 5. Dados de programação reais
 
-- `tools/github_stats.mjs` usa `gh api` para ler, de cada projeto com `links.repo`: linguagens (bytes), número de commits, data de criação e último push. O resultado vai para `assets/site/github.json`.
+- `tools/github_stats.mjs` lê da API do GitHub, de cada projeto com `links.repo`: linguagens (bytes), data de criação e último push. O resultado vai para `assets/site/github.json`. Os commits ficam de fora: vários repositórios tiveram o histórico condensado, e o número subestimaria o trabalho.
 - Roda à mão quando o João quiser atualizar, e o arquivo vai para o git.
 - A página lê esse JSON. Se ele faltar, as partes de dados somem e o resto continua.
-- Usos: a barra de linguagens e os commits de cada projeto, e uma faixa corrida entre seções ("7 projetos · N commits · Python 41% · TypeScript 33% …").
+- Usos: a barra de linguagens de cada projeto e uma faixa corrida entre seções ("7 projetos · TypeScript 52% · Python 22% · …").
 
 ## 6. Movimento
 

@@ -2,7 +2,7 @@
 
 **Objetivo:** construir a landing page do spec (seções 1–8) em `lp.html`, publicar em `/portfolio/lp` sem mexer no site de hoje, renovar o README do perfil (seção 9) e deixar a troca de endereço pronta num branch local, esperando o João.
 
-**Arquitetura:** `lp.html` carrega `site/main.js`, que monta as seções a partir do `data.js` (bloco novo `DATA.site`) como HTML e depois liga o elenco (`site/cast.js`), o 3D (`site/scene3d.js`, three.js sob demanda) e as animações. Funções puras novas (`siteAnchor`, `repoOf`) vão para `logic.js` e são testadas no `check.mjs`. Os dados do GitHub vêm de `tools/github_stats.mjs` para `assets/site/github.json`.
+**Arquitetura:** `lp.html` carrega `site/main.js`, que monta as seções a partir do `data.js` (bloco novo `DATA.site`) como HTML e depois liga o elenco (`site/cast.js`), o 3D (`site/scene3d.js`, three.js sob demanda) e as animações. Funções puras novas (`siteAnchor`, `repoOf`) vão para `logic.js` e são testadas no `check.mjs`. Os dados do GitHub vêm de `tools/github_stats.mjs` (API do GitHub por `fetch`; o `gh` não está instalado) para `assets/site/github.json`, só com linguagens e datas.
 
 **Tecnologia:** HTML/CSS/JS (módulos ES), sem build. three.js 0.169.0 pelo jsDelivr (mapa de importação). Google Fonts: Unbounded, Bricolage Grotesque, JetBrains Mono. Testes: `node check.mjs` e `node tools/e2e.mjs` (Edge headless via CDP).
 
