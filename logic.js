@@ -239,5 +239,38 @@ export function siteAnchor(hash, projects) {
   return SITE_IDS.includes(h) ? h : null;
 }
 
+// The landing page's skills as Disco Elysium skill checks: the difficulty comes from the power (0-100),
+// as a key in DATA.site.ui.
+export const skillCheck = (power) => (power >= 90 ? 'd90' : power >= 85 ? 'd85' : power >= 80 ? 'd80' : 'd75');
+
+// International Morse as [lit, units] steps: dot 1, dash 3, 1 off inside a letter, 3 between letters,
+// 7 after the word (then it repeats).
+const MORSE = {
+  A: '.-', B: '-...', C: '-.-.', D: '-..', E: '.', F: '..-.', G: '--.', H: '....', I: '..', J: '.---', K: '-.-', L: '.-..', M: '--',
+  N: '-.', O: '---', P: '.--.', Q: '--.-', R: '.-.', S: '...', T: '-', U: '..-', V: '...-', W: '.--', X: '-..-', Y: '-.--', Z: '--..',
+};
+export function morse(word) {
+  const steps = [];
+  [...word.toUpperCase()].forEach((ch, i) => {
+    if (i) steps.push([false, 3]);
+    [...MORSE[ch]].forEach((s, j) => {
+      if (j) steps.push([false, 1]);
+      steps.push([true, s === '.' ? 1 : 3]);
+    });
+  });
+  steps.push([false, 7]);
+  return steps;
+}
+
+// The Konami code one key at a time: the next position, KONAMI.length when it is complete. A wrong key
+// starts over, except an ↑ that can still begin the code (↑↑↑ keeps the last two).
+export const KONAMI = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
+export function konami(pos, key) {
+  const k = key.length === 1 ? key.toLowerCase() : key;
+  if (k === KONAMI[pos]) return pos + 1;
+  if (k !== KONAMI[0]) return 0;
+  return pos === 2 ? 2 : 1;
+}
+
 // "owner/repo" of a GitHub link, or null.
 export const repoOf = (url) => String(url ?? '').match(/^https:\/\/github\.com\/([^/]+\/[^/#?]+?)\/?$/)?.[1] ?? null;

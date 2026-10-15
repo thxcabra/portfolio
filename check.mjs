@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { DATA } from './data.js';
 import {
   route, textWidth, fitsLines, centerBox, fade8, grey8, brighten8, alpha8, blendLevels, nextSeed, starPos, gfWindow, titleEntrance, TEXT_SPEEDS, multiTiles, monPath, wrapText, toPages, listMove, nextIndex, fitScale, cycle, splitShown, pingPong,
-  discPath, rrectPath, corner, TYPES, SHAPES, DIRS, around, pathToAny, pageFits, esc, ACT_W, siteAnchor, repoOf,
+  discPath, rrectPath, corner, TYPES, SHAPES, DIRS, around, pathToAny, pageFits, esc, ACT_W, siteAnchor, repoOf, skillCheck, morse, konami, KONAMI,
 } from './logic.js';
 import { MENU } from './carts/center/screens/menu.js';
 import { VOLUMES } from './sound.js';
@@ -351,7 +351,24 @@ assert.equal(repoOf(undefined), null);
 
 // the landing page's texts: same keys in both languages; its media exist
 const site = DATA.site;
-assert.ok(site.tagline.pt && site.tagline.en, 'site.tagline');
+for (const k of ['about', 'looking']) assert.ok(site[k].pt && site[k].en, `site.${k} em pt e en`);
+assert.equal(site.about.pt.length, site.about.en.length, 'site.about: mesmo número de parágrafos em pt e en');
+assert.deepEqual([...site.order].sort((x, y) => x - y), DATA.projects.map((_, i) => i), 'site.order: cada projeto uma vez');
+for (const a of site.art) assert.ok(existsSync(here0(a.src)) && a.caption.pt && a.caption.en, `arte sem arquivo ou legenda: ${a.src}`);
+for (const f of site.favorites) assert.ok(f.name && f.why.pt && f.why.en, `jogo favorito incompleto: ${f.name}`);
+
+// skill checks, Morse and the Konami code (the landing page's skills and secrets)
+assert.deepEqual([95, 90, 85, 80, 75, 60].map(skillCheck), ['d90', 'd90', 'd85', 'd80', 'd75', 'd75']);
+for (const m of DATA.moves) assert.ok(site.ui.pt[skillCheck(m.power)] && site.ui.en[skillCheck(m.power)], `dificuldade sem texto: ${m.name}`);
+const cabra = morse('CABRA');
+assert.deepEqual(cabra.slice(0, 3), [[true, 3], [false, 1], [true, 1]], 'C começa com traço, ponto');
+assert.equal(cabra.reduce((t, [, u]) => t + u, 0), 56, 'CABRA em Morse dura 56 unidades com a pausa final');
+assert.deepEqual(cabra.at(-1), [false, 7]);
+const run = (keys) => keys.reduce((p, k) => konami(p, k), 0);
+assert.equal(run(KONAMI), KONAMI.length);
+assert.equal(run(['ArrowUp', ...KONAMI]), KONAMI.length, '↑↑↑ ainda começa o código');
+assert.equal(run(['B', ...KONAMI.slice(0, 8), 'B', 'A']), KONAMI.length, 'B e A maiúsculos valem');
+assert.equal(run([...KONAMI.slice(0, 5), 'x']), 0, 'tecla errada recomeça');
 assert.deepEqual(Object.keys(site.ui.en).sort(), Object.keys(site.ui.pt).sort(), 'site.ui: chaves diferentes em pt e en');
 for (const f of [site.media.photo, ...site.media.drawings, ...site.games.map((g) => g.media)].filter(Boolean)) assert.ok(existsSync(here0(f)), `falta ${f}`);
 for (const g of site.games) assert.ok(g.name && g.text?.pt && g.text?.en && g.media, `jogo incompleto: ${g.name}`);
@@ -364,7 +381,7 @@ const lum = (hex) => {
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 };
 const contrast = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };
-for (const [fg, bg] of [['paper', 'ink'], ['ink', 'paper'], ['ink', 'orange'], ['ink', 'green'], ['paper', 'purple'], ['orange', 'ink'], ['green', 'ink'], ['orange-deep', 'paper'], ['green-deep', 'paper'], ['purple', 'paper'], ['paper', 'ink-2']]) {
+for (const [fg, bg] of [['paper', 'ink'], ['ink', 'paper'], ['ink', 'orange'], ['ink', 'green'], ['paper', 'purple'], ['orange', 'ink'], ['green', 'ink'], ['orange-deep', 'paper'], ['green-deep', 'paper'], ['purple', 'paper'], ['paper', 'ink-2'], ['violet', 'ink-3'], ['orange', 'ink-3'], ['green', 'ink-3'], ['paper', 'ink-3']]) {
   const c = contrast(tok(fg), tok(bg));
   assert.ok(c >= 4.5, `contraste ${fg} sobre ${bg}: ${c.toFixed(2)}`);
 }

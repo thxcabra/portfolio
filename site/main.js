@@ -1,11 +1,10 @@
-// The landing page (lp.html): one vertical page made from data.js, in the GBA's two languages. Sections
-// are HTML strings; after each render the code card types, the project pieces lean, and the cast
-// (cast.js) and the 3D piece (scene3d.js) are mounted again.
+// The landing page (lp.html): one vertical page made from data.js, in the GBA's two languages. A cartoon
+// world on an old tape: João's goat, a PS1-style VHS in 3D (scene3d.js), a film grain over everything, and
+// secrets for whoever digs (the Konami code, Morse in the footer LED, a goat that peeks now and then, and
+// the door to his ARG at #/sinal).
 import { DATA } from '../data.js';
-import { siteAnchor, repoOf, esc, SHAPES } from '../logic.js';
-import { typewrite } from '../typewriter.js';
-import { mountCast, defs } from './cast.js';
-import { mount3d } from './scene3d.js';
+import { siteAnchor, repoOf, esc, skillCheck, morse, konami, KONAMI } from '../logic.js';
+import { mountVhs } from './scene3d.js';
 
 export const PLAY_URL = './';   // the GBA; 'jogar' once the landing page takes the main address
 const SITE = DATA.site;
@@ -16,13 +15,12 @@ const store = {
 const saved = store.get('lang', null);
 let lang = saved === 'pt' || saved === 'en' ? saved : navigator.language?.toLowerCase().startsWith('pt') ? 'pt' : 'en';
 const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
-const L = (o) => (typeof o === 'string' ? o : o?.[lang] ?? o?.pt ?? '');
-const U = () => SITE.ui[lang];
-const T = (k, vars = {}) => String(U()[k] ?? SITE.ui.pt[k] ?? k).replace(/\{(\w+)\}/g, (_, v) => vars[v] ?? '');
+const L = (o) => (typeof o === 'string' || Array.isArray(o) ? o : o?.[lang] ?? o?.pt ?? '');
+const T = (k, vars = {}) => String(SITE.ui[lang][k] ?? SITE.ui.pt[k] ?? k).replace(/\{(\w+)\}/g, (_, v) => vars[v] ?? '');
 let gh = {};
 let cleanup = [];
 
-// The game's types, in the page's three colours (the rest are paper).
+// The game's types in the page's colours (the rest are paper): chips, and the skills' "attributes".
 const TYPE_COLOR = {
   fire: 'orange', electric: 'orange', fighting: 'orange', ground: 'orange', rock: 'orange',
   grass: 'green', bug: 'green', water: 'green', flying: 'green', ice: 'green',
@@ -31,7 +29,7 @@ const TYPE_COLOR = {
 const techColor = (name) => TYPE_COLOR[DATA.moves.find((m) => m.name === name)?.type ?? DATA.tech[name]] ?? 'paper';
 const TILTS = [-2.5, 1.5, -1, 2.5, -1.5, 1, -2];
 const tilt = (i) => TILTS[i % TILTS.length];
-const MATERIALS = ['paper', 'purple', 'data', 'green', 'paper', 'orange', 'data'];
+const MATERIALS = ['paper', 'orange', 'purple', 'green'];
 const ext = (url) => (url.startsWith('http') ? ' target="_blank" rel="noopener"' : '');
 
 // Icons: one drawn set, 24-unit grid, 2px round strokes.
@@ -42,29 +40,30 @@ const ICONS = {
   left: '<path d="M15 5l-7 7 7 7"/>',
   right: '<path d="M9 5l7 7-7 7"/>',
   menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
-  star: '<path d="M12 3l2.4 6.1 6.6.4-5.1 4.1 1.7 6.4L12 16.4 6.4 20l1.7-6.4L3 9.5l6.6-.4z" fill="currentColor"/>',
 };
 const icon = (name) => `<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name]}</svg>`;
 
-// Hand-drawn strokes (drawn in as they scroll in): a different underline under each heading.
+// The line boil of hand-drawn cartoons: three displacement maps the drawings cycle through (site.css).
+const boilDefs = () => `<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>${[3, 11, 23].map((seed, i) => `
+  <filter id="boil-${i}"><feTurbulence type="fractalNoise" baseFrequency=".022" numOctaves="2" seed="${seed}"/><feDisplacementMap in="SourceGraphic" scale="4" xChannelSelector="R" yChannelSelector="G"/></filter>`).join('')}
+</defs></svg>`;
+
 const UNDERLINES = [
   'M4 14 C 60 4, 120 18, 180 9 S 270 6, 296 12',
   'M6 8 C 70 16, 150 2, 220 12 L 294 6',
   'M4 12 Q 40 2, 80 12 T 160 12 T 240 12 T 296 10',
   'M8 6 C 90 18, 200 18, 292 4 M 40 16 C 120 12, 200 14, 260 12',
 ];
-const underline = (k) => `<svg class="stroke under" viewBox="0 0 300 20" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="${UNDERLINES[k % UNDERLINES.length]}"/></svg>`;
 const heading = (k, title, lead = '') => `<header class="sec-head">
-  <h2 class="display">${esc(title)}</h2>${underline(k)}
+  <h2 class="display">${esc(title)}</h2>
+  <svg class="stroke under" viewBox="0 0 300 20" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="${UNDERLINES[k % UNDERLINES.length]}"/></svg>
   ${lead ? `<p class="lead">${esc(lead)}</p>` : ''}</header>`;
-const drawings = (a, b) => SITE.media.drawings.slice(a, b).map((src) => `<img class="drawing" src="${esc(src)}" alt="" aria-hidden="true">`).join('');
-const photo = (cls) => (SITE.media.photo ? `<img class="photo ${cls}" src="${esc(SITE.media.photo)}" alt="${esc(DATA.trainer.name)}">` : '');
 
 function top() {
-  const links = [['projetos', 'projects'], ['sobre', 'about'], ['experiencia', 'work'], ['habilidades', 'skills'], ...(SITE.games.length ? [['jogos', 'games']] : []), ['contato', 'contact']];
+  const links = [['projetos', 'projects'], ['coisas', 'art'], ['sobre', 'about'], ['experiencia', 'work'], ['habilidades', 'skills'], ...(SITE.games.length ? [['jogos', 'games']] : []), ['contato', 'contact']];
   return `<a class="skip" href="#projetos">${T('skip')}</a>
   <header class="top">
-    <a class="mark" href="#topo" aria-label="${esc(DATA.trainer.name)}"><span class="cast" data-cast="mark" aria-hidden="true"></span><span class="mark-name" aria-hidden="true">JC</span></a>
+    <a class="mark" href="#topo" aria-label="${esc(DATA.trainer.name)}"><img src="assets/site/goat-pixel.png" alt="" width="45" height="75"><span>CABRAL</span></a>
     <nav aria-label="${T('nav')}">
       <button class="menu-btn" type="button" aria-expanded="false" aria-controls="nav-links">${icon('menu')}<span>${T('menu')}</span></button>
       <ul id="nav-links">${links.map(([id, k]) => `<li><a href="#${id}">${T(k)}</a></li>`).join('')}</ul>
@@ -74,27 +73,13 @@ function top() {
   </header>`;
 }
 
-function codeCard() {
-  const k = U().code_keys;
-  const s = (v) => `<span class="s">'${esc(v)}'</span>`;
-  return [
-    '<span class="kw">const</span> joao = {',
-    `  <span class="k">${k.city}</span>: ${s(DATA.trainer.location)},`,
-    `  <span class="k">${k.speaks}</span>: [${s('pt')}, ${s('en')}],`,
-    `  <span class="k">${k.since}</span>: <span class="n">${DATA.trainer.since}</span>,`,
-    `  <span class="k">${k.likes}</span>: [${U().likes.map(s).join(', ')}],`,
-    '};',
-  ].join('\n');
-}
-
 function hero() {
   const t = DATA.trainer;
-  const [first, ...rest] = t.name.split(' ');
-  return `<section class="hero" id="topo">
+  return `<section class="hero field-purple" id="topo">
     <div class="hero-text">
-      <h1 class="display name">${esc(first)} <span class="outline">${esc(rest.join(' '))}</span></h1>
+      <h1 class="display"><span class="hello">${esc(T('hello'))}</span> <span class="name">${esc(t.name)}.</span></h1>
+      <p class="call">${esc(T('call'))}</p>
       <p class="role">${esc(L(t.role))}</p>
-      <p class="tagline">${esc(L(SITE.tagline))}</p>
       <p class="ctas">
         <a class="btn btn-orange" href="${PLAY_URL}">${icon('play')}${T('play_long')}</a>
         <a class="btn btn-line" href="#contato">${T('talk')}</a>
@@ -102,52 +87,34 @@ function hero() {
       <p class="play-note">${esc(T('play_note'))}</p>
     </div>
     <div class="stage">
-      <div class="cast" data-cast="hero" aria-hidden="true"></div>
-      <div class="obj3d" data-3d aria-hidden="true"></div>
-      <figure class="paper code-card tape" aria-hidden="true"><pre><code>${codeCard()}</code></pre></figure>
-      <img class="sticker partner" src="assets/mon/front/${t.partner}.png" alt="" width="64" height="64">
-      <svg class="stroke hero-arrow" viewBox="0 0 700 340" aria-hidden="true"><path pathLength="1" d="M20 40 C 160 330, 470 340, 660 150 M 610 150 L 662 148 L 652 200"/></svg>
-      <a class="gba-shot tape tape-o" href="${PLAY_URL}"><img src="assets/og.png" alt="${esc(T('play_long'))}" width="1200" height="630"><span class="pixel" aria-hidden="true">${esc(T('play').toUpperCase())}</span></a>
-      ${photo('cutout')}${drawings(0, 2)}
+      <i class="cel" aria-hidden="true"></i>
+      <img class="goat boil" src="assets/site/goat-ink.png" alt="${esc(T('goat'))}" width="376" height="551">
+      <div class="vhs" data-3d aria-hidden="true"></div>
+      <a class="gba-shot tape" href="${PLAY_URL}"><img src="assets/og.png" alt="${esc(T('play_long'))}" width="1200" height="630"><span class="vt" aria-hidden="true">${icon('play')}${esc(T('play').toUpperCase())}</span></a>
     </div>
   </section>`;
-}
-
-function ticker() {
-  const repos = Object.values(gh);
-  const items = [`${DATA.projects.length} ${T('t_projects')}`];
-  if (repos.length) {
-    const langs = {};
-    repos.forEach((r) => Object.entries(r.languages).forEach(([l, b]) => { langs[l] = (langs[l] ?? 0) + b; }));
-    const total = Object.values(langs).reduce((a, b) => a + b, 0);
-    items.push(...Object.entries(langs).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([l, b]) => `${l} ${Math.round((100 * b) / total)}%`));
-  }
-  items.push(`${T('t_since')} ${DATA.trainer.since}`, DATA.trainer.location);
-  const row = items.map((s) => `<span>${esc(s)}</span>${icon('star')}`).join('');
-  return `<div class="ticker mono" aria-hidden="true"><p class="track">${row}${row}</p></div>`;
 }
 
 function repoData(g) {
   const total = Object.values(g.languages).reduce((a, b) => a + b, 0) || 1;
   const top3 = Object.entries(g.languages).sort((a, b) => b[1] - a[1]).slice(0, 3);
   const rest = total - top3.reduce((a, [, b]) => a + b, 0);
-  return `<div class="repo-data mono">
+  return `<div class="repo-data">
     <p class="langbar" aria-hidden="true">${[...top3, ...(rest > 0 ? [['', rest]] : [])].map(([, b], k) => `<i class="l${k}" style="flex:${b}"></i>`).join('')}</p>
-    <p>${top3.map(([l, b]) => `${esc(l)} ${Math.round((100 * b) / total)}%`).join(' · ')}</p>
+    <p class="vt">${top3.map(([l, b]) => `${esc(l)} ${Math.round((100 * b) / total)}%`).join(' · ')}</p>
   </div>`;
 }
 
-function project(p, i) {
-  const g = gh[repoOf(p.links.repo)];
-  const iconUrl = `assets/mon/icon/${p.dex}${p.form ? `-${p.form}` : ''}.png`;
+// k: the place on the page; i: the place in data.js, which the links (#/projetos/3) keep using.
+function project(i, k) {
+  const p = DATA.projects[i], g = gh[repoOf(p.links.repo)];
   const links = [p.links.repo && [p.links.repo, T('code')], p.links.live && [p.links.live, T('live')]].filter(Boolean);
-  return `<article class="project m-${MATERIALS[i % MATERIALS.length]}" id="projeto-${i + 1}" style="--r:${tilt(i)}deg;--i:${i}">
-    <button class="shot tape${i % 2 ? ' tape-o' : ''}" type="button" data-project="${i}" aria-label="${esc(T('shots', { name: p.name }))}">
-      <img src="${esc(p.shots[0])}" alt="" loading="lazy">${p.shots.length > 1 ? `<span class="shot-count mono">+${p.shots.length - 1}</span>` : ''}
+  return `<article class="project m-${MATERIALS[k % MATERIALS.length]}" id="projeto-${i + 1}" style="--r:${tilt(k)}deg;--i:${k}">
+    <button class="shot tape${k % 2 ? ' tape-o' : ''}" type="button" data-project="${i}" aria-label="${esc(T('shots', { name: p.name }))}">
+      <img src="${esc(p.shots[0])}" alt="" loading="lazy">${p.shots.length > 1 ? `<span class="shot-count vt">+${p.shots.length - 1}</span>` : ''}
     </button>
-    <i class="mon" style="background-image:url(${iconUrl})" aria-hidden="true"></i>
     <h3 class="display">${esc(p.name)}</h3>
-    <p class="meta mono">${esc(L(p.kind))} · ${p.year}</p>
+    <p class="meta vt">${esc(L(p.kind))} · ${p.year}</p>
     <p class="pitch">${esc(L(p.pitch))}</p>
     <p class="text">${esc(L(p.text))}</p>
     <ul class="chips">${p.stack.map((s) => `<li class="chip c-${techColor(s)}">${esc(s)}</li>`).join('')}</ul>
@@ -158,91 +125,95 @@ function project(p, i) {
 
 const projects = () => `<section class="projects" id="projetos">
   ${heading(0, T('projects'), T('projects_lead'))}
-  <div class="project-grid">${DATA.projects.map(project).join('')}</div>
+  <div class="project-grid">${SITE.order.map(project).join('')}</div>
+</section>`;
+
+// João's own drawings, pixel art and 3D, as a pinned-up collage.
+const art = () => `<section class="art field-green" id="coisas">
+  ${heading(1, T('art'), T('art_lead'))}
+  <ul class="art-wall">${SITE.art.map((a, k) => `<li class="piece piece-${a.kind}" style="--r:${tilt(k + 1)}deg">
+    <figure><span class="frame"><img src="${esc(a.src)}" alt="${esc(L(a.caption))}" width="${a.w}" height="${a.h}" loading="lazy"${a.kind === 'ink' ? ' class="boil"' : ''}></span>
+    <figcaption>${esc(L(a.caption))}</figcaption></figure></li>`).join('')}</ul>
 </section>`;
 
 function about() {
   const t = DATA.trainer;
-  const line = (cmd, out) => `<p><span class="prompt">$</span> ${esc(cmd)}</p><p class="out">${esc(out)}</p>`;
-  return `<section class="about" id="sobre">
-    ${heading(1, T('about'))}
+  const list = (title, items) => `<div class="card"><h3 class="display">${esc(title)}</h3><ul>${items.map((s) => `<li>${s}</li>`).join('')}</ul></div>`;
+  return `<section class="about field-orange" id="sobre">
+    ${heading(2, T('about'))}
     <div class="about-grid">
-      <p class="about-text">${esc(L(t.about))}</p>
+      <div class="about-text">${L(SITE.about).map((p) => `<p>${esc(p)}</p>`).join('')}
+        <ul class="facts vt"><li>${esc(t.location)}</li><li>${esc(L(t.languages))}</li><li>${esc(T('since', { year: t.since }))}</li></ul>
+      </div>
       <div class="side">
-        ${photo('about-photo')}
-        <div class="term mono">
-          <p class="term-bar" aria-hidden="true"><i></i><i></i><i></i></p>
-          ${line('whoami', t.name.toLowerCase())}${line(`cat ${T('f_role')}`, L(t.role))}${line(`cat ${T('f_where')}`, t.location)}${line(`cat ${T('f_langs')}`, L(t.languages))}
-          <p><span class="prompt">$</span> <span class="caret" aria-hidden="true"></span></p>
-          <div class="cast cameo" data-cast="about" aria-hidden="true"></div>
-        </div>
-        ${drawings(2, 4)}
+        ${list(T('playing'), SITE.now.playing.map(esc))}
+        ${list(T('listening'), SITE.now.listening.map(esc))}
+        ${list(T('favorites'), SITE.favorites.map((f) => `<b>${esc(f.name)}</b> ${esc(L(f.why))}`))}
       </div>
     </div>
   </section>`;
 }
 
 function work() {
-  const stub = (period, title, sub, text, i, shape) => `<li class="stub" style="--r:${tilt(i) / 2}deg">
-    ${shape ? `<i class="badge-sticker" style="--slot:${SHAPES.indexOf(shape)}" aria-hidden="true"></i>` : ''}
-    <h3 class="display">${esc(title)}</h3>${sub ? `<p class="role">${esc(sub)}</p>` : ''}<p class="period mono">${esc(period)}</p>${text ? `<p>${esc(text)}</p>` : ''}</li>`;
+  const stub = (period, title, sub, text, i) => `<li class="stub" style="--r:${tilt(i) / 2}deg">
+    <h3 class="display">${esc(title)}</h3>${sub ? `<p class="role">${esc(sub)}</p>` : ''}<p class="period vt">${esc(period)}</p>${text ? `<p>${esc(text)}</p>` : ''}</li>`;
   return `<section class="work" id="experiencia">
-    ${heading(2, T('work'))}
+    ${heading(3, T('work'))}
     <div class="timeline">
       <svg class="stroke line" viewBox="0 0 10 100" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M5 0 V100"/></svg>
-      <ol class="jobs">${DATA.badges.map((b, i) => stub(L(b.period), b.name, L(b.role), L(b.text), i + 2, b.shape)).join('')}</ol>
+      <ol class="jobs">${DATA.badges.map((b, i) => stub(L(b.period), b.name, L(b.role), L(b.text), i + 2)).join('')}</ol>
     </div>
     <h3 class="sub display">${T('school')}</h3>
     <ol class="school">${DATA.education.map((e, i) => stub(L(e.period), e.name, L(e.course), '', i + 4)).join('')}</ol>
   </section>`;
 }
 
+// Skills as Disco Elysium skill checks: SKILL [Difficulty: Success] – what it is. The skill's colour is its
+// "attribute", from the game's type.
 function skills() {
   const techs = [...new Set(DATA.projects.flatMap((p) => p.stack))];
   return `<section class="skills" id="habilidades">
-    ${heading(3, T('skills'), T('skills_lead'))}
-    <div class="skills-grid">
-      <div class="panel"><div class="cast cameo" data-cast="skills" aria-hidden="true"></div>${DATA.moves.map((m, i) => `<div class="move" style="--c:var(--${TYPE_COLOR[m.type] ?? 'paper'})">
-        <p class="move-name mono">${esc(m.name)}</p>
-        <p class="bar" role="img" aria-label="${T('power')}: ${m.power}/100"><i style="--p:${m.power}%"></i></p>
-        <p class="years mono">${T('years', { n: m.years })}${i ? '' : '<svg class="stroke ring" viewBox="0 0 120 60" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M70 6 C 20 2, 4 22, 10 38 C 18 58, 96 60, 112 36 C 124 16, 90 4, 54 8"/></svg>'}</p>
-        <p class="move-text">${esc(L(m.text))}</p>
-      </div>`).join('')}</div>
-      <ul class="cloud" aria-label="Stack">${techs.map((s, i) => `<li class="chip c-${techColor(s)}" style="--r:${tilt(i) * 2.5}deg;--y:${tilt(i + 3) * 2}px">${esc(s)}</li>`).join('')}</ul>
+    ${heading(0, T('skills'), T('skills_lead'))}
+    <div class="de">
+      <figure class="de-portrait" aria-hidden="true"><span class="inv"><img class="boil" src="assets/site/goat-ink.png" alt="" width="376" height="551"></span></figure>
+      <ol class="de-log">${DATA.moves.map((m) => `<li style="--c:var(--${({ purple: 'violet' })[TYPE_COLOR[m.type]] ?? TYPE_COLOR[m.type] ?? 'paper'})">
+        <span class="de-skill">${esc(m.name)}</span> <span class="de-check">[${T(skillCheck(m.power))}: ${T('success')}]</span> – ${esc(L(m.text))} <span class="de-years">${T('years', { n: m.years })}.</span>
+      </li>`).join('')}</ol>
     </div>
+    <ul class="cloud" aria-label="${T('stack')}">${techs.map((s, i) => `<li class="chip c-${techColor(s)}" style="--r:${tilt(i) * 2.5}deg;--y:${tilt(i + 3) * 2}px">${esc(s)}</li>`).join('')}</ul>
   </section>`;
 }
 
 function games() {
   if (!SITE.games.length) return '';
-  const media = (src) => (/\.glb$/i.test(src) ? `<div class="obj3d game-3d" data-3d="${esc(src)}" aria-hidden="true"></div>`
-    : /\.(mp4|webm)$/i.test(src) ? `<video src="${esc(src)}" muted loop playsinline autoplay></video>`
-      : `<img src="${esc(src)}" alt="" loading="lazy">`);
   return `<section class="games" id="jogos">
-    ${heading(0, T('games'))}
-    <div class="game-grid">${SITE.games.map((g, i) => `<article class="game paper" style="--r:${tilt(i)}deg">
-      ${media(g.media)}<h3 class="display">${esc(g.name)}</h3><p>${esc(L(g.text))}</p>
+    ${heading(1, T('games'))}
+    <div class="game-grid">${SITE.games.map((g, i) => `<article class="game card" style="--r:${tilt(i)}deg">
+      <img src="${esc(g.media)}" alt="" loading="lazy"><h3 class="display">${esc(g.name)}</h3><p>${esc(L(g.text))}</p>
       ${g.link ? `<p class="links"><a href="${esc(g.link)}"${ext(g.link)}>${T('live')}${icon('out')}</a></p>` : ''}
     </article>`).join('')}</div>
   </section>`;
 }
 
-const contact = () => `<section class="contact" id="contato">
-  <h2 class="display">${esc(T('contact_title'))}</h2>
-  <p class="lead">${esc(T('contact_lead'))}</p>
-  <ul class="contact-links">${DATA.contact.map((c) => `<li><a class="big" href="${esc(c.url)}"${ext(c.url)}>
-    <span class="display">${esc(c.label)}</span><span class="mono">${esc(c.url.replace(/^(mailto:|https?:\/\/(www\.)?)/, '').replace(/\/$/, ''))}</span>${icon('out')}</a></li>`).join('')}</ul>
-  <div class="cast" data-cast="contact" aria-hidden="true"></div>
+const contact = () => `<section class="contact field-green" id="contato">
+  <div class="contact-text">
+    <h2 class="display">${esc(T('contact_title'))}</h2>
+    <p class="lead">${esc(L(SITE.looking))}</p>
+    <ul class="contact-links">${DATA.contact.map((c) => `<li><a class="big" href="${esc(c.url)}"${ext(c.url)}>
+      <span class="display">${esc(c.label)}</span><span class="vt">${esc(c.url.replace(/^(mailto:|https?:\/\/(www\.)?)/, '').replace(/\/$/, ''))}</span>${icon('out')}</a></li>`).join('')}</ul>
+  </div>
+  <img class="waving" src="assets/site/goat-pixel.png" alt="" width="45" height="75">
 </section>`;
 
 const footer = () => `<footer class="foot">
   <a class="btn btn-orange" href="${PLAY_URL}">${icon('play')}${T('play_long')}</a>
   <p>${esc(T('footer'))}</p>
   <p><a href="https://github.com/thxcabra/portfolio" target="_blank" rel="noopener">${T('source')}${icon('out')}</a></p>
+  <i class="led" aria-hidden="true"></i>
 </footer>`;
 
 const viewer = () => `<dialog class="viewer">
-  <p class="v-bar"><span class="v-count mono"></span><button class="v-close" type="button">${T('close')}${icon('close')}</button></p>
+  <p class="v-bar"><span class="v-count vt"></span><button class="v-close" type="button">${T('close')}${icon('close')}</button></p>
   <figure class="v-pic"></figure>
   <p class="v-nav"><button class="v-prev" type="button" aria-label="${T('prev')}">${icon('left')}</button><button class="v-next" type="button" aria-label="${T('next')}">${icon('right')}</button></p>
 </dialog>`;
@@ -257,7 +228,103 @@ function showShot(k) {
   d.querySelector('.v-nav').hidden = p.shots.length < 2;
 }
 
-// ---------- motion ----------
+// ---------- the film over everything: a grain texture made once, moved in steps by the CSS ----------
+function grain() {
+  const c = document.createElement('canvas');
+  c.width = c.height = 160;
+  const g = c.getContext('2d'), img = g.createImageData(160, 160);
+  for (let i = 0; i < img.data.length; i += 4) {
+    const v = Math.random() * 255;
+    img.data.set([v, v, v, 34], i);
+  }
+  g.putImageData(img, 0, 0);
+  const el = document.createElement('div');
+  el.className = 'film';
+  el.setAttribute('aria-hidden', 'true');
+  document.documentElement.style.setProperty('--grain', `url(${c.toDataURL()})`);   // the weak signal's static uses it too
+  document.body.append(el);
+}
+
+// ---------- secrets ----------
+// A broadcast cut (the Konami code) or the weak signal of the ARG's door (#/sinal): fullscreen, any key,
+// click or Esc closes it.
+function overlay(kind) {
+  if (document.querySelector('.signal')) return;
+  const el = document.createElement('div');
+  el.className = `signal signal-${kind}`;
+  el.setAttribute('role', 'dialog');
+  el.setAttribute('aria-modal', 'true');
+  el.tabIndex = -1;
+  el.innerHTML = kind === 'lost'
+    ? `<div class="bars" aria-hidden="true"></div><div class="signal-text vt"><p class="signal-title">${T('lost_title')}</p><p>${esc(T('lost_text'))}</p><p class="small">${esc(T('lost_back'))}</p></div>`
+    : `<div class="static" aria-hidden="true"></div><div class="signal-text vt"><p class="signal-title">${T('weak_title')}</p><p>${esc(T('weak_text'))}</p></div>`;
+  el.setAttribute('aria-label', kind === 'lost' ? T('lost_title') : T('weak_title'));
+  document.body.append(el);
+  el.focus();
+  if (kind === 'lost') beep();
+  const close = () => {
+    el.remove();
+    removeEventListener('keydown', onKey, true);
+    if (kind === 'weak' && location.hash === '#/sinal') history.replaceState(null, '', location.pathname + location.search);
+  };
+  const onKey = (e) => { e.preventDefault(); e.stopPropagation(); close(); };
+  setTimeout(() => addEventListener('keydown', onKey, true), 300);   // the last key of the code doesn't close it
+  el.addEventListener('click', close);
+}
+
+// The test-card tone: a short 1 kHz beep, only after a key press (the browser allows sound then).
+function beep() {
+  if (reduced()) return;
+  try {
+    const ctx = new AudioContext(), osc = ctx.createOscillator(), vol = ctx.createGain();
+    osc.frequency.value = 1000;
+    vol.gain.value = 0.05;
+    osc.connect(vol).connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.6);
+    osc.onended = () => ctx.close();
+  } catch { /* no sound */ }
+}
+
+// The footer LED blinks CABRA in Morse.
+function blinkMorse() {
+  const led = document.querySelector('.led');
+  if (!led || reduced()) return;
+  const steps = morse('CABRA');
+  let i = 0, timer = 0;
+  const next = () => {
+    const [lit, units] = steps[i];
+    led.classList.toggle('on', lit);
+    i = (i + 1) % steps.length;
+    timer = setTimeout(next, units * 180);
+  };
+  next();
+  cleanup.push(() => clearTimeout(timer));
+}
+
+// Now and then (1 visit in 16, or ?bode), the pixel goat peeks from the bottom edge and waves; it is the
+// way into the ARG's door.
+function peek() {
+  if (!(new URLSearchParams(location.search).has('bode') || Math.random() < 1 / 16)) return;
+  const b = document.createElement('button');
+  b.className = 'peek';
+  b.type = 'button';
+  b.setAttribute('aria-label', T('peek'));
+  b.innerHTML = '<img src="assets/site/goat-pixel.png" alt="" width="45" height="75">';
+  b.addEventListener('click', () => { location.hash = '#/sinal'; b.remove(); });
+  document.body.append(b);
+}
+
+// ---------- the page ----------
+function goToHash(smooth) {
+  if (location.hash === '#/sinal') return overlay('weak');
+  const id = siteAnchor(location.hash, DATA.projects.length);
+  const el = id && document.getElementById(id);
+  if (!el) return;
+  if (location.hash !== `#${id}`) history.replaceState(null, '', `#${id}`);
+  el.scrollIntoView({ behavior: smooth && !reduced() ? 'smooth' : 'auto', block: 'start' });
+}
+
 // The project pieces lean towards a fine pointer.
 function tiltCards() {
   if (reduced() || !matchMedia('(pointer: fine)').matches) return;
@@ -271,33 +338,16 @@ function tiltCards() {
   });
 }
 
-// The code card types itself once the collage has landed.
-function typeCode() {
-  const code = document.querySelector('.code-card code');
-  if (reduced() || !code) return;
-  const skip = typewrite(code, 40);
-  cleanup.push(skip);
-}
-
-// ---------- the page ----------
-function goToHash(smooth) {
-  const id = siteAnchor(location.hash, DATA.projects.length);
-  const el = id && document.getElementById(id);
-  if (!el) return;
-  if (location.hash !== `#${id}`) history.replaceState(null, '', `#${id}`);
-  el.scrollIntoView({ behavior: smooth && !reduced() ? 'smooth' : 'auto', block: 'start' });
-}
-
 function render() {
   cleanup.forEach((f) => f());
   cleanup = [];
   document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
-  document.body.innerHTML = defs() + top() + `<main>${hero()}${ticker()}${projects()}${about()}${work()}${skills()}${games()}${contact()}</main>` + footer() + viewer();
-  const casts = { hero: ['blob', 'star', 'circle'], contact: ['squiggle', 'circle', 'star', 'blob'], mark: ['circle'], about: ['blob'], skills: ['star'] };
-  document.querySelectorAll('[data-cast]').forEach((el) => cleanup.push(mountCast(el, casts[el.dataset.cast], { reduced: reduced() })));
-  document.querySelectorAll('[data-3d]').forEach((el) => cleanup.push(mount3d(el, { reduced: reduced(), model: el.dataset['3d'] })));
+  document.body.innerHTML = boilDefs() + top() + `<main>${hero()}${projects()}${art()}${about()}${work()}${skills()}${games()}${contact()}</main>` + footer() + viewer();
+  grain();
   tiltCards();
-  typeCode();
+  blinkMorse();
+  const vhs = document.querySelector('[data-3d]');
+  if (vhs) cleanup.push(mountVhs(vhs, { reduced: reduced(), label: T('tape') }));
 }
 
 addEventListener('click', (e) => {
@@ -334,13 +384,24 @@ addEventListener('click', (e) => {
   else if (t.closest('.v-prev')) showShot(shots.k - 1);
   else if (t.closest('.v-next')) showShot(shots.k + 1);
 });
+let code = 0;
 addEventListener('keydown', (e) => {
-  if (!document.querySelector('.viewer')?.open) return;
-  if (e.key === 'ArrowLeft') showShot(shots.k - 1);
-  if (e.key === 'ArrowRight') showShot(shots.k + 1);
+  if (document.querySelector('.viewer')?.open) {
+    if (e.key === 'ArrowLeft') showShot(shots.k - 1);
+    if (e.key === 'ArrowRight') showShot(shots.k + 1);
+    return;
+  }
+  if (e.target.closest?.('input, textarea')) return;
+  code = konami(code, e.key);
+  if (code === KONAMI.length) {
+    code = 0;
+    overlay('lost');
+  }
 });
 addEventListener('hashchange', () => goToHash(true));
 
 gh = await fetch('assets/site/github.json').then((r) => (r.ok ? r.json() : {})).catch(() => ({}));
 render();
 goToHash(false);
+peek();
+console.log(`%c${T('hint')}`, 'font: 14px monospace; color: #ff6a1f');

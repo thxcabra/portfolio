@@ -191,49 +191,81 @@ export const DATA = {
     { label: 'GITHUB', url: 'https://github.com/thxcabra' },
   ],
 
-  // A landing page (lp.html). Estes textos não passam pela fonte do jogo. media e games são o material do
-  // João: foto recortada (PNG transparente), desenhos (PNG transparente) e jogos ({ name, text: { pt, en },
-  // media: 'assets/site/…' (png, gif, webp, mp4 ou glb), link }). Só aparece o que estiver preenchido.
-  // Nada de imagem gerada por IA.
+  // A landing page (lp.html), a página principal. Estes textos não passam pela fonte do jogo e saem das
+  // respostas do João. art: as artes dele (tools/site_art.py prepara a partir de material/). Nada de imagem
+  // gerada por IA. games: jogos dele ({ name, text: { pt, en }, media, link }), vazio por enquanto.
   site: {
-    tagline: {
-      pt: 'Construo produtos digitais do zero: software, IA, dados e jogos. Estáveis, bonitos e divertidos de usar.',
-      en: 'I build digital products from scratch: software, AI, data and games. Stable, good-looking and fun to use.',
+    // Ordem dos projetos na página (índices de `projects`): os de que ele mais se orgulha primeiro. O link
+    // #/projetos/N continua sendo a posição em `projects`.
+    order: [0, 2, 6, 1, 4, 3, 5],
+    about: {
+      pt: [
+        'Me chamam de Cabral desde o colégio. Daí virou Cabra, e de Cabra virou GOAT. Por isso o bode, e por isso o thxcabra: the cabra, o Cabra.',
+        'Sou engenheiro de software e trabalho com IA e automação de dados. Acho que IA é uma baita aliada quando usada do jeito certo, pra tirar do caminho o trabalho maçante.',
+        'Fora do código, sou nerd de tudo: RPG, mangá, anime, HQ, vídeo de terror indie e ARG. Sempre acabo voltando pros jogos, porque eles juntam todo o resto. No fone é rap, quase sempre. E coleciono cartas de Pokémon, mangás, quadrinhos e camisas de futebol e basquete.',
+      ],
+      en: [
+        'People have called me Cabral since school. That turned into Cabra, which is Portuguese for goat, and Cabra turned into GOAT. Hence the goat, and hence thxcabra: the cabra.',
+        'I am a software engineer working with AI and data automation. I think AI is a great ally when it is used the right way, to get the tedious work out of the way.',
+        'Outside of code I am a nerd about everything: RPGs, manga, anime, comics, indie horror videos and ARGs. I always end up back at games, because they bring all the rest together. Rap is almost always playing. And I collect Pokémon cards, manga, comics and football and basketball jerseys.',
+      ],
     },
+    looking: {
+      pt: 'Quero trabalhar na produção de jogos. E curto demais projeto com esporte e dados.',
+      en: 'I want to work on making games. And I really love projects with sports and data.',
+    },
+    now: {
+      playing: ['Disco Elysium', 'Skyrim', 'Eldest Souls', 'Universe for Sale'],
+      listening: ['NOG', 'Matuê', 'BK', 'J. Cole', 'Tchelo', 'LPT Zlatan', 'Jotapê'],
+    },
+    favorites: [
+      { name: 'Disco Elysium', why: { pt: 'Narrativa, mecânicas diferentes, história e investigação.', en: 'Narrative, unusual mechanics, story and investigation.' } },
+      { name: 'Until Then', why: { pt: 'Narrativa, arte linda, história envolvente e decisões.', en: 'Narrative, beautiful art, a gripping story and choices.' } },
+      { name: 'Far Cry 4', why: { pt: 'Contexto, escolhas, gameplay, liberdade e um vilão foda.', en: 'Setting, choices, gameplay, freedom and a killer villain.' } },
+      { name: 'Hotline Miami', why: { pt: 'Estética, história, gameplay e música.', en: 'Look, story, gameplay and music.' } },
+    ],
+    art: [
+      { src: 'assets/site/goat-ink.png', kind: 'ink', w: 376, h: 551, caption: { pt: 'O bode, em traço.', en: 'The goat, in brush lines.' } },
+      { src: 'assets/site/goat-pixel.png', kind: 'pixel', w: 45, h: 75, caption: { pt: 'O bode em pixel art, dando oi.', en: 'The goat in pixel art, saying hi.' } },
+      { src: 'assets/site/firecat.png', kind: 'pixel', w: 57, h: 52, caption: { pt: 'Uma criatura de fogo, em pixel art.', en: 'A fire creature, in pixel art.' } },
+      { src: 'assets/site/pokeball.gif', kind: 'gif', w: 1000, h: 1000, caption: { pt: 'Uma Pokébola low poly, no estilo do PS1.', en: 'A low poly Poké Ball, PS1 style.' } },
+    ],
     media: { photo: null, drawings: [] },
     games: [],
     ui: {
       pt: {
         skip: 'Pular para o conteúdo', nav: 'Seções', menu: 'Menu', lang: 'EN', lang_name: 'Mudar para inglês',
+        hello: 'Opa, eu sou o', call: 'Pode me chamar de Cabral.',
         play: 'Jogar', play_long: 'Jogar meu portfólio', play_note: 'Este portfólio também é um jogo: um Centro Pokémon dentro de um GBA.',
-        talk: 'Fale comigo',
-        projects: 'Projetos', about: 'Sobre', work: 'Experiência', skills: 'Habilidades', games: 'Jogos', contact: 'Contato',
-        projects_lead: 'Coisas que eu construí, do problema até as mãos de quem usa.',
+        talk: 'Fale comigo', goat: 'O bode, mascote do Cabral, desenhado por ele', tape: 'CABRAL · PORTFÓLIO',
+        projects: 'Projetos', art: 'Coisas que eu faço', about: 'Sobre', work: 'Experiência', skills: 'Habilidades', games: 'Jogos', contact: 'Contato',
+        projects_lead: 'Os de que eu mais me orgulho vêm primeiro.', art_lead: 'Desenho, pixel art e 3D.',
         code: 'Código', live: 'Ver ao vivo', shots: 'Ver as imagens de {name}', shot_of: '{i} de {n}',
-        close: 'Fechar', prev: 'Anterior', next: 'Próxima', commits: '{n} commits',
-        school: 'Formação', years: '{n} anos', power: 'Poder', skills_lead: 'O que eu uso no dia a dia, e há quanto tempo.',
+        close: 'Fechar', prev: 'Anterior', next: 'Próxima',
+        since: 'Em tecnologia desde {year}', playing: 'Jogando agora', listening: 'No fone', favorites: 'Jogos que me marcaram',
+        school: 'Formação', years: '{n} anos', skills_lead: 'Testes de habilidade, do jeito do Disco Elysium.', success: 'Sucesso',
+        d75: 'Médio', d80: 'Desafiador', d85: 'Formidável', d90: 'Lendário', stack: 'Stack',
         contact_title: 'Vaga ou projeto? Bora conversar.',
-        contact_lead: 'Se você tem um time fazendo coisas interessantes, ou um projeto que precisa sair do papel, me chama.',
         footer: 'Feito à mão em HTML, CSS e JS, sem framework.', source: 'Código do site',
-        t_projects: 'projetos', t_since: 'em tecnologia desde',
-        f_role: 'cargo.txt', f_where: 'onde.txt', f_langs: 'idiomas.txt',
-        code_keys: { city: 'cidade', speaks: 'idiomas', since: 'desde', likes: 'gosta' }, likes: ['jogos', 'dados', 'design'],
+        lost_title: 'SINAL PERDIDO', lost_text: 'Esta transmissão foi interrompida. Não ajuste o seu aparelho.', lost_back: 'Aperte qualquer tecla para voltar.',
+        weak_title: 'SINAL FRACO', weak_text: 'Volte depois.', peek: 'Um bode acenando', hint: 'Psiu. Tenta o código Konami.',
       },
       en: {
         skip: 'Skip to content', nav: 'Sections', menu: 'Menu', lang: 'PT', lang_name: 'Mudar para português',
+        hello: "Hey, I'm", call: 'You can call me Cabral.',
         play: 'Play', play_long: 'Play my portfolio', play_note: 'This portfolio is also a game: a Pokémon Center inside a GBA.',
-        talk: 'Talk to me',
-        projects: 'Projects', about: 'About', work: 'Experience', skills: 'Skills', games: 'Games', contact: 'Contact',
-        projects_lead: 'Things I built, from the problem to the hands of the people who use them.',
+        talk: 'Talk to me', goat: "The goat, Cabral's mascot, drawn by him", tape: 'CABRAL · PORTFOLIO',
+        projects: 'Projects', art: 'Things I make', about: 'About', work: 'Experience', skills: 'Skills', games: 'Games', contact: 'Contact',
+        projects_lead: "The ones I'm proudest of come first.", art_lead: 'Drawing, pixel art and 3D.',
         code: 'Code', live: 'See it live', shots: 'See the pictures of {name}', shot_of: '{i} of {n}',
-        close: 'Close', prev: 'Previous', next: 'Next', commits: '{n} commits',
-        school: 'Education', years: '{n} years', power: 'Power', skills_lead: 'What I use day to day, and for how long.',
+        close: 'Close', prev: 'Previous', next: 'Next',
+        since: 'In tech since {year}', playing: 'Playing now', listening: 'On repeat', favorites: 'Games that made me',
+        school: 'Education', years: '{n} years', skills_lead: 'Skill checks, Disco Elysium style.', success: 'Success',
+        d75: 'Medium', d80: 'Challenging', d85: 'Formidable', d90: 'Legendary', stack: 'Stack',
         contact_title: "A role or a project? Let's talk.",
-        contact_lead: 'If your team is making interesting things, or you have a project that needs to get off the ground, reach out.',
         footer: 'Handmade in HTML, CSS and JS, no framework.', source: 'Site source',
-        t_projects: 'projects', t_since: 'in tech since',
-        f_role: 'role.txt', f_where: 'where.txt', f_langs: 'languages.txt',
-        code_keys: { city: 'city', speaks: 'speaks', since: 'since', likes: 'likes' }, likes: ['games', 'data', 'design'],
+        lost_title: 'SIGNAL LOST', lost_text: 'This broadcast has been interrupted. Do not adjust your set.', lost_back: 'Press any key to go back.',
+        weak_title: 'WEAK SIGNAL', weak_text: 'Come back later.', peek: 'A goat waving', hint: 'Psst. Try the Konami code.',
       },
     },
   },

@@ -54,6 +54,7 @@ const KEYS = {
   ArrowLeft: { code: 'ArrowLeft', windowsVirtualKeyCode: 37 }, ArrowRight: { code: 'ArrowRight', windowsVirtualKeyCode: 39 },
   z: { code: 'KeyZ', windowsVirtualKeyCode: 90, text: 'z' }, x: { code: 'KeyX', windowsVirtualKeyCode: 88, text: 'x' },
   Escape: { code: 'Escape', windowsVirtualKeyCode: 27 },
+  b: { code: 'KeyB', windowsVirtualKeyCode: 66, text: 'b' }, a: { code: 'KeyA', windowsVirtualKeyCode: 65, text: 'a' },
 };
 const keyDown = (k) => send('Input.dispatchKeyEvent', { type: 'keyDown', key: k, ...KEYS[k] });
 const key = async (k, wait = 300) => {
@@ -514,10 +515,13 @@ ok('celular em pé vira GBA SP e volta');
 await ev('localStorage.clear()');
 await send('Page.navigate', { url: `${BASE}lp.html?lp=1` });
 await sleep(2500);
-assert.deepEqual(await ev(`[...document.querySelectorAll('main > section')].map((s) => s.id)`), ['topo', 'projetos', 'sobre', 'experiencia', 'habilidades', 'contato'], 'seções da landing page');
+assert.deepEqual(await ev(`[...document.querySelectorAll('main > section')].map((s) => s.id)`), ['topo', 'projetos', 'coisas', 'sobre', 'experiencia', 'habilidades', 'contato'], 'seções da landing page');
 assert.equal(await ev(`document.querySelectorAll('.project').length`), 7);
 assert.ok(await ev('document.documentElement.scrollWidth <= innerWidth'), 'a landing page está mais larga que a tela');
-assert.equal(await ev(`document.querySelectorAll('[data-cast=hero] .char .pupil').length`), 6, 'o elenco da abertura: três formas com dois olhos');
+assert.deepEqual(await ev(`[...document.querySelectorAll('.project')].slice(0, 3).map((p) => p.id)`), ['projeto-1', 'projeto-3', 'projeto-7'], 'Magnifyer, PitchIQ e o portfólio vêm primeiro');
+assert.equal(await ev(`document.querySelectorAll('main img[src*="assets/mon/"], main img[src*="badges"], .mon, .badge-sticker').length`), 0, 'a landing page não tem mais Pokémon (só o print do GBA)');
+assert.equal(await ev(`document.querySelectorAll('#coisas .piece').length`), 4, 'as quatro artes do João');
+assert.ok(await ev(`document.querySelector('.hero .goat').complete && document.querySelector('.hero .goat').naturalWidth > 0`), 'o bode da abertura não carregou');
 assert.equal(await ev(`document.querySelector('.top .play').getAttribute('href')`), './', 'o Jogar leva ao GBA');
 await click('.top .lang', 600);
 assert.equal(await ev('document.documentElement.lang'), 'en');
@@ -542,12 +546,27 @@ assert.equal(await hash(), '#projeto-3', 'o link antigo vira a âncora nova');
 assert.ok(await ev(`(() => { const t = document.getElementById('projeto-3').getBoundingClientRect().top; return t >= 0 && t < innerHeight / 2; })()`), 'não rolou até o projeto 3');
 ok('landing page: link antigo #/projetos/3 rola até o projeto');
 
+await send('Page.navigate', { url: `${BASE}lp.html?secret=1` });
+await sleep(2500);
+for (const k of ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a']) await key(k, 60);
+await sleep(200);
+assert.ok(await has('.signal-lost'), 'o código Konami não interrompeu a transmissão');
+await sleep(400);
+await key('Escape', 300);
+assert.ok(!(await has('.signal')), 'uma tecla não fechou a interrupção');
+await ev(`location.hash = '#/sinal'`);
+await sleep(400);
+assert.ok(await has('.signal-weak'), '#/sinal não abriu a porta do ARG');
+await click('.signal-weak', 300);
+assert.ok(!(await has('.signal')) && (await hash()) === '', 'o clique não fechou a porta do ARG');
+ok('landing page: código Konami interrompe a transmissão; #/sinal abre a porta do ARG');
+
 await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
 await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 3, mobile: true });
 await send('Page.navigate', { url: `${BASE}lp.html?small=1` });
 await sleep(2500);
 assert.ok(await ev('document.documentElement.scrollWidth <= innerWidth'), 'rolagem horizontal no celular');
-assert.equal(await ev(`getComputedStyle(document.querySelector('.code-card')).animationName`), 'none', 'com movimento reduzido nada se move');
+assert.equal(await ev(`getComputedStyle(document.querySelector('.hero .goat')).animationName`), 'none', 'com movimento reduzido nada se move');
 await click('.menu-btn', 300);
 assert.ok(await ev(`getComputedStyle(document.querySelector('#nav-links')).display !== 'none'`), 'o menu do celular não abriu');
 await send('Emulation.clearDeviceMetricsOverride');
