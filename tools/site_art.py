@@ -3,6 +3,7 @@ never redrawing:
 
   goat-ink.png    the goat in black brush lines: the white paper becomes transparent, the line one ink colour
   goat-pixel.png  the waving pixel goat (material/6.png, 90x90), cropped to its pixels
+  goat-head.png   its head, for the portrait in the top bar
   firecat.png     the fire creature: the transparency checkerboard baked into the export (two greys) becomes
                   transparent, and the 16x upscale goes back to one pixel per pixel
   pokeball.gif    the PS1-style low poly Poké Ball turning (material/9.gif), as is
@@ -37,7 +38,9 @@ def goat_ink():
 
 def goat_pixel():
     _, _, px, _ = pngio.read(SRC / '6.png')
-    pngio.write(OUT / 'goat-pixel.png', crop(px))
+    body = crop(px)
+    pngio.write(OUT / 'goat-pixel.png', body)
+    pngio.write(OUT / 'goat-head.png', crop([row[:38] for row in body[:32]]))   # above the shoulders, left of the waving hand
 
 
 def firecat(scale=16, x0=9, y0=0):
@@ -56,5 +59,5 @@ if __name__ == '__main__':
     goat_pixel()
     firecat()
     shutil.copyfile(SRC / '9.gif', OUT / 'pokeball.gif')
-    for f in ['goat-ink.png', 'goat-pixel.png', 'firecat.png', 'pokeball.gif']:
+    for f in ['goat-ink.png', 'goat-pixel.png', 'goat-head.png', 'firecat.png', 'pokeball.gif']:
         print(f, (OUT / f).stat().st_size, 'bytes')

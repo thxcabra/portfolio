@@ -243,6 +243,14 @@ export function siteAnchor(hash, projects) {
 // as a key in DATA.site.ui.
 export const skillCheck = (power) => (power >= 90 ? 'd90' : power >= 85 ? 'd85' : power >= 80 ? 'd80' : 'd75');
 
+// Rolling that check: d20 plus a bonus from the power, against the difficulty's target. The bonus is high
+// enough that every check passes; a natural 20 is a critical success.
+const TARGET = { d75: 12, d80: 14, d85: 16, d90: 18 };
+export function skillRoll(power, roll) {
+  const bonus = Math.floor(power / 5);
+  return { roll, bonus, total: roll + bonus, dc: TARGET[skillCheck(power)], crit: roll === 20 };
+}
+
 // International Morse as [lit, units] steps: dot 1, dash 3, 1 off inside a letter, 3 between letters,
 // 7 after the word (then it repeats).
 const MORSE = {

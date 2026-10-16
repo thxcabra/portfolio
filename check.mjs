@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { DATA } from './data.js';
 import {
   route, textWidth, fitsLines, centerBox, fade8, grey8, brighten8, alpha8, blendLevels, nextSeed, starPos, gfWindow, titleEntrance, TEXT_SPEEDS, multiTiles, monPath, wrapText, toPages, listMove, nextIndex, fitScale, cycle, splitShown, pingPong,
-  discPath, rrectPath, corner, TYPES, SHAPES, DIRS, around, pathToAny, pageFits, esc, ACT_W, siteAnchor, repoOf, skillCheck, morse, konami, KONAMI,
+  discPath, rrectPath, corner, TYPES, SHAPES, DIRS, around, pathToAny, pageFits, esc, ACT_W, siteAnchor, repoOf, skillCheck, skillRoll, morse, konami, KONAMI,
 } from './logic.js';
 import { MENU } from './carts/center/screens/menu.js';
 import { VOLUMES } from './sound.js';
@@ -355,10 +355,19 @@ for (const k of ['about', 'looking']) assert.ok(site[k].pt && site[k].en, `site.
 assert.equal(site.about.pt.length, site.about.en.length, 'site.about: mesmo número de parágrafos em pt e en');
 assert.deepEqual([...site.order].sort((x, y) => x - y), DATA.projects.map((_, i) => i), 'site.order: cada projeto uma vez');
 for (const a of site.art) assert.ok(existsSync(here0(a.src)) && a.caption.pt && a.caption.en, `arte sem arquivo ou legenda: ${a.src}`);
-for (const f of site.favorites) assert.ok(f.name && f.why.pt && f.why.en, `jogo favorito incompleto: ${f.name}`);
+for (const f of site.favorites) assert.ok(f.name && f.why.pt && f.why.en && Number.isInteger(f.steam), `jogo favorito incompleto: ${f.name}`);
+for (const g of site.recommend) assert.ok(g.name && Number.isInteger(g.steam), `jogo recomendado sem link da Steam: ${g.name}`);
+for (const t of site.tracks) assert.ok(t.artist && t.song && Number.isInteger(t.id), `música incompleta: ${t.artist}`);
+assert.deepEqual(site.attrs.flatMap((a) => a.moves).sort(), DATA.moves.map((m) => m.name).sort(), 'site.attrs: cada habilidade em um atributo');
+for (const b of DATA.badges.filter((x) => x.via)) assert.ok(DATA.badges.some((x) => x.name === b.via && !x.via), `via sem a empresa: ${b.via}`);
 
 // skill checks, Morse and the Konami code (the landing page's skills and secrets)
 assert.deepEqual([95, 90, 85, 80, 75, 60].map(skillCheck), ['d90', 'd90', 'd85', 'd80', 'd75', 'd75']);
+for (const m of DATA.moves) {
+  const low = skillRoll(m.power, 1), high = skillRoll(m.power, 20);
+  assert.ok(low.total >= low.dc && !low.crit, `${m.name}: um 1 no dado ainda passa`);
+  assert.ok(high.crit && high.total === 20 + high.bonus);
+}
 for (const m of DATA.moves) assert.ok(site.ui.pt[skillCheck(m.power)] && site.ui.en[skillCheck(m.power)], `dificuldade sem texto: ${m.name}`);
 const cabra = morse('CABRA');
 assert.deepEqual(cabra.slice(0, 3), [[true, 3], [false, 1], [true, 1]], 'C começa com traço, ponto');
