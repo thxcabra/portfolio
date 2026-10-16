@@ -134,3 +134,33 @@ Fica em inglês.
   - nenhuma rolagem horizontal a 390 px;
   - movimento reduzido.
 - **Capturas** a 1440 e 390, mostradas ao João antes de publicar.
+
+## Revisão 2 (retorno do João sobre a primeira versão)
+
+- **Página mais curta:**
+  - projetos em cards menores, com o texto completo num "ler mais";
+  - experiência só com os dois cards da MOIC, e os clientes (CapyFi, Fogo, Kaia, Haust Labs) num "ver mais" dentro do card de Social Media Manager;
+  - "Coisas que eu faço" no fim, numa faixa, com as imagens inteiras;
+  - menos espaço entre seções.
+- **Fontes, três que combinam com pixel art:** Jersey 10 nos títulos, Chakra Petch no texto, Silkscreen nos dados. Saem Dela Gothic One, VT323 e Libre Baskerville.
+- **Barra do topo como HUD de RPG:**
+  - retrato do bode (a cabeça, em pixel) numa moldura, "CABRAL" e o nível (anos em tecnologia);
+  - uma barra de XP que enche com a rolagem;
+  - o menu com cursor de jogo e a seção atual marcada;
+  - o idioma como chave;
+  - o JOGAR como botão START.
+- **Habilidades como ficha de RPG**, sem citar o Disco Elysium:
+  - três atributos coloridos (Código; Dados e IA; Criação);
+  - clicar numa habilidade rola um d20 low poly estilo PS1 e o teste ("[Lendário: Sucesso]", a conta do dado e o texto) aparece numa caixa de diálogo.
+- **Mangá, anime e quadrinhos:** retícula de mangá em alguns fundos; linhas de velocidade e uma onomatopeia quando o dado rola ou o código Konami entra.
+- **3D low poly estilo PS1:** a fita VHS, o d20 e uma bola de basquete perto dos projetos de esporte.
+- **No fone:**
+  - mini player com trechos de 30 segundos (busca da Apple na hora de tocar, link para a música completa);
+  - a música mais tocada de cada artista: CBJR, The Offspring, Green Day, Matuê, Rage Against the Machine, BK, System of a Down, J. Cole, Twenty One Pilots, LPT Zlatan, Djavan, OutKast, Jorge Vercillo, Michael Jackson;
+  - NOG, Tchelo e Jotapê ficam de fora até o João dizer qual música (a busca é ambígua).
+- **Jogos:**
+  - "Jogos que eu recomendo" (Skyrim, Eldest Souls, Universe for Sale) e "Jogos que me marcaram" (Disco Elysium, Until Then, Far Cry 4, Hotline Miami);
+  - uma linha por jogo, com link para a Steam;
+  - sai o "Jogando agora".
+- **MOIC SITE:** o stack passa a ser Astro, HTML, Cloudflare e CRM.
+- **Textos:** todos revistos para soar menos genéricos.
