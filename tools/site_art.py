@@ -3,15 +3,23 @@ never redrawing:
 
   goat-ink.png    the goat in black brush lines: the white paper becomes transparent, the line one ink colour
   goat-pixel.png  the waving pixel goat (material/6.png, 90x90), cropped to its pixels
-  goat-head.png   its head, for the portrait in the top bar
   firecat.png     the fire creature: the transparency checkerboard baked into the export (two greys) becomes
                   transparent, and the 16x upscale goes back to one pixel per pixel
   pokeball.gif    the PS1-style low poly Poké Ball turning (material/9.gif), as is
+  law-chopper.png, pen-portrait.png
+                  his ink and ballpoint drawings, photographed: the paper (lit unevenly) becomes transparent and
+                  the line keeps the pen's colour
+  kakashi.png     his pixel art, in fewer colours
+  poster-cbjr.jpg his Charlie Brown Jr. poster
+  me-*.jpg        photos of him, for the polaroids in "Sobre"
+  nuzlocke.png    the Hall of Fame of his first Nuzlocke won, a FireRed screenshot
 
 Run: python tools/site_art.py
 """
 import shutil
 from pathlib import Path
+
+from PIL import Image, ImageChops, ImageFilter
 
 import pngio
 
@@ -40,7 +48,6 @@ def goat_pixel():
     _, _, px, _ = pngio.read(SRC / '6.png')
     body = crop(px)
     pngio.write(OUT / 'goat-pixel.png', body)
-    pngio.write(OUT / 'goat-head.png', crop([row[:38] for row in body[:32]]))   # above the shoulders, left of the waving hand
 
 
 def firecat(scale=16, x0=9, y0=0):
@@ -53,11 +60,40 @@ def firecat(scale=16, x0=9, y0=0):
     pngio.write(OUT / 'firecat.png', crop(rows))
 
 
+def drawing(src, out, ink, height=720):
+    """A photographed drawing: the paper's own brightness, taken around each pixel (lighter than any line),
+    is the reference; whatever is darker than it becomes the line, in one ink colour."""
+    im = Image.open(SRC / src).convert('L')
+    im = im.resize((round(im.width * height / im.height), height), Image.LANCZOS)
+    paper = im.filter(ImageFilter.MaxFilter(21)).filter(ImageFilter.MinFilter(21)).filter(ImageFilter.GaussianBlur(3))
+    dark = ImageChops.subtract(paper, im)   # how much darker than the paper around it
+    alpha = dark.point(lambda v: 0 if v < 24 else min(255, (v - 24) * 3))
+    line = Image.new('RGBA', im.size, ink + (0,))
+    line.putalpha(alpha)
+    line.save(OUT / out, optimize=True)
+
+
+def photo(src, out, width, quality=82):
+    im = Image.open(SRC / src).convert('RGB')
+    if im.width > width:
+        im = im.resize((width, round(im.height * width / im.width)), Image.LANCZOS)
+    im.save(OUT / out, quality=quality, optimize=True, progressive=True)
+
+
 if __name__ == '__main__':
     OUT.mkdir(parents=True, exist_ok=True)
     goat_ink()
     goat_pixel()
     firecat()
     shutil.copyfile(SRC / '9.gif', OUT / 'pokeball.gif')
-    for f in ['goat-ink.png', 'goat-pixel.png', 'goat-head.png', 'firecat.png', 'pokeball.gif']:
-        print(f, (OUT / f).stat().st_size, 'bytes')
+    drawing('law-chopper.png', 'law-chopper.png', INK)
+    drawing('retrato-caneta.png', 'pen-portrait.png', (22, 35, 121))
+    Image.open(SRC / 'kakashi.png').convert('RGB').quantize(48).save(OUT / 'kakashi.png', optimize=True)
+    photo('poster-cbjr.png', 'poster-cbjr.jpg', 720)
+    photo('foto-crianca.jpg', 'me-kid.jpg', 480)
+    photo('foto-noite.png', 'me-night.jpg', 480)
+    photo('foto-elevador.jpg', 'me-lift.jpg', 480)
+    shutil.copyfile(SRC / 'nuzlocke.png', OUT / 'nuzlocke.png')
+    for f in sorted(OUT.glob('*.*')):
+        if f.suffix != '.json':
+            print(f.name, f.stat().st_size, 'bytes')

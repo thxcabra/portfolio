@@ -120,7 +120,8 @@ export const DATA = {
     'NEXT.JS': 'water', FASTAPI: 'psychic', SUPABASE: 'rock', 'CHROME MV3': 'electric', ANTHROPIC: 'dragon',
     GEMINI: 'dragon', OPENROUTER: 'dragon', TAVILY: 'dragon', TELEGRAM: 'flying', EXPRESS: 'electric',
     'NOTION API': 'normal', CLOUDFLARE: 'steel', SEO: 'grass', CRM: 'normal', JAVASCRIPT: 'electric',
-    HTML: 'grass', CSS: 'grass', ASTRO: 'psychic',
+    HTML: 'grass', CSS: 'grass', ASTRO: 'psychic', 'C#': 'psychic', DOCKER: 'water', FIGMA: 'psychic',
+    GAMEMAKER: 'fire', BLENDER: 'fire', BLOCKBENCH: 'grass', ASEPRITE: 'grass', PHOTOSHOP: 'water',
   },
 
   // Experiência: cada emprego é uma insígnia (máx. 8), do mais recente ao mais antigo. via: o cliente veio
@@ -168,9 +169,8 @@ export const DATA = {
   ],
 
   education: [
-    { name: 'UFSC', course: { pt: 'Bacharelado em Ciência da Computação', en: "Bachelor's in Computer Science" }, period: { pt: '2022 – 2025', en: '2022 – 2025' } },
-    { name: 'UNIASSELVI', course: { pt: 'Bacharelado em Sistemas de Informação', en: "Bachelor's in Information Systems" }, period: { pt: 'fev 2026', en: 'Feb 2026' } },
-    { name: 'WIZARD BY PEARSON', course: { pt: 'Inglês avançado', en: 'Advanced English' }, period: { pt: '2015 – 2021', en: '2015 – 2021' } },
+    { name: 'UFSC', course: { pt: 'Ciência da Computação', en: 'Computer Science' }, period: { pt: '2022 – 2025', en: '2022 – 2025' } },
+    { name: 'UNIASSELVI', course: { pt: 'Sistemas de Informação', en: 'Information Systems' }, period: { pt: '2026 – hoje', en: '2026 – now' } },
   ],
 
   // PODER (0–100) e ANOS começam como estimativa: ajuste aqui.
@@ -193,13 +193,19 @@ export const DATA = {
   ],
 
   // A landing page (lp.html), a página principal. Estes textos não passam pela fonte do jogo e saem das
-  // respostas do João. art: as artes dele (tools/site_art.py prepara a partir de material/). tracks: a música
-  // mais tocada de cada artista que ele ouve (o id é da Apple; a página busca o trecho de 30 s na hora).
-  // Nada de imagem gerada por IA. games: jogos dele, vazio por enquanto.
+  // respostas do João. art e photos: as artes e as fotos dele (tools/site_art.py prepara a partir de
+  // material/). tracks: a música mais tocada de cada artista que ele ouve (o id é da Apple; a página busca o
+  // trecho de 30 s na hora). Nada de imagem gerada por IA.
   site: {
-    // Ordem dos projetos na página (índices de `projects`): os de que ele mais se orgulha primeiro. O link
-    // #/projetos/N continua sendo a posição em `projects`.
-    order: [0, 2, 6, 1, 4, 3, 5],
+    // Ordem dos projetos na página (índices de `projects`): os de que ele mais se orgulha primeiro. O
+    // portfólio (home) fica de fora: ele tem a seção "Este site" no fim. O link #/projetos/N continua sendo
+    // a posição em `projects`.
+    order: [0, 2, 5, 1, 4, 3],
+    home: 6,
+    home_text: {
+      pt: 'O jogo e esta página saem do mesmo código. No GBA, o Centro Pokémon do FireRed foi refeito com os números da decompilação do jogo, e a música é sintetizada dos dados dele. O resto do processo está no GitHub.',
+      en: "The game and this page come from the same code. In the GBA, FireRed's Pokémon Center is rebuilt with numbers from the game's decompilation, and the music is synthesized from its data. The rest of the process is on GitHub.",
+    },
     about: {
       pt: [
         'Me chamam de Cabral desde o colégio. Virou Cabra, depois GOAT. Daí vem o bode e o thxcabra: the cabra.',
@@ -241,23 +247,45 @@ export const DATA = {
       { artist: 'Jorge Vercillo', song: 'Monalisa', id: 713931546 },
       { artist: 'Michael Jackson', song: 'Beat It', id: 269573341 },
     ],
+    photos: [
+      { src: 'assets/site/me-kid.jpg', w: 480, h: 360, label: 'NV. 1', alt: { pt: 'O João criança, de mão na cintura', en: 'João as a kid, hands on his hips' } },
+      { src: 'assets/site/me-night.jpg', w: 480, h: 654, alt: { pt: 'O João de óculos, numa luz vermelha à noite', en: 'João in glasses, in red light at night' } },
+      { src: 'assets/site/me-lift.jpg', w: 150, h: 150, alt: { pt: 'O João tirando uma selfie no elevador', en: 'João taking a selfie in an elevator' } },
+    ],
+    nuzlocke: { src: 'assets/site/nuzlocke.png', w: 993, h: 613, alt: { pt: 'Hall da Fama do FireRed: Cradily, Raichu, Crobat, Walrein, Altaria e Dustox', en: 'FireRed Hall of Fame: Cradily, Raichu, Crobat, Walrein, Altaria and Dustox' } },
+    // As tecnologias da ficha (as cores vêm de `moves` ou de `tech`).
+    stack: ['PYTHON', 'TYPESCRIPT', 'JAVASCRIPT', 'C#', 'HTML', 'CSS', 'REACT', 'NEXT.JS', 'ASTRO', 'FASTAPI', 'SUPABASE', 'DOCKER', 'GCP', 'GEMINI', 'ANTHROPIC', 'CLOUDFLARE', 'UNITY', 'GAMEMAKER', 'BLENDER', 'BLOCKBENCH', 'ASEPRITE', 'PHOTOSHOP', 'FIGMA'],
+    // Um 1 natural no d20: a falha crítica de cada habilidade.
+    fumbles: {
+      PYTHON: { pt: 'Esqueceu os dois-pontos depois do if. SyntaxError.', en: 'Forgot the colon after the if. SyntaxError.' },
+      TYPESCRIPT: { pt: 'Tudo virou any. O compilador desistiu de você.', en: 'Everything became any. The compiler gave up on you.' },
+      REACT: { pt: 'useEffect sem a lista de dependências. A página renderizou 4.000 vezes.', en: 'A useEffect with no dependency list. The page rendered 4,000 times.' },
+      LLMS: { pt: 'O modelo jurou que 2 + 2 = 5, com fonte e tudo.', en: 'The model swore 2 + 2 = 5, with sources.' },
+      DADOS: { pt: 'O CSV veio separado por ponto e vírgula. E com vírgula decimal.', en: 'The CSV came separated by semicolons. With decimal commas.' },
+      GCP: { pt: 'Deixou a máquina ligada no fim de semana. Chegou a fatura.', en: 'Left the VM running all weekend. The bill arrived.' },
+      UNITY: { pt: 'O personagem atravessou o chão e está caindo até agora.', en: 'The character fell through the floor and is still falling.' },
+      DESIGN: { pt: 'Comic Sans no título. Ninguém viu nada.', en: 'Comic Sans in the title. Nobody saw anything.' },
+    },
     // A ficha de RPG das habilidades: cada atributo junta alguns `moves`.
     attrs: [
       { name: { pt: 'Código', en: 'Code' }, color: 'orange', moves: ['PYTHON', 'TYPESCRIPT', 'REACT'] },
       { name: { pt: 'Dados e IA', en: 'Data and AI' }, color: 'purple', moves: ['LLMS', 'DADOS', 'GCP'] },
       { name: { pt: 'Criação', en: 'Making' }, color: 'green', moves: ['UNITY', 'DESIGN'] },
     ],
+    // kind: o fundo da moldura (ink: papel; pixel: uma cor; dark: preto; photo: sem moldura).
     art: [
-      { src: 'assets/site/goat-ink.png', kind: 'ink', w: 376, h: 551, caption: { pt: 'O bode, em traço.', en: 'The goat, in brush lines.' } },
-      { src: 'assets/site/goat-pixel.png', kind: 'pixel', w: 45, h: 75, caption: { pt: 'O bode em pixel art.', en: 'The goat in pixel art.' } },
-      { src: 'assets/site/firecat.png', kind: 'pixel', w: 57, h: 52, caption: { pt: 'Um gato de fogo.', en: 'A fire cat.' } },
-      { src: 'assets/site/pokeball.gif', kind: 'gif', w: 1000, h: 1000, caption: { pt: 'Pokébola low poly, estilo PS1.', en: 'Low poly Poké Ball, PS1 style.' } },
+      { src: 'assets/site/goat-ink.png', kind: 'ink', w: 376, h: 551, alt: { pt: 'O bode, em traço', en: 'The goat, in brush lines' } },
+      { src: 'assets/site/goat-pixel.png', kind: 'pixel', bg: 'purple', w: 45, h: 75, alt: { pt: 'O bode em pixel art', en: 'The goat in pixel art' } },
+      { src: 'assets/site/law-chopper.png', kind: 'ink', w: 577, h: 720, alt: { pt: 'O Law e o Chopper, de One Piece, em nanquim', en: 'Law and Chopper from One Piece, in ink' } },
+      { src: 'assets/site/kakashi.png', kind: 'dark', w: 693, h: 875, alt: { pt: 'O Kakashi em pixel art, com o sharingan atrás', en: 'Kakashi in pixel art, with the sharingan behind him' } },
+      { src: 'assets/site/poster-cbjr.jpg', kind: 'photo', w: 720, h: 701, alt: { pt: 'Pôster de Só os Loucos Sabem, do Charlie Brown Jr.', en: "A poster for Charlie Brown Jr.'s Só os Loucos Sabem" } },
+      { src: 'assets/site/firecat.png', kind: 'pixel', bg: 'orange', w: 57, h: 52, alt: { pt: 'Um gato de fogo em pixel art', en: 'A fire cat in pixel art' } },
+      { src: 'assets/site/pen-portrait.png', kind: 'ink', w: 614, h: 720, alt: { pt: 'Retrato de um senhor de óculos, em caneta azul', en: 'Portrait of an old man in glasses, in blue ballpoint' } },
+      { src: 'assets/site/pokeball.gif', kind: 'dark', w: 1000, h: 1000, alt: { pt: 'Pokébola low poly, estilo PS1', en: 'Low poly Poké Ball, PS1 style' } },
     ],
-    media: { photo: null, drawings: [] },
-    games: [],
     ui: {
       pt: {
-        skip: 'Pular para o conteúdo', nav: 'Seções', lang_name: 'English', level: 'NV.', xp: 'XP',
+        skip: 'Pular para o conteúdo', nav: 'Seções', lang_name: 'English',
         hello: 'Opa, eu sou o', call: 'Pode me chamar de Cabral.',
         play: 'Jogar', play_long: 'Jogar meu portfólio', play_note: 'Esse portfólio também é um jogo: um Centro Pokémon dentro de um GBA.',
         talk: 'Fale comigo', goat: 'O bode, mascote do Cabral, desenhado por ele', tape: 'CABRAL · PORTFÓLIO',
@@ -267,18 +295,20 @@ export const DATA = {
         close: 'Fechar', prev: 'Anterior', next: 'Próxima',
         since: 'Em tecnologia desde {year}', recommend: 'Jogos que eu recomendo', favorites: 'Jogos que me marcaram', steam: '{name} na Steam',
         listening: 'No fone', play_song: 'Tocar', pause: 'Pausar', prev_song: 'Música anterior', next_song: 'Próxima música',
-        full_song: 'Ouvir inteira', preview: 'Trechos de 30 s, via Apple Music.', song_error: 'Essa não tocou. Pula pra próxima.',
-        clients: 'Clientes que eu atendi pela MOIC', school: 'Formação', years: '{n} anos',
+        full_song: 'Ouvir inteira', song_error: 'Essa não tocou. Pula pra próxima.',
+        clients: 'Clientes que eu atendi pela MOIC', school: 'Formação', photos: 'Fotos minhas', nuzlocke: 'Meu primeiro Nuzlocke vencido, no FireRed.',
         skills_lead: 'Minha ficha de personagem. Clica numa habilidade pra fazer o teste.', roll_hint: 'O d20 tá esperando.',
-        success: 'Sucesso', crit: 'Sucesso crítico', roll_math: 'd20 {roll} + {bonus} = {total} (precisava de {dc})',
+        success: 'Sucesso', crit: 'Sucesso crítico', roll_math: 'd20 {roll} + {bonus} = {total} (precisava de {dc})', roll_fumble: 'd20 {roll}: um 1 natural sempre falha',
         d75: 'Médio', d80: 'Desafiador', d85: 'Formidável', d90: 'Lendário', stack: 'Stack', sfx_roll: 'CLACK!',
+        roll_die: 'Rolar o d20', fumble: 'Falha crítica', sfx_crit: 'CRÍTICO!', sfx_crack: 'CRACK!', sfx_eat: 'NHAC!',
+        eaten: 'O bode comeu o dado. Já já ele devolve.', lights: 'Você ouviu isso?', pumpkin: 'Uma abóbora',
         contact_title: 'Vaga ou projeto? Bora conversar.',
-        footer: 'HTML, CSS e JS puro, com three.js nas peças 3D.', source: 'Código do site',
+        home: 'Este site', home_code: 'Ver o código no GitHub', source: 'Código do site', cart: 'PORTFÓLIO',
         lost_title: 'SINAL PERDIDO', lost_text: 'Esta transmissão foi interrompida. Não ajuste o seu aparelho.', lost_back: 'Aperte qualquer tecla para voltar.',
         weak_title: 'SINAL FRACO', weak_text: 'Volte depois.', peek: 'Um bode acenando', hint: 'Psiu. Tenta o código Konami.',
       },
       en: {
-        skip: 'Skip to content', nav: 'Sections', lang_name: 'Português', level: 'LV.', xp: 'XP',
+        skip: 'Skip to content', nav: 'Sections', lang_name: 'Português',
         hello: "Hey, I'm", call: 'You can call me Cabral.',
         play: 'Play', play_long: 'Play my portfolio', play_note: 'This portfolio is also a game: a Pokémon Center inside a GBA.',
         talk: 'Talk to me', goat: "The goat, Cabral's mascot, drawn by him", tape: 'CABRAL · PORTFOLIO',
@@ -288,13 +318,15 @@ export const DATA = {
         close: 'Close', prev: 'Previous', next: 'Next',
         since: 'In tech since {year}', recommend: 'Games I recommend', favorites: 'Games that made me', steam: '{name} on Steam',
         listening: 'On repeat', play_song: 'Play', pause: 'Pause', prev_song: 'Previous song', next_song: 'Next song',
-        full_song: 'Full song', preview: '30-second previews, via Apple Music.', song_error: "That one didn't play. Skip to the next.",
-        clients: 'Clients I handled through MOIC', school: 'Education', years: '{n} years',
+        full_song: 'Full song', song_error: "That one didn't play. Skip to the next.",
+        clients: 'Clients I handled through MOIC', school: 'Education', photos: 'Photos of me', nuzlocke: 'My first Nuzlocke win, in FireRed.',
         skills_lead: 'My character sheet. Click a skill to roll for it.', roll_hint: 'The d20 is waiting.',
-        success: 'Success', crit: 'Critical success', roll_math: 'd20 {roll} + {bonus} = {total} (needed {dc})',
+        success: 'Success', crit: 'Critical success', roll_math: 'd20 {roll} + {bonus} = {total} (needed {dc})', roll_fumble: 'd20 {roll}: a natural 1 always fails',
         d75: 'Medium', d80: 'Challenging', d85: 'Formidable', d90: 'Legendary', stack: 'Stack', sfx_roll: 'CLACK!',
+        roll_die: 'Roll the d20', fumble: 'Critical failure', sfx_crit: 'CRITICAL!', sfx_crack: 'CRACK!', sfx_eat: 'CHOMP!',
+        eaten: 'The goat ate the die. It will give it back in a moment.', lights: 'Did you hear that?', pumpkin: 'A pumpkin',
         contact_title: "A role or a project? Let's talk.",
-        footer: 'Plain HTML, CSS and JS, with three.js for the 3D bits.', source: 'Site source',
+        home: 'This site', home_code: 'See the code on GitHub', source: 'Site source', cart: 'PORTFOLIO',
         lost_title: 'SIGNAL LOST', lost_text: 'This broadcast has been interrupted. Do not adjust your set.', lost_back: 'Press any key to go back.',
         weak_title: 'WEAK SIGNAL', weak_text: 'Come back later.', peek: 'A goat waving', hint: 'Psst. Try the Konami code.',
       },

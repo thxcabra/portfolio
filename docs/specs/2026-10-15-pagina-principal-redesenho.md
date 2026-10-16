@@ -164,3 +164,26 @@ Fica em inglês.
   - sai o "Jogando agora".
 - **MOIC SITE:** o stack passa a ser Astro, HTML, Cloudflare e CRM.
 - **Textos:** todos revistos para soar menos genéricos.
+
+## Revisão 3 (retorno do João sobre a revisão 2, 16/10)
+
+- **Barra do topo:** saem o retrato, o "CABRAL", o nível e o XP. Ficam as seções no meio e, no fim, o idioma e o JOGAR. "Coisas que eu faço" sai do menu (a seção continua na página).
+- **Abertura:**
+  - o bode em traço maior e sem nada na frente do rosto; a fita e a tela do GBA vão para a direita;
+  - a frase "Esse portfólio também é um jogo…" vira um balão que só aparece com o mouse (ou o foco) no botão Jogar.
+- **Projetos:** sai o card do portfólio e o site da MOIC sobe para o terceiro lugar. O portfólio ganha a seção "Este site", antes do contato, com o texto de como foi feito, o código no GitHub e um cartucho 3D. O link antigo `#/projetos/7` cai nela.
+- **Sobre:**
+  - três fotos do João como polaroides (criança, com "NV. 1"; à noite; no elevador);
+  - o Hall da Fama do primeiro Nuzlocke vencido dele, no FireRed, embaixo dos jogos;
+  - sai o aviso "Trechos de 30 s, via Apple Music".
+- **Formação:** sai a Wizard; fica "UFSC · Ciência da Computação · 2022–2025 → UNIASSELVI · Sistemas de Informação · 2026–hoje", sem "Bacharelado", com uma seta entre os dois. A troca de curso fica subentendida. O GBA usa os mesmos dados.
+- **Habilidades:**
+  - saem os "X anos";
+  - o d20 tem faces numeradas (as opostas somam 21) e cai na face do resultado; clicar no dado também rola;
+  - segredos do d20: no 1, falha crítica (o dado racha e o texto zoa a habilidade); no 20, confete e o bode comemorando; no 13, a luz da página apaga e só a abóbora brilha; rolando 7 vezes em 15 segundos, o bode come o dado e devolve depois de 5 segundos;
+  - uma abóbora PS1 na mesa: acende ao passar o mouse e apaga a luz ao clicar;
+  - as tecnologias passam a ser uma lista escolhida (entram Unity, GameMaker, Blender, Blockbench, Aseprite, Photoshop, Figma, C# e Docker; saem Chrome MV3, Telegram, OpenRouter, Tavily, Express, Notion API e CRM).
+- **Coisas que eu faço:** sem legendas; entram o Law com o Chopper (nanquim), o Kakashi (pixel art), o retrato em caneta azul e o pôster do Charlie Brown Jr. Cada arte abre grande.
+- **Fim:** o bode em 3D low poly estilo PS1, montado em código a partir do bode pixel, acenando no contato. O rodapé perde o texto "HTML, CSS e JS puro" e ganha uma floresta morta na névoa com uma figura parada, um pouco mais perto a cada visita.
+- **Filme:** de vez em quando passa uma faixa de tracking de VHS.
+- **README:** GameMaker e Blockbench entram na arte das tecnologias.

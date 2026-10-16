@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { DATA } from './data.js';
 import {
   route, textWidth, fitsLines, centerBox, fade8, grey8, brighten8, alpha8, blendLevels, nextSeed, starPos, gfWindow, titleEntrance, TEXT_SPEEDS, multiTiles, monPath, wrapText, toPages, listMove, nextIndex, fitScale, cycle, splitShown, pingPong,
-  discPath, rrectPath, corner, TYPES, SHAPES, DIRS, around, pathToAny, pageFits, esc, ACT_W, siteAnchor, repoOf, skillCheck, skillRoll, morse, konami, KONAMI,
+  discPath, rrectPath, corner, TYPES, SHAPES, DIRS, around, pathToAny, pageFits, esc, ACT_W, siteAnchor, repoOf, skillCheck, skillRoll, tooMany, morse, konami, KONAMI,
 } from './logic.js';
 import { MENU } from './carts/center/screens/menu.js';
 import { VOLUMES } from './sound.js';
@@ -353,8 +353,11 @@ assert.equal(repoOf(undefined), null);
 const site = DATA.site;
 for (const k of ['about', 'looking']) assert.ok(site[k].pt && site[k].en, `site.${k} em pt e en`);
 assert.equal(site.about.pt.length, site.about.en.length, 'site.about: mesmo número de parágrafos em pt e en');
-assert.deepEqual([...site.order].sort((x, y) => x - y), DATA.projects.map((_, i) => i), 'site.order: cada projeto uma vez');
-for (const a of site.art) assert.ok(existsSync(here0(a.src)) && a.caption.pt && a.caption.en, `arte sem arquivo ou legenda: ${a.src}`);
+assert.deepEqual([...site.order, site.home].sort((x, y) => x - y), DATA.projects.map((_, i) => i), 'site.order e site.home: cada projeto uma vez');
+assert.ok(site.home_text.pt && site.home_text.en && DATA.projects[site.home].links.repo, 'Este site: texto e link do código');
+for (const a of [...site.art, ...site.photos, site.nuzlocke]) assert.ok(existsSync(here0(a.src)) && a.alt.pt && a.alt.en, `imagem sem arquivo ou texto alternativo: ${a.src}`);
+for (const t of site.stack) assert.ok(DATA.moves.some((m) => m.name === t) || DATA.tech[t], `tecnologia sem tipo (cor): ${t}`);
+for (const m of DATA.moves) assert.ok(site.fumbles[m.name]?.pt && site.fumbles[m.name]?.en, `habilidade sem falha crítica: ${m.name}`);
 for (const f of site.favorites) assert.ok(f.name && f.why.pt && f.why.en && Number.isInteger(f.steam), `jogo favorito incompleto: ${f.name}`);
 for (const g of site.recommend) assert.ok(g.name && Number.isInteger(g.steam), `jogo recomendado sem link da Steam: ${g.name}`);
 for (const t of site.tracks) assert.ok(t.artist && t.song && Number.isInteger(t.id), `música incompleta: ${t.artist}`);
@@ -364,10 +367,14 @@ for (const b of DATA.badges.filter((x) => x.via)) assert.ok(DATA.badges.some((x)
 // skill checks, Morse and the Konami code (the landing page's skills and secrets)
 assert.deepEqual([95, 90, 85, 80, 75, 60].map(skillCheck), ['d90', 'd90', 'd85', 'd80', 'd75', 'd75']);
 for (const m of DATA.moves) {
-  const low = skillRoll(m.power, 1), high = skillRoll(m.power, 20);
-  assert.ok(low.total >= low.dc && !low.crit, `${m.name}: um 1 no dado ainda passa`);
-  assert.ok(high.crit && high.total === 20 + high.bonus);
+  const low = skillRoll(m.power, 1), two = skillRoll(m.power, 2), high = skillRoll(m.power, 20);
+  assert.ok(low.fumble && !low.crit, `${m.name}: um 1 no dado é falha crítica`);
+  assert.ok(two.total >= two.dc && !two.fumble, `${m.name}: um 2 no dado já passa`);
+  assert.ok(high.crit && !high.fumble && high.total === 20 + high.bonus);
 }
+assert.ok(tooMany([0, 1, 2, 3, 4, 5, 6].map((s) => s * 1000), 7000), '7 rolagens em 7 s: o bode come o dado');
+assert.ok(!tooMany([0, 1, 2, 3, 4, 5].map((s) => s * 1000), 7000), '6 rolagens ainda não');
+assert.ok(!tooMany([0, 1, 2, 3, 4, 5, 6].map((s) => s * 5000), 31000), 'rolagens espaçadas não contam');
 for (const m of DATA.moves) assert.ok(site.ui.pt[skillCheck(m.power)] && site.ui.en[skillCheck(m.power)], `dificuldade sem texto: ${m.name}`);
 const cabra = morse('CABRA');
 assert.deepEqual(cabra.slice(0, 3), [[true, 3], [false, 1], [true, 1]], 'C começa com traço, ponto');
@@ -379,8 +386,6 @@ assert.equal(run(['ArrowUp', ...KONAMI]), KONAMI.length, '↑↑↑ ainda começ
 assert.equal(run(['B', ...KONAMI.slice(0, 8), 'B', 'A']), KONAMI.length, 'B e A maiúsculos valem');
 assert.equal(run([...KONAMI.slice(0, 5), 'x']), 0, 'tecla errada recomeça');
 assert.deepEqual(Object.keys(site.ui.en).sort(), Object.keys(site.ui.pt).sort(), 'site.ui: chaves diferentes em pt e en');
-for (const f of [site.media.photo, ...site.media.drawings, ...site.games.map((g) => g.media)].filter(Boolean)) assert.ok(existsSync(here0(f)), `falta ${f}`);
-for (const g of site.games) assert.ok(g.name && g.text?.pt && g.text?.en && g.media, `jogo incompleto: ${g.name}`);
 
 // the landing page's colours (site/site.css): text pairs keep WCAG AA contrast
 const siteCss = readFileSync(here0('site/site.css'), 'utf8');

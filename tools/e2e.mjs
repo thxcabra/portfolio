@@ -515,12 +515,15 @@ ok('celular em pé vira GBA SP e volta');
 await ev('localStorage.clear()');
 await send('Page.navigate', { url: `${BASE}lp.html?lp=1` });
 await sleep(2500);
-assert.deepEqual(await ev(`[...document.querySelectorAll('main > section')].map((s) => s.id)`), ['topo', 'projetos', 'sobre', 'experiencia', 'habilidades', 'coisas', 'contato'], 'seções da landing page');
-assert.equal(await ev(`document.querySelectorAll('.project').length`), 7);
+assert.deepEqual(await ev(`[...document.querySelectorAll('main > section')].map((s) => s.id)`), ['topo', 'projetos', 'sobre', 'experiencia', 'habilidades', 'coisas', 'este-site', 'contato'], 'seções da landing page');
+assert.equal(await ev(`document.querySelectorAll('.project').length`), 6, 'seis projetos; o portfólio fica em Este site');
 assert.ok(await ev('document.documentElement.scrollWidth <= innerWidth'), 'a landing page está mais larga que a tela');
-assert.deepEqual(await ev(`[...document.querySelectorAll('.project')].slice(0, 3).map((p) => p.id)`), ['projeto-1', 'projeto-3', 'projeto-7'], 'Magnifyer, PitchIQ e o portfólio vêm primeiro');
+assert.deepEqual(await ev(`[...document.querySelectorAll('.project')].slice(0, 3).map((p) => p.id)`), ['projeto-1', 'projeto-3', 'projeto-6'], 'Magnifyer, PitchIQ e o site da MOIC vêm primeiro');
+assert.ok(await has('#este-site #projeto-7 a[href="https://github.com/thxcabra/portfolio"]'), 'Este site leva ao código no GitHub');
 assert.equal(await ev(`document.querySelectorAll('main img[src*="assets/mon/"], main img[src*="badges"], .mon, .badge-sticker').length`), 0, 'a landing page não tem mais Pokémon (só o print do GBA)');
-assert.equal(await ev(`document.querySelectorAll('#coisas .piece').length`), 4, 'as quatro artes do João');
+assert.equal(await ev(`document.querySelectorAll('#coisas .piece').length`), 8, 'as oito artes do João');
+assert.equal(await ev(`document.querySelectorAll('#sobre .polaroid').length`), 3, 'as três fotos do João');
+assert.equal(await ev(`document.querySelectorAll('nav a[data-sec]').length`), 5, 'o menu sem Coisas que eu faço');
 assert.ok(await ev(`document.querySelector('.hero .goat').complete && document.querySelector('.hero .goat').naturalWidth > 0`), 'o bode da abertura não carregou');
 assert.equal(await ev(`document.querySelector('.hud .start').getAttribute('href')`), './', 'o Jogar leva ao GBA');
 assert.equal(await ev(`document.querySelectorAll('#experiencia .jobs > li').length`), 2, 'só os dois cards da MOIC');
@@ -529,9 +532,25 @@ assert.equal(await ev(`document.querySelectorAll('#sobre a[href^="https://store.
 assert.equal(await ev(`document.querySelectorAll('[data-deck] [data-track]').length`), 14, 'o toca-fitas com as 14 músicas');
 await ev(`document.getElementById('habilidades').scrollIntoView({ behavior: 'instant' })`);
 await sleep(300);
-await click('.skill[data-move="PYTHON"]', 1200);
-assert.match(await ev(`document.querySelector('.dialog-check').textContent`), /PYTHON \[Lendário: Sucesso|PYTHON \[Lendário: Sucesso crítico/, 'o teste de habilidade não apareceu');
-assert.match(await ev(`document.querySelector('.dialog-check').textContent`), /d20 \d+ \+ 18 = \d+/);
+const dialog = () => ev(`document.querySelector('.dialog').textContent.replace(/\\s+/g, ' ')`);
+await ev('Math.random = () => 0.5');   // the d20 comes up 11
+await click('.skill[data-move="PYTHON"]', 1400);
+assert.match(await dialog(), /PYTHON \[Lendário: Sucesso\] d20 11 \+ 18 = 29/, 'o teste de habilidade não apareceu');
+await ev('Math.random = () => 0');   // a 1: critical failure
+await click('.skill[data-move="PYTHON"]', 1400);
+assert.match(await dialog(), /Falha crítica.*dois-pontos/, 'um 1 no d20 não deu falha crítica');
+assert.ok(await has('.dice.cracked'), 'o dado não rachou');
+await ev('Math.random = () => 0.6');   // a 13: the lights go out
+await click('.dice', 1400);
+assert.ok(await has('.lights-out'), 'um 13 não apagou a luz');
+await sleep(2000);
+await ev('Math.random = () => 0.95');   // a 20: the party
+await click('.skill[data-move="UNITY"]', 1400);
+assert.ok((await has('.confetti')) && (await has('.table.cheer')), 'um 20 não fez festa');
+for (let i = 0; i < 3; i++) await click('.dice', 80);   // seven rolls in a row: the goat eats the die
+assert.ok(await has('.table.eating'), 'o bode não comeu o dado');
+await sleep(1400);
+assert.match(await dialog(), /bode comeu o dado/, 'o resultado atrasado apagou o aviso do bode');
 await click('.hud .lang', 600);
 assert.equal(await ev('document.documentElement.lang'), 'en');
 assert.equal(await ev(`document.querySelector('#projetos h2').textContent`), 'Projects');
@@ -547,7 +566,7 @@ await click('.v-next', 300);
 assert.match(await ev(`document.querySelector('.v-count').textContent`), /2 de 2/);
 await key('Escape', 300);
 assert.ok(!(await ev(`document.querySelector('dialog.viewer').open`)), 'Esc não fechou os prints');
-ok('landing page: seções, 7 projetos, Jogar, clientes da MOIC, jogos na Steam, toca-fitas, teste de habilidade, PT/EN salvo, prints');
+ok('landing page: seções, 6 projetos e Este site, Jogar, clientes da MOIC, jogos na Steam, toca-fitas, fotos, teste de habilidade e os segredos do d20, PT/EN salvo, prints');
 
 await send('Page.navigate', { url: `${BASE}lp.html?old=1#/projetos/3` });
 await sleep(2500);
