@@ -417,7 +417,7 @@ export const DATA = {
       bag_work: 'TRABALHO', bag_school: 'FORMAÇÃO', bag_close: 'FECHAR BOLSA', bag_more: 'A: LER MAIS',
       box_title: 'PROJETOS', box_selected: 'Escolheu {name}.', box_withdraw: 'LEVAR', box_deposit: 'DEVOLVER',
       box_summary: 'RESUMO', box_cancel: 'CANCELAR', box_full: 'Sua equipe está cheia!',
-      simple_label: 'SIMPLES', simple_back: 'VOLTAR AO GBA', simple_lang: 'ENGLISH', sp_power: 'PODER',
+      site_label: 'SITE',
       tm_title: 'ESTOJO TM', tm_years: '{n} ANOS DE USO', tm_close: 'O ESTOJO TM será guardado.',
       card_name: 'NOME: ', card_projects: 'PROJETOS', card_badges: 'INSÍGNIAS', card_time: 'TEMPO', card_years: '{n} ANOS', card_about: 'A: SOBRE MIM',
       // what A and B do right now, next to the buttons on the console
@@ -447,7 +447,7 @@ export const DATA = {
       bag_work: 'WORK', bag_school: 'EDUCATION', bag_close: 'CLOSE BAG', bag_more: 'A: READ MORE',
       box_title: 'PROJECTS', box_selected: '{name} is selected.', box_withdraw: 'WITHDRAW', box_deposit: 'DEPOSIT',
       box_summary: 'SUMMARY', box_cancel: 'CANCEL', box_full: "Your party's full!",
-      simple_label: 'SIMPLE', simple_back: 'BACK TO THE GBA', simple_lang: 'PORTUGUÊS', sp_power: 'POWER',
+      site_label: 'SITE',
       tm_title: 'TM CASE', tm_years: '{n} YEARS OF USE', tm_close: 'The TM CASE will be put away.',
       card_name: 'NAME: ', card_projects: 'PROJECTS', card_badges: 'BADGES', card_time: 'TIME', card_years: '{n} YEARS', card_about: 'A: ABOUT ME',
       act_skip: 'SKIP', act_start: 'START', act_talk: 'TALK', act_run: 'RUN', act_next: 'NEXT', act_choose: 'CHOOSE',

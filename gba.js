@@ -6,7 +6,6 @@ import { fitScale, centerBox, discPath, rrectPath, corner, TEXT_SPEEDS, ACT_W } 
 import { setVolume, sfx, cry, music, fadeOutMusic, fanfare } from './sound.js';
 import cart from './carts/center/index.js';
 import { startKanto } from './kanto.js';
-import { createSimple } from './simple.js';
 
 const KEYS = {
   ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right',
@@ -131,18 +130,6 @@ const show = (() => {
   };
 })();
 
-// ---------- the simple view (#/simples): the same content as a page to scroll ----------
-const simple = createSimple({ data: DATA, lang: () => lang, setLang: (l) => api.setLang(l), t, store, show: (m, i) => show.open(m, i), onClose: () => closeSimple() });
-function openSimple() {
-  [...held].forEach((n) => press(n, false));
-  history.replaceState(null, '', '#/simples');
-  simple.open();
-}
-function closeSimple() {
-  simple.close();
-  history.replaceState(null, '', location.pathname + location.search);
-}
-
 // ---------- body: two shells on the game-pixel grid, geometric, no logos ----------
 // Landscape: the original GBA. Portrait (phones): an opened GBA SP, screen on top, buttons below.
 const INK = '#221c4f', BODY = '#5a52b4', HI = '#7c75d4', LO = '#463e9c', PALE = '#c9c5e6';
@@ -177,20 +164,20 @@ const SHELLS = {
       path('M94 16h244v164h-244z', '#101014'),
       `<g class="g-dpad">${dpad(22, 54, 40, 14)}</g>`,
       `<g class="g-start">${disc(58, 122, 8, KEY, KEY_INK)}</g><g class="g-select">${disc(58, 140, 8, KEY, KEY_INK)}</g>`,
-      `<g class="g-simple">${disc(58, 158, 8, KEY, KEY_INK)}</g>`,
+      `<g class="g-site">${disc(58, 158, 8, KEY, KEY_INK)}</g>`,
       `<g class="g-a">${round(393, 59, 22)}</g><g class="g-b">${round(367, 73, 22)}</g>`,
       led(360, 26, 'led-power'),
       path(Array.from({ length: 6 }, (_, i) => Array.from({ length: 14 }, (_, t) => `M${366 + 7 * i + t} ${156 - t}h2v1h-2z`).join('')).join(''), LO),
       led(362, 168, 'led-sound'),
     ].join(''),
-    labels: () => label(DATA.trainer.name, 96, 179, 240) + label('START', 14, 119, 40, 'right') + label('SELECT', 14, 137, 40, 'right') + label(t('simple_label'), 4, 155, 50, 'right') +
+    labels: () => label(DATA.trainer.name, 96, 179, 240) + label('START', 14, 119, 40, 'right') + label('SELECT', 14, 137, 40, 'right') + label(t('site_label'), 4, 155, 50, 'right') +
       label('POWER', 368, 21, 40, 'left') + label(t('opt_sound'), 370, 163, 40, 'left'),
     controls: [
       btn('up', 32, 50, 20, 18), btn('down', 32, 80, 20, 18), btn('left', 18, 64, 18, 20), btn('right', 48, 64, 18, 20),
       btn('start', 12, 118, 58, 18), btn('select', 12, 136, 58, 18),
       btn('a', 391, 57, 26, 26, `A${act(-11, -12)}`, 'hw round'), btn('b', 365, 71, 26, 26, `B${act(-11, 23)}`, 'hw round'),   // the words above A, below B
       btn('l', 0, 0, 88, 16), btn('r', 344, 0, 88, 16),
-      btn('sound', 356, 110, 66, 72), btn('simple', 8, 154, 62, 18),
+      btn('sound', 356, 110, 66, 72), btn('site', 8, 154, 62, 18),
     ],
   },
   sp: {
@@ -203,16 +190,16 @@ const SHELLS = {
       box(14, 192, 228, 14, LO, INK, 4),   // hinge
       `<g class="g-dpad">${dpad(32, 230, 44, 16)}</g>`,
       `<g class="g-a">${round(204, 226, 28)}</g><g class="g-b">${round(170, 244, 28)}</g>`,
-      `<g class="g-select">${disc(105, 285, 10, KEY, KEY_INK)}</g><g class="g-start">${disc(141, 285, 10, KEY, KEY_INK)}</g><g class="g-simple">${disc(205, 285, 10, KEY, KEY_INK)}</g>`,
+      `<g class="g-select">${disc(105, 285, 10, KEY, KEY_INK)}</g><g class="g-start">${disc(141, 285, 10, KEY, KEY_INK)}</g><g class="g-site">${disc(205, 285, 10, KEY, KEY_INK)}</g>`,
       path(Array.from({ length: 12 }, (_, i) => `M${22 + (i % 4) * 7} ${280 + Math.floor(i / 4) * 6}h3v3h-3z`).join(''), LO),
       led(234, 212, 'led-power'),
       led(16, 307, 'led-sound'),
     ].join(''),
-    labels: () => label(DATA.trainer.name, 8, 174, 240) + label('SELECT', 90, 297, 40) + label('START', 126, 297, 40) + label(t('simple_label'), 186, 297, 48) + label(t('opt_sound'), 22, 302, 30, 'left'),
+    labels: () => label(DATA.trainer.name, 8, 174, 240) + label('SELECT', 90, 297, 40) + label('START', 126, 297, 40) + label(t('site_label'), 186, 297, 48) + label(t('opt_sound'), 22, 302, 30, 'left'),
     controls: [
       btn('up', 40, 220, 28, 26), btn('down', 40, 258, 28, 26), btn('left', 20, 240, 26, 28), btn('right', 62, 240, 26, 28),
       btn('a', 200, 222, 36, 36, `A${act(-16, -10, 'right')}`, 'hw round'), btn('b', 166, 240, 36, 36, `B${act(-48, 11, 'right')}`, 'hw round'),   // above A, left of B
-      btn('select', 92, 280, 36, 34), btn('start', 128, 280, 36, 34), btn('simple', 186, 278, 48, 34),
+      btn('select', 92, 280, 36, 34), btn('start', 128, 280, 36, 34), btn('site', 186, 278, 48, 34),
       btn('sound', 10, 274, 54, 44),
     ],
   },
@@ -250,10 +237,6 @@ function toggleSound() {
 
 addEventListener('keydown', (e) => {
   if (e.ctrlKey || e.metaKey || e.altKey) return;
-  if (simple.up && !show.up) {
-    if (e.key === 'Escape') closeSimple();
-    return;   // the page scrolls with the keys
-  }
   const name = KEYS[e.key];
   if (!name) return;
   e.preventDefault();
@@ -277,7 +260,7 @@ $gba.addEventListener('pointerdown', (e) => {
   if (hw) {
     e.preventDefault();
     if (hw.dataset.btn === 'sound') return toggleSound();
-    if (hw.dataset.btn === 'simple') return openSimple();
+    if (hw.dataset.btn === 'site') return void (location.href = './');   // the main page
     hw.setPointerCapture(e.pointerId);
     return press(hw.dataset.btn, true);
   }
@@ -329,11 +312,7 @@ Promise.all([document.fonts.load('16px Gen3'), document.fonts.load('16px "Gen3 S
   setTimeout(() => {
     document.body.classList.add('powered');
     cart.start($screen, api);
-    const go = () => {
-      if (pathOf() === 'simples') return simple.open();
-      if (simple.up) simple.close();
-      if (pathOf()) cart.open(pathOf());
-    };
+    const go = () => { if (pathOf()) cart.open(pathOf()); };
     go();
     addEventListener('hashchange', go);
   }, reduced() ? 0 : 400);

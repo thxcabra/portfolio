@@ -9,7 +9,7 @@ import { siteAnchor, repoOf, esc, skillCheck, skillRoll, tooMany, morse, konami,
 import { typewrite } from '../typewriter.js';
 import { mountPS1 } from './scene3d.js';
 
-export const PLAY_URL = './';   // the GBA; 'jogar' once the landing page takes the main address
+export const PLAY_URL = 'jogar';   // the GBA (jogar.html; GitHub Pages serves it without the .html)
 const SITE = DATA.site;
 const store = {
   get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } },

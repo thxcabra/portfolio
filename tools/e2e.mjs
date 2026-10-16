@@ -17,7 +17,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const server = createServer(async (req, res) => {
   const path = decodeURIComponent(new URL(req.url, BASE).pathname);
-  const file = new URL('.' + (path === '/' ? '/index.html' : path), ROOT);
+  const file = new URL('.' + (path === '/' ? '/index.html' : extname(path) ? path : `${path}.html`), ROOT);   // /jogar is jogar.html, as on GitHub Pages
   try {
     const body = await readFile(file);
     res.writeHead(200, { 'content-type': MIME[extname(file.pathname)] || 'application/octet-stream' });
@@ -110,7 +110,7 @@ const rightClick = async (wait = 300) => {
 // Rectangle of an element in game pixels, relative to the screen: [left, top, right, bottom].
 const rectIn = (sel) => ev(`(() => { const s = document.getElementById('screen').getBoundingClientRect(), b = document.querySelector('${sel}').getBoundingClientRect(), k = s.width / 240; return [b.left - s.left, b.top - s.top, b.right - s.left, b.bottom - s.top].map((v) => Math.round(v / k)); })()`);
 
-await send('Page.navigate', { url: BASE });
+await send('Page.navigate', { url: `${BASE}jogar` });
 await sleep(1500);
 assert.ok(await ev(`document.body.classList.contains('powered')`), 'a luz POWER não acendeu');
 assert.ok(await has('canvas.intro'), 'a abertura da GAME FREAK não começou numa sessão nova');
@@ -442,7 +442,7 @@ await closeMsg();
 ok('falar com alguém toca o som de seleção, como no jogo');
 
 await ev('localStorage.clear()');
-await send('Page.navigate', { url: `${BASE}?link=1#/contato` });   // a query change forces a full load
+await send('Page.navigate', { url: `${BASE}jogar?link=1#/contato` });   // a query change forces a full load
 await sleep(2200);
 assert.ok(!(await has('.title')), 'o link direto não pulou o título');
 assert.ok(await has('.contact .win'), 'o link direto não abriu o CONTATO');
@@ -466,34 +466,13 @@ await key('x', 700);
 assert.ok(!(await has('.dex')), 'B não voltou para a sala');
 ok('links: #/contato e #/projetos/7 abrem direto, B volta para a sala, link inválido cai na sala');
 
-await click('[data-btn="simple"]', 600);
-assert.equal(await ev(`document.querySelector('.simple').hidden`), false, 'o botão SIMPLES não abriu a versão simples');
-assert.equal(await hash(), '#/simples');
-assert.equal(await ev(`document.querySelectorAll('.sp-proj').length`), 7, 'a versão simples deveria listar os 7 projetos');
-assert.equal(await ev(`getComputedStyle(document.getElementById('gba')).visibility`), 'hidden');
-const meBefore = await me();
-await key('ArrowDown', 300);
-assert.deepEqual(await me(), meBefore, 'as setas na versão simples não podem mexer o Red');
-await click('.sp-btn[data-act="lang"]', 300);
-assert.match(await ev(`document.querySelector('.simple').textContent`), /PROJECTS/, 'o botão de idioma não trocou para inglês');
-await click('.sp-btn[data-act="lang"]', 300);
-await ev(`document.querySelector('.sp-shot').scrollIntoView({ block: 'center' })`);
-await sleep(200);
-await click('.sp-shot', 600);
-assert.equal(await ev(`document.querySelector('.show').hidden`), false, 'a miniatura não ampliou');
-await key('x', 300);
-await key('Escape', 400);
-assert.equal(await ev(`document.querySelector('.simple').hidden`), true, 'Esc não voltou ao GBA');
-assert.equal(await hash(), '');
-await ev(`location.hash = '#/simples'`);
-await sleep(500);
-assert.equal(await ev(`document.querySelector('.simple').hidden`), false, '#/simples não abriu a versão simples');
-await click('.sp-btn[data-act="back"]', 400);
-assert.equal(await ev(`document.querySelector('.simple').hidden`), true);
-ok('versão simples: botão no GBA e #/simples, 7 projetos, idioma, imagem ampliada, setas não mexem o jogo, volta');
+await click('[data-btn="site"]', 2500);
+assert.equal(await ev('location.pathname'), '/', 'o botão SITE não levou à página principal');
+assert.ok(await has('.hud .start'), 'a página principal não abriu');
+ok('o botão SITE do GBA leva à página principal');
 
 await ev('sessionStorage.clear()');
-await send('Page.navigate', { url: `${BASE}?again=1` });
+await send('Page.navigate', { url: `${BASE}jogar?again=1` });
 await sleep(10000);   // 0,4 s de luz + ~8,1 s da GAME FREAK
 assert.ok(await has('.title .entrance'), 'depois da GAME FREAK deveria vir a entrada do título');
 await sleep(5000);    // ~4,4 s de entrada
@@ -511,9 +490,9 @@ await sleep(400);
 assert.equal(await ev(`document.getElementById('gba').style.width`), '432px', 'deitado não voltou ao GBA');
 ok('celular em pé vira GBA SP e volta');
 
-// ---------- the landing page (lp.html) ----------
+// ---------- the main page (index.html) ----------
 await ev('localStorage.clear()');
-await send('Page.navigate', { url: `${BASE}lp.html?lp=1` });
+await send('Page.navigate', { url: `${BASE}?lp=1` });
 await sleep(2500);
 assert.deepEqual(await ev(`[...document.querySelectorAll('main > section')].map((s) => s.id)`), ['topo', 'projetos', 'sobre', 'experiencia', 'habilidades', 'coisas', 'este-site', 'contato'], 'seções da landing page');
 assert.equal(await ev(`document.querySelectorAll('.project').length`), 6, 'seis projetos; o portfólio fica em Este site');
@@ -525,7 +504,7 @@ assert.equal(await ev(`document.querySelectorAll('#coisas .piece').length`), 8, 
 assert.equal(await ev(`document.querySelectorAll('#sobre .polaroid').length`), 3, 'as três fotos do João');
 assert.equal(await ev(`document.querySelectorAll('nav a[data-sec]').length`), 5, 'o menu sem Coisas que eu faço');
 assert.ok(await ev(`document.querySelector('.hero .goat').complete && document.querySelector('.hero .goat').naturalWidth > 0`), 'o bode da abertura não carregou');
-assert.equal(await ev(`document.querySelector('.hud .start').getAttribute('href')`), './', 'o Jogar leva ao GBA');
+assert.equal(await ev(`document.querySelector('.hud .start').getAttribute('href')`), 'jogar', 'o Jogar leva ao GBA');
 assert.equal(await ev(`document.querySelectorAll('#experiencia .jobs > li').length`), 2, 'só os dois cards da MOIC');
 assert.equal(await ev(`document.querySelectorAll('#experiencia .jobs details li').length`), 4, 'os quatro clientes dentro do card de social media');
 assert.equal(await ev(`document.querySelectorAll('#sobre a[href^="https://store.steampowered.com/app/"]').length`), 7, 'os jogos com link da Steam');
@@ -568,13 +547,17 @@ await key('Escape', 300);
 assert.ok(!(await ev(`document.querySelector('dialog.viewer').open`)), 'Esc não fechou os prints');
 ok('landing page: seções, 6 projetos e Este site, Jogar, clientes da MOIC, jogos na Steam, toca-fitas, fotos, teste de habilidade e os segredos do d20, PT/EN salvo, prints');
 
-await send('Page.navigate', { url: `${BASE}lp.html?old=1#/projetos/3` });
+await send('Page.navigate', { url: `${BASE}?old=1#/projetos/3` });
 await sleep(2500);
 assert.equal(await hash(), '#projeto-3', 'o link antigo vira a âncora nova');
 assert.ok(await ev(`(() => { const t = document.getElementById('projeto-3').getBoundingClientRect().top; return t >= 0 && t < innerHeight / 2; })()`), 'não rolou até o projeto 3');
 ok('landing page: link antigo #/projetos/3 rola até o projeto');
+await click('.hud .start', 2500);
+assert.equal(await ev('location.pathname'), '/jogar', 'o Jogar não abriu o GBA');
+assert.ok(await has('#gba'), 'o GBA não carregou em /jogar');
+ok('landing page: o Jogar abre o GBA em /jogar');
 
-await send('Page.navigate', { url: `${BASE}lp.html?secret=1` });
+await send('Page.navigate', { url: `${BASE}?secret=1` });
 await sleep(2500);
 for (const k of ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a']) await key(k, 60);
 await sleep(200);
@@ -591,7 +574,7 @@ ok('landing page: código Konami interrompe a transmissão; #/sinal abre a porta
 
 await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
 await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 3, mobile: true });
-await send('Page.navigate', { url: `${BASE}lp.html?small=1` });
+await send('Page.navigate', { url: `${BASE}?small=1` });
 await sleep(2500);
 assert.ok(await ev('document.documentElement.scrollWidth <= innerWidth'), 'rolagem horizontal no celular');
 assert.equal(await ev(`getComputedStyle(document.querySelector('.hero .goat')).animationName`), 'none', 'com movimento reduzido nada se move');

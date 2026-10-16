@@ -34,7 +34,7 @@ body:not(.ready) .gba { opacity: 0; }   /* not visibility: hidden, which would b
 .p-dpad .g-dpad, .p-a .g-a, .p-b .g-b, .p-start .g-start, .p-select .g-select, .p-l .g-l, .p-r .g-r { transform: translateY(1px); }
 .gba:has([data-btn="a"]:hover) .g-a, .gba:has([data-btn="b"]:hover) .g-b,
 .gba:has([data-btn="start"]:hover) .g-start, .gba:has([data-btn="select"]:hover) .g-select,
-.gba:has([data-btn="l"]:hover) .g-l, .gba:has([data-btn="r"]:hover) .g-r, .gba:has([data-btn="simple"]:hover) .g-simple { filter: brightness(1.1); }
+.gba:has([data-btn="l"]:hover) .g-l, .gba:has([data-btn="r"]:hover) .g-r, .gba:has([data-btn="site"]:hover) .g-site { filter: brightness(1.1); }
 .led-power { fill: #2a3a2a; }
 .powered .led-power { fill: #78f878; }
 .led-sound { fill: #2a3a2a; }
@@ -228,33 +228,6 @@ img.bag-icon { left: 12px; top: 128px; }
 .show-step.back { transform: scaleX(-1); }   /* the font has ▶ only */
 .show-box { max-width: min(100%, 1100px); border: calc(var(--k) * 8px) solid transparent; border-image: url(assets/ui/frame-1.png) 8 repeat; background: #fff padding-box; cursor: default; }
 .show img { display: block; max-width: 100%; height: auto; image-rendering: auto; }   /* screenshots are not pixel art */
-
-/* ---------- the simple view (simple.js): a page to scroll, in game pixels scaled by --ks ---------- */
-.simple { position: fixed; inset: 0; z-index: 5; overflow: auto; background: rgb(8 10 24 / .6); color: #626262; --sh: #d5d5cd; font: 16px/15px Gen3, monospace; }
-.simple[hidden] { display: none; }
-.simple * { text-shadow: 1px 0 0 var(--sh), 0 1px 0 var(--sh), 1px 1px 0 var(--sh); }
-body.simple-mode .gba { visibility: hidden; }
-.sp { zoom: var(--ks); width: var(--sw); margin: 0 auto; padding: 8px 0 24px; }
-.sp h1 { font: 32px/30px Gen3, monospace; color: #3152cd; --sh: #a4c5f6; }
-.sp h2 { margin: 12px 0 4px 8px; font-size: 16px; color: #fff; --sh: #626262; }
-.sp h3 { font-size: 16px; color: #000; --sh: #d5d5cd; }
-.sp p { margin: 0 0 7px; }
-.sp ul { list-style: none; }
-.sp-win { display: flow-root; margin-bottom: 8px; padding: 4px 6px; border: 8px solid transparent; border-image: var(--frame) 8 repeat; background: #fff padding-box; }
-.sp-bar { display: flex; justify-content: space-between; }
-.sp-meta { font-family: 'Gen3 Small'; }
-.sp-pitch { color: #3152cd; --sh: #a4c5f6; }
-.sp-btn { display: inline-block; margin: 0 4px 4px 0; padding: 0 4px; border: 8px solid transparent; border-image: var(--frame, url(assets/ui/frame-1.png)) 8 repeat; background: #fff padding-box; color: #626262; text-decoration: none; line-height: 15px; cursor: pointer; }
-.sp-btn:hover, .sp-btn:focus-visible { color: #e60808; --sh: #ffbd73; outline: none; }
-.sp-type { display: inline-block; width: 32px; height: 12px; margin: 0 2px; vertical-align: -1px; background: url(assets/ui/types.png); }
-.sp-mon, .sp-red { float: right; margin-left: 4px; }
-.sp-badge { float: left; width: 16px; height: 16px; margin: 0 6px 0 0; background: url(assets/ui/badges.png); }
-.sp-job, .sp-skill { display: flow-root; margin-bottom: 6px; }
-.sp-stack { display: flex; flex-wrap: wrap; gap: 2px 8px; margin-bottom: 7px; }
-.sp-stack li { display: flex; align-items: center; gap: 2px; }
-.sp-shots { display: flex; flex-wrap: wrap; gap: 6px; }
-.sp-shot { border: 1px solid #626262; }
-.sp-shot img { display: block; width: 96px; height: 60px; object-fit: cover; object-position: top; image-rendering: auto; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
